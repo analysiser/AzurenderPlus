@@ -6,6 +6,6 @@ Project proposal: http://photonmap.blogspot.com/2014/11/15-869-final-project-pro
 
 Change Logs:
 11/5/2014
-Removed path tracing code and photon mapping code from original Azurender code base for simplicity. This is the baseline.
+Removed path tracing code and photon mapping code from original Azurender code base for simplicity. This is the baseline.\n
 11/6/2014
-Update baseline for the final project. Added azRayPacket class for further working.
+Update baseline for the final project. Added azRayPacket class for further working.\n
