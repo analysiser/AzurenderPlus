@@ -63,7 +63,7 @@
 // Cone filter constants    jensen P67, k >= 1 is a filter constant characterizing the filter
 #define CONE_K                          (1)
 
-#define ENABLE_PATH_TRACING_GI          true
+#define ENABLE_PATH_TRACING_GI          false
 #define PT_GI_SAMPLE                    (1)
 
 #define ENABLE_PHOTON_MAPPING           false
@@ -181,15 +181,6 @@ namespace _462 {
     #endif
         
 #endif
-        
-        // initialize trace pixel data structure
-//        for (int i = 0; i < MAX_THREADS_TRACE; i++)
-//        {
-//            tracePixelData[i].row_num = -1;
-//            tracePixelData[i].buffer = new Color3[width];
-////            tracePixelData[i].scene = scene;
-//        }
-        
         return true;
     }
     
@@ -216,12 +207,6 @@ namespace _462 {
                 photonRay.photon.setColor(aLight->color);
                 photonTrace(photonRay, EPSILON, TMAX, PHOTON_TRACE_DEPTH);
             }
-//            Ray photonRay = getPhotonEmissionRayFromLight(scene->get_lights()[0]);
-//            // Make color only the portion of light
-//            photonRay.photon.mask = 0;
-//            photonRay.photon.setColor(l->color);// * (real_t(1)/(real_t)(INDIRECT_PHOTON_NEEDED + CAUSTICS_PHOTON_NEEDED));
-//            photonTrace(photonRay, EPSILON, TMAX, PHOTON_TRACE_DEPTH);
-            
         }
 
         
@@ -275,129 +260,7 @@ namespace _462 {
         
         printf("Finished Balancing!\n");
     }
-    
-    // worker node for parallel photon scatter
-    void Raytracer::photonScatterWorker(PhotonScatterData *data)
-    {
-//        printf("running thread!\n");
-//        PhotonScatterData localData = *data;
-        
-        unsigned int start = SDL_GetTicks();
-        
-        // scatter indirect
-        while ((data->worker_photon_indirect.size() < data->indirect_needed))
-        {
-            for (size_t i = 0; i < data->worker_lights_copy.size(); i++)
-            {
-                Ray photonRay = data->worker_lights_copy[i]->getRandomRayFromLight();//getPhotonEmissionRayFromLight(data->worker_lights_copy[i]);
-                photonRay.photon = Photon(data->worker_lights_copy[i]->color);
-                localPhotonTrace(photonRay, EPSILON, TMAX, PHOTON_TRACE_DEPTH,
-                                 data->worker_photon_indirect,
-                                 data->worker_photon_caustics,
-                                 data->indirect_needed,
-                                 data->caustics_needed);
-            }
-//            Ray photonRay = getPhotonEmissionRayFromLight(data->light);
-//            // Make color only the portion of light
-//            photonRay.photon = Photon(data->light->color);
-//            localPhotonTrace(photonRay, EPSILON, TMAX, PHOTON_TRACE_DEPTH,
-//                             data->worker_photon_indirect,
-//                             data->worker_photon_caustics,
-//                             data->indirect_needed,
-//                             data->caustics_needed);
-        }
-        
-        // scatter caustics
-        while ((data->worker_photon_caustics.size() < data->caustics_needed))
-        {
-            for (size_t i = 0; i < data->worker_lights_copy.size(); i++)
-            {
-                Ray photonRay = data->worker_lights_copy[i]->getRandomRayFromLight();
-                photonRay.photon = Photon(data->worker_lights_copy[i]->color);
-                localPhotonTrace(photonRay, EPSILON, TMAX, PHOTON_TRACE_DEPTH,
-                                 data->worker_photon_indirect,
-                                 data->worker_photon_caustics,
-                                 data->indirect_needed,
-                                 data->caustics_needed);
-            }
-//            Ray photonRay = getPhotonEmissionRayFromLight(data->light);
-//            // Make color only the portion of light
-//            photonRay.photon = Photon(data->light->color);
-////            photonRay.photon.setColor(data->light.color);// * (real_t(1)/(real_t)(INDIRECT_PHOTON_NEEDED + CAUSTICS_PHOTON_NEEDED));
-//            //            photonTrace(photonRay, EPSILON, TMAX, PHOTON_TRACE_DEPTH);
-//            localPhotonTrace(photonRay, EPSILON, TMAX, PHOTON_TRACE_DEPTH,
-//                             data->worker_photon_indirect,
-//                             data->worker_photon_caustics,
-//                             data->indirect_needed,
-//                             data->caustics_needed);
-        }
-        
-        unsigned int end = SDL_GetTicks();
-        
-        printf("thread finish: %dms\n", end - start);
-    }
-    
-    void Raytracer::tracePixelWorker(TracePixelData *data)
-    {
-        // Actual trace
-        for (size_t x = 0; x < width; x++)
-        {
-            Color3 color = trace_pixel(scene, x, data->row_num, width, height);
-            data->buffer[x] = color;
-        }
-    }
-    
-    void Raytracer::parallelPhotonScatter(const Scene* scene)
-    {
-        // debug
-        unsigned int start = SDL_GetTicks();
-        unsigned int end;
-        
-        photon_indirect_list.clear();
-        photon_caustic_list.clear();
-        
-        // assuming there is only one light source
-//        SphereLight l = scene->get_lights()[0];
 
-        
-        // create MAX_THREADS POSIX threads
-        std::thread tid[MAX_THREADS_SCATTER];
-        PhotonScatterData data[MAX_THREADS_SCATTER];
-        
-        for (int i = 0; i < MAX_THREADS_SCATTER; i++)
-        {
-            data[i].indirect_needed = INDIRECT_PHOTON_NEEDED/MAX_THREADS_SCATTER;
-            data[i].caustics_needed = CAUSTICS_PHOTON_NEEDED/MAX_THREADS_SCATTER;
-//            data[i].light = l;
-            for (size_t ii = 0; ii < scene->num_lights(); ii++)
-            {
-                Light *aLight = scene->get_lights()[ii];
-                data[i].worker_lights_copy.push_back(aLight);
-            }
-            tid[i] = std::thread(&Raytracer::photonScatterWorker, *this, &data[i]);
-        }
-        
-        // wait until four threads finishes
-        for (int i = 0; i < MAX_THREADS_SCATTER; i++)
-        {
-            tid[i].join();
-        }
-        
-        // combine thread data to global raytracer data
-        photon_indirect_list.reserve(INDIRECT_PHOTON_NEEDED);
-        photon_caustic_list.reserve(CAUSTICS_PHOTON_NEEDED);
-        
-        for (int i = 0; i < MAX_THREADS_SCATTER; i++)
-        {
-//            printf("worker thread has indirect: %ld, caustics: %ld\n",data[i].worker_photon_indirect.size(), data[i].worker_photon_caustics.size());
-            photon_indirect_list.insert( photon_indirect_list.end(), data[i].worker_photon_indirect.begin(), data[i].worker_photon_indirect.end() );
-            photon_caustic_list.insert( photon_caustic_list.end(), data[i].worker_photon_caustics.begin(), data[i].worker_photon_caustics.end() );
-        }
-        
-        end = SDL_GetTicks();
-        printf("Finished Parallel Scattering, time = %d ms, indirect num = %ld, caustic num = %ld\n", end - start, photon_indirect_list.size(), photon_caustic_list.size());
-    }
-    
     void Raytracer::kdtreeConstruction()
     {
         unsigned int start = 0, end = 0, acc = 0;
@@ -563,6 +426,49 @@ namespace _462 {
         return res*(float(1)/float(num_samples));
     }
     
+    bool Raytracer::packetRayTracer(unsigned char* buffer)
+    {
+        pass_start = SDL_GetTicks();
+        
+        while (current_row < height) {
+            
+            for (current_col = 0; current_col < width; current_col += STEP_SIZE) {
+                for (size_t i = 0; i < STEP_SIZE; i++) {
+                    size_t y = current_row + i;
+                    y = std::min(y, height);
+                    for (size_t j = 0; j < STEP_SIZE; j++) {
+                        size_t x = current_col + j;
+                        x = std::min(x, width);
+                        // trace a pixel
+                        // Packet entrance
+                        Color3 color = trace_pixel(scene, x, y, width, height);
+                        
+                        raytraceColorBuffer[(y * width + x)] += color;
+                        Color3 progressiveColor = raytraceColorBuffer[(y * width + x)] * ((1.0)/(num_iteration));
+                        progressiveColor = clamp(progressiveColor, 0.0, 1.0);
+                        
+                        progressiveColor.to_array(&buffer[4 * (y * width + x)]);
+                    }
+                }
+            }
+            current_row += STEP_SIZE;
+        }
+        
+        // Reset raytracer for another render pass
+        if (num_iteration < TOTAL_ITERATION)
+        {
+            pass_end = SDL_GetTicks();
+            acc_pass_spent += pass_end - pass_start;
+            printf("Done One Pass! Iteration = %d, Pass spent = %dms\n", num_iteration, (pass_end - pass_start));
+            current_row = 0;
+            current_col = 0;
+            num_iteration++;
+            return false;
+        }
+        
+        return true;
+    }
+    
     /**
      * Raytraces some portion of the scene. Should raytrace for about
      * max_time duration and then return, even if the raytrace is not copmlete.
@@ -577,6 +483,7 @@ namespace _462 {
      */
     bool Raytracer::raytrace(unsigned char* buffer, real_t* max_time)
     {
+        pass_start = SDL_GetTicks();
         // the time in milliseconds that we should stop
         unsigned int end_time = 0;
         bool is_done;
@@ -592,6 +499,10 @@ namespace _462 {
         // rows at once for simplicity and efficiency.
         for (; !max_time || end_time > SDL_GetTicks(); current_row += STEP_SIZE)
         {
+            if (end_time > SDL_GetTicks())
+            {
+                std::cout<<"FINISH"<<std::endl;
+            }
             // we're done if we finish the last row
             is_done = current_row >= height;
             // break if we finish
@@ -601,24 +512,7 @@ namespace _462 {
             for (int c_row = current_row; c_row < loop_upper; c_row++)
             {
                 for (size_t x = 0; x < width; x++)
-                {
-                    // Xiao: debugging
-                    // Measuring time
-                    if (c_row == 0 && x == 0)
-                    {
-                        // master start
-                        if (num_iteration == 1)
-                        {
-                            master_start = SDL_GetTicks();
-                            
-                        }
-                        
-                        pass_start = SDL_GetTicks();
-                        
-                        acc_cphoton_search_time = 0;
-                        acc_iphoton_search_time = 0;
-                    }
-                    
+                {                    
                     // trace a pixel
                     // Packet entrance
                     Color3 color = trace_pixel(scene, x, c_row, width, height);
@@ -629,6 +523,7 @@ namespace _462 {
                     
                     progressiveColor.to_array(&buffer[4 * (c_row * width + x)]);
                 }
+                // Make packets
             }
         }
         
@@ -868,147 +763,6 @@ namespace _462 {
         }
     }
     
-    // Photon Tracing function for a single thread purposes
-    void Raytracer::localPhotonTrace(Ray ray, real_t t0, real_t t1, int depth,
-                                     std::vector<Photon> &indirect_list, std::vector<Photon> &caustics_list,
-                                     size_t indirect_needed, size_t caustics_needed)
-    {
-        if (depth == 0) {
-            return;
-        }
-        
-        bool isHit = false;
-        HitRecord record = getClosestHit(ray, t0, t1, &isHit, Layer_All);
-        
-        if (isHit)
-        {
-            // refractive
-            if (record.refractive_index > 0) {
-                
-                float ni = float(1.0);
-                float nt = (float)record.refractive_index;
-                float cos_theta = dot(ray.d, record.normal);
-                
-                float reflectivity = azFresnel::FresnelDielectricEvaluate(cos_theta, ni, nt);
-                float transmity    = 1.f - reflectivity;
-                
-                if (reflectivity > 0.f) {
-                    Vector3 reflectDirection = azReflection::reflect(ray.d, record.normal);
-                    reflectDirection = normalize(reflectDirection);
-                    
-                    Ray reflectRay = Ray(record.position + EPSILON * reflectDirection, reflectDirection);
-                    
-                    reflectRay.photon = ray.photon;
-                    reflectRay.photon.setColor(reflectRay.photon.getColor() * record.specular * reflectivity);
-                    reflectRay.photon.mask |= 0x2;
-                    localPhotonTrace(reflectRay, t0, t1, depth-1, indirect_list, caustics_list, indirect_needed, caustics_needed);
-                    
-                }
-                
-                if (transmity > 0.f) {
-                    
-                    Vector3 refractDirection = azReflection::refract(ray.d, record.normal, ni, nt);
-                    refractDirection = normalize(refractDirection);
-                    
-                    // create refractive reflection for photon
-                    Ray refractRay = Ray(record.position + EPSILON * refractDirection , refractDirection);
-                    refractRay.photon = ray.photon;
-                    refractRay.photon.setColor(refractRay.photon.getColor() * record.specular * transmity);
-                    refractRay.photon.mask |= 0x2;
-                    localPhotonTrace(refractRay, t0, t1, depth-1, indirect_list, caustics_list, indirect_needed, caustics_needed);
-                }
-            }
-            // specular reflective
-            else if (record.specular != Color3::Black())
-            {
-                // Pure reflective surface
-                if (record.diffuse == Color3::Black()) {
-                    
-                    Ray reflectRay = Ray(record.position, normalize(ray.d - 2 * dot(ray.d, record.normal) * record.normal));
-                    reflectRay.photon = ray.photon;
-                    reflectRay.photon.setColor(reflectRay.photon.getColor() * record.specular);
-                    reflectRay.photon.mask |= 0x2;
-                    localPhotonTrace(reflectRay, t0, t1, depth-1, indirect_list, caustics_list, indirect_needed, caustics_needed);
-                    
-                }
-                // Hit on a surface that is both reflective and diffusive
-                else
-                {
-                    real_t prob = random();
-                    // Then there is a possibility of whether reflecting or absorbing
-                    if (prob < 0.5) {
-                        Vector3 reflectDirection = azReflection::reflect(ray.d, record.normal);
-                        reflectDirection = normalize(reflectDirection);
-                        Ray reflectRay = Ray(record.position + EPSILON * reflectDirection, reflectDirection);
-                        
-                        reflectRay.photon = ray.photon;
-                        reflectRay.photon.setColor(reflectRay.photon.getColor() * record.specular);
-                        reflectRay.photon.mask |= 0x2;
-                        localPhotonTrace(reflectRay, t0, t1, depth - 1, indirect_list, caustics_list, indirect_needed, caustics_needed);
-                    }
-                    else {
-                        // absorb
-                        if (indirect_list.size() < indirect_needed)
-                        {
-                            ray.photon.position = record.position;
-                            setPhotonDirection(ray.photon, -ray.d);
-                            indirect_list.push_back(ray.photon);
-                        }
-                        
-                    }
-                }
-            }
-            // diffusive
-            else {
-                // direct illumination, do not store
-                if (ray.photon.mask == 0x0) {
-                    // consider don't do direct illumination
-                    // if remove this, global photons could be faster but caustics are getting far slower
-                    real_t prob = random();
-                    if (prob > PROB_DABSORB) {
-                        Ray photonRay = Ray(record.position, uniformSampleHemisphere(record.normal));
-                        photonRay.photon = ray.photon;
-                        photonRay.photon.mask |= 0x1;
-                        photonRay.photon.setColor(ray.photon.getColor() * record.diffuse);
- 
-                        localPhotonTrace(photonRay, t0, t1, depth-1, indirect_list, caustics_list, indirect_needed, caustics_needed);
-                    }
-                }
-                // caustics
-                else if (ray.photon.mask == 0x2) {
-                    if (caustics_list.size() < caustics_needed) {
-                        ray.photon.position = record.position;
-                        setPhotonDirection(ray.photon, -ray.d);
-                        caustics_list.push_back(ray.photon);
-                        
-                    }
-                }
-                // indirect illumination
-                else {
-                    real_t prob = random();
-                    if (prob < PROB_DABSORB) {
-                        // Store photon in indirect illumination map
-                        if (indirect_list.size() < indirect_needed) {
-                            ray.photon.position = (record.position);
-                            setPhotonDirection(ray.photon, -ray.d);
-                            ray.photon.setColor(ray.photon.getColor() * (real_t(1)/real_t(PROB_DABSORB)));
-                            indirect_list.push_back(ray.photon);
-                        }
-                    }
-                    else {
-                        // Generate a diffusive reflect
-                        Ray photonRay = Ray(record.position, uniformSampleHemisphere(record.normal));
-                        photonRay.photon = ray.photon;
-                        photonRay.photon.mask |= 0x1;
-                        photonRay.photon.setColor(ray.photon.getColor() * record.diffuse);
-//                        ray.photon.setColor(ray.photon.getColor() * (real_t(1)/real_t(1.0 - PROB_DABSORB)));
-                        localPhotonTrace(photonRay, t0, t1, depth-1, indirect_list, caustics_list, indirect_needed, caustics_needed);
-                    }
-                }
-            }
-        }
-    }
-    
     /**
      * @brief   Ray tracing a given ray, return the color of the hiting point on surface
      * @param   ray     Ray to trace
@@ -1047,67 +801,7 @@ namespace _462 {
             return radiance;
         }
         
-        // refraction
-        if (record.refractive_index > 0) {
-            
-            Color3 reflColor = Color3::Black();
-            Color3 refrColor = Color3::Black();
-            
-            float ni = float(1.0);
-            float nt = (float)record.refractive_index;
-            float cos_theta = dot(ray.d, record.normal);
-            
-            float reflectivity = azFresnel::FresnelDielectricEvaluate(cos_theta, ni, nt);
-            float transmity    = 1.f - reflectivity;
-            
-            // reflection
-            if (reflectivity > 0.f) {
-                Vector3 reflectDirection = azReflection::reflect(ray.d, record.normal);
-                reflectDirection = normalize(reflectDirection);
-                
-                Ray reflectRay = Ray(record.position + EPSILON * reflectDirection, reflectDirection);
-                reflColor = record.specular * trace(reflectRay, t0, t1, depth - 1);
-                
-            }
-            
-            // refraction
-            if (transmity > 0.f) {
-                
-                Vector3 refractDirection = azReflection::refract(ray.d, record.normal, ni, nt);
-    
-                refractDirection = normalize(refractDirection);
-                
-                Ray refractRay = Ray(record.position + EPSILON * refractDirection , normalize(refractDirection));
-                refrColor = record.specular * trace(refractRay, t0, t1, depth - 1);
-            }
-            
-            radiance += reflectivity * reflColor + transmity * refrColor;
-        }
-        // reflection
-        else if (record.specular != Color3::Black())
-        {
-            // Trace for specularly reflective
-            ray.d = normalize(ray.d);
-            Vector3 reflectDirection = azReflection::reflect(ray.d, record.normal);
-            reflectDirection = normalize(reflectDirection);
-            Ray reflectRay = Ray(record.position + reflectDirection * EPSILON, reflectDirection);
-            radiance += record.specular * trace(reflectRay, t0, t1, depth - 1);
-            
-        }
-        
-        // ray hits skybox
-        // TODO: better wrap up of skybox
-        if (record.diffuse == Color3(-1.0, -1.0, -1.0))
-        {
-            Color3 hdrColor = record.texture;
-            hdrColor.r = hdrColor.r > 0.99 ? hdrColor.r * 3 : hdrColor.r;
-            hdrColor.g = hdrColor.g > 0.99 ? hdrColor.g * 3 : hdrColor.g;
-            hdrColor.b = hdrColor.b > 0.99 ? hdrColor.b * 3 : hdrColor.b;
-            record.texture = hdrColor;
-            radiance += hdrColor;
-        }
-        // ray hits diffusive surface
-        else if (record.diffuse != Color3::Black() && record.refractive_index == 0) {
+        if (record.diffuse != Color3::Black() && record.refractive_index == 0) {
 
             // Trace each light source for direct illumination
             radiance += shade_direct_illumination(record, t0, t1);
@@ -1120,17 +814,11 @@ namespace _462 {
             for (int i = 0; i < PT_GI_SAMPLE; i++) {
                 Vector3 dir = uniformSampleHemisphere(record.normal);
                 Ray secondRay = Ray(record.position + dir * EPSILON, dir);
-//                bool isSecondRayHit;
-//                HitRecord secondRecord = getClosestHit(secondRay, t0, t1, &isSecondRayHit);
-//                if (isSecondRayHit) {
-                    Color3 Li = record.diffuse * trace(secondRay, t0, t1, depth - 1);
-//                    Color3 Li = secondRecord.diffuse;
-//                if (Li != Color3::Black()) {
-//                    Li = Li * INV_PI;
-                    indirectRadiance += Li;
-//                }
+                
+                Color3 Li = record.diffuse * trace(secondRay, t0, t1, depth - 1);
+                
+                indirectRadiance += Li;
 
-//                }
             }
             radiance += indirectRadiance * (1.f/float(PT_GI_SAMPLE));
 
@@ -1147,26 +835,10 @@ namespace _462 {
                     radiance += photonRadiance;
                     radiance = clamp(radiance, 0, 1.0);
                 }
-                
-    #else
-                if (CAUSTICS_PHOTON_NEEDED + INDIRECT_PHOTON_NEEDED > 0)
-                {
-                    Color3 photonRadiance = shade_photons(record, PHOTON_QUERY_RADIUS, INFINITY) * (2.0/(CAUSTICS_PHOTON_NEEDED + INDIRECT_PHOTON_NEEDED)) * coeef;
-                    photonRadiance = clamp(photonRadiance, 0, 1.0);
-                    radiance += photonRadiance;
-                    
-                    radiance = clamp(radiance, 0, 1.0);
-                }
     #endif
 #endif
             
         }
-        
-        // for raytracing ambient
-        // turn amient on if needed
-//        if ( record.refractive_index == 0) {
-//            radiance += scene->ambient_light * record.ambient;
-//        }
         
         return record.texture * radiance;
     }
@@ -1256,90 +928,6 @@ namespace _462 {
         
         return causticsColor;
         
-    }
-    
-    // Shading of Indirect lightning
-    Color3 Raytracer::shade_indirect_illumination(HitRecord &record, real_t radius, size_t num_samples)
-    {
-        Color3 indirectColor = Color3::Black();
-        std::vector<Photon> nearestIndirectPhotons;
-        
-        if (record.refractive_index == 0)
-        {
-//            real_t sampleSquaredRadiusIndirect = 0.5;       // 0.5
-//            real_t maxSquaredDistIndirect = 0.001;          // 0.001
-            size_t maxPhotonsEstimate = num_samples;
-            float maxSearchSquaredRadius = radius*0.9;
-            
-            // this value is used for search pruning
-            
-            while (nearestIndirectPhotons.size() == 0)
-            {
-                maxSearchSquaredRadius /= 0.9;
-                locatePhotons(1, record.position, kdtree_photon_indirect_list, nearestIndirectPhotons, maxSearchSquaredRadius, maxPhotonsEstimate);
-            }
-            
-            // cone filter to gather radiance of indirect illumination photons
-            for (size_t i = 0; i < nearestIndirectPhotons.size(); i++)
-            {
-                indirectColor +=
-                record.getPhotonLambertianColor(getPhotonDirection(nearestIndirectPhotons[i]), nearestIndirectPhotons[i].getColor());
-//                record.getPhotonLambertianColor(nearestIndirectPhotons[i].direction, nearestIndirectPhotons[i].getColor())
-                //* getConeFilterWeight(sqrt(nearestIndirectPhotons[i].squaredDistance), sqrt(sampleSquaredRadiusIndirect));
-                //* getGaussianFilterWeight(nearestIndirectPhotons[i].squaredDistance, maxSearchSquaredRadius);
-            }
-            //indirectColor *= (real_t(1)/((real_t(1) - real_t(2)/(real_t(3) * CONE_K)) * (PI * maxSquaredDistIndirect)));
-            indirectColor *= (real_t(1)/(PI * maxSearchSquaredRadius));// * 0.0005;// * (1.0/(INDIRECT_PHOTON_NEEDED));
-            
-        }
-        
-        return indirectColor;
-    }
-    
-    Color3 Raytracer::shade_photons(HitRecord &record, real_t radius, size_t num_samples)
-    {
-        Color3 color = Color3::Black();
-        std::vector<Photon> nearestPhotons;
-        
-        if (record.refractive_index == 0)
-        {
-            size_t maxPhotonsEstimate = num_samples;
-            float maxSearchSquaredRadius = radius * 0.9;
-            
-//            locatePhotons(1, record.position, kdtree_photon_indirect_list, nearestPhotons, maxSearchSquaredRadius, maxPhotonsEstimate);
-//            locatePhotons(1, record.position, kdtree_photon_caustic_list, nearestPhotons, maxSearchSquaredRadius, maxPhotonsEstimate);
-//            
-//            if (!nearestPhotons.size()) {
-//                return color;
-            
-            unsigned int start, end;
-            while (nearestPhotons.size() == 0)
-            {
-                maxSearchSquaredRadius /= 0.9;
-                start = SDL_GetTicks();
-                locatePhotons(1, record.position, kdtree_photon_indirect_list, nearestPhotons, maxSearchSquaredRadius, maxPhotonsEstimate);
-                end = SDL_GetTicks();
-                acc_iphoton_search_time += end - start;
-                
-                start = SDL_GetTicks();
-                locatePhotons(1, record.position, kdtree_photon_caustic_list, nearestPhotons, maxSearchSquaredRadius, maxPhotonsEstimate);
-                 end = SDL_GetTicks();
-                acc_cphoton_search_time += end - start;
-            }
-            
-            // shade
-//            printf("size = %ld\n",nearestPhotons.size());
-            for (size_t i = 0; i < nearestPhotons.size(); i++)
-            {
-//                std::cout<<nearestPhotons[i].getColor()<<std::endl;
-                color +=
-                record.getPhotonLambertianColor(getPhotonDirection(nearestPhotons[i]), nearestPhotons[i].getColor());
-            }
-            
-            color *= (real_t(1)/(PI * maxSearchSquaredRadius));
-        }
-        
-        return color;
     }
     
     Color3 Raytracer::shade_cphotons(HitRecord &record, real_t radius, size_t num_samples)

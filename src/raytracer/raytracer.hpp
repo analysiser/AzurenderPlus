@@ -37,15 +37,6 @@ namespace _462 {
         unsigned int caustics_needed;
     };
     
-    
-    struct TracePixelData
-    {
-//        Scene *scene;
-        Color3 *buffer;
-        int row_num;
-        
-    };
-    
     struct ispcCPhotonData
     {
         int size;
@@ -72,6 +63,7 @@ namespace _462 {
         bool initialize(Scene* scene, size_t num_samples,
                         size_t width, size_t height);
         
+        bool packetRayTracer(unsigned char* buffer);
         bool raytrace(unsigned char* buffer, real_t* max_time);
         
         void perPixelRender(unsigned char* buffer);
@@ -126,8 +118,6 @@ namespace _462 {
         unsigned int acc_pass_spent;
         unsigned int acc_kdtree_cons;
         
-        TracePixelData tracePixelData[MAX_THREADS_TRACE];
-
         Color3 *raytraceColorBuffer;
         
         Color3 trace_pixel(const Scene* scene,
@@ -188,18 +178,8 @@ namespace _462 {
         
         float vvhComputeVolume(Vector3 a, Vector3 b);
         
-        /////////// vvh kdtree ///////////
-        
-        // worker node for raytracing and photon radiance gathering
-        void tracePixelWorker(TracePixelData *data);
-        
         // Photon Tracing for global illumination and caustics
         void photonTrace(Ray ray, real_t t0, real_t t1, int depth);
-        
-        // Photon Tracing function for a single thread purposes
-        void localPhotonTrace(Ray ray, real_t t0, real_t t1, int depth,
-                              std::vector<Photon> &indirect_list, std::vector<Photon> &caustics_list,
-                              size_t indirect_needed, size_t caustics_needed);
         
         // Raytracing helper function, to decide if there is a hit on a surface to shade
         Color3 trace(Ray ray, real_t t0, real_t t1, int depth);
@@ -212,12 +192,6 @@ namespace _462 {
         
         // Shading of caustics
         Color3 shade_caustics(HitRecord &record, real_t radius, size_t num_samples);
-        
-        // Shading of Indirect lightning
-        Color3 shade_indirect_illumination(HitRecord &record, real_t radius, size_t num_samples);
-        
-        // Shade global illumination and caustics at the same time
-        Color3 shade_photons(HitRecord &record, real_t radius, size_t num_samples);
         
         // Test: Shade c photons
         Color3 shade_cphotons(HitRecord &record, real_t radius, size_t num_samples);
@@ -243,7 +217,9 @@ namespace _462 {
         size_t width, height;
         
         // the next row to raytrace
+        size_t current_col;
         size_t current_row;
+        
         
         //
         unsigned int num_samples;

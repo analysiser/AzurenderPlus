@@ -35,17 +35,34 @@ namespace _462 {
     class azRayPacket
     {
     public:
-        
-        azRayPacket(const vector<Ray> list) { rayList = list; }
-        azRayPacket(unsigned int size) { rayList = vector<Ray>(size); }
+        azRayPacket():size_(0){}
+        azRayPacket(const vector<Ray> list):size_(list.size()) {
+            rayList = list;
+            activeMask = vector<bool>(true, size_);
+        }
+        azRayPacket(unsigned int size):size_(size) {
+            rayList = vector<Ray>(size);
+            activeMask = vector<bool>(true, size_);
+        }
         
         void add(const Ray r)
         {
             rayList.push_back(r);
         }
         
+        void setReady()
+        {
+            size_ = rayList.size();
+            activeMask = vector<bool>(true, size_);
+        }
+        
+        unsigned int getSize(){ return size_; }
+        
     private:
+        
+        unsigned int size_;
         vector<Ray> rayList;
+        vector<bool> activeMask;
     };
     
 }
