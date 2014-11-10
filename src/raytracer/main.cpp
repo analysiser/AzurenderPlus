@@ -201,6 +201,7 @@ namespace _462 {
 //                raytrace_finished = raytracer.raytrace( buffer, nullptr );
                 raytrace_finished = raytracer.PacketizedRayTrace( buffer );
             }
+
         } else {
             // copy camera over from camera control (if not raytracing)
             camera_control.update( delta_time );
@@ -307,6 +308,11 @@ namespace _462 {
             
             // reset flag that says we are done
             raytrace_finished = false;
+        }
+        else
+        {
+            // clean buffer
+            memset((unsigned char *)buffer, 0, BUFFER_SIZE(width, height));
         }
         
         raytracing = !raytracing;

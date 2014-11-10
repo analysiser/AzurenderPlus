@@ -451,6 +451,7 @@ namespace _462 {
         float dx = float(1)/width;
         float dy = float(1)/height;
         
+        // TODO: parallel ray generation
         // Ray generation
         while (current_row < height) {
             
@@ -460,11 +461,11 @@ namespace _462 {
                 // For each STEP rows
                 for (size_t i = 0; i < STEP_SIZE; i++) {
                     size_t y = current_row + i;
-                    y = std::min(y, height);
+                    y = std::min(y, height - 1);
                     // For each STEP cols
                     for (size_t j = 0; j < STEP_SIZE; j++) {
                         size_t x = current_col + j;
-                        x = std::min(x, width);
+                        x = std::min(x, width - 1);
                         
                         // TODO: generate ray packets
                         Ray eyeRay = generateEyeRay(scene->camera.get_position(), x, y, dx, dy);
@@ -490,6 +491,8 @@ namespace _462 {
 //                        printf("%d\n", index);
                         size_t x = current_col + index%STEP_SIZE;
                         size_t y = current_row + index/STEP_SIZE;
+                        x = std::min(x, width - 1);
+                        y = std::min(y, height - 1);
 //                        std::cout<<x<<" "<<y<<std::endl;
                         
                         Color3 color = shade(ray, hitInfo, EPSILON, INFINITY, 1);
