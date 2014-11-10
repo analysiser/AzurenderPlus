@@ -10,6 +10,7 @@ include_directories(
     ${PNG_INCLUDE_DIRS}
 )
 
+add_subdirectory(utils)
 add_subdirectory(application)
 add_subdirectory(math)
 add_subdirectory(raytracer)
