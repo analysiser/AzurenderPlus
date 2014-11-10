@@ -20,8 +20,11 @@
 #include "scene/triangle.hpp"
 #include "scene/sphere.hpp"
 
+#include "utils/Parallel.h"
+
 #include <SDL_timer.h>
 #include <iostream>
+
 //#include <pthread.h>
 
 
@@ -167,6 +170,7 @@ namespace _462 {
         for (size_t i = 0; i < width * height; i++) {
             raytraceColorBuffer[i] = Color3::Black();
         }
+        
         
         // test:
         printf("c photon size = %ld, photon size = %ld, Vector3 size = %ld, Color size = %ld, TP size = %ld\n", sizeof(cPhoton),sizeof(Photon), sizeof(Vector3), sizeof(Color3), sizeof(unsigned char));
