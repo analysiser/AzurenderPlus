@@ -46,87 +46,6 @@ namespace _462 {
                                 Layer_Unused2,
     };
     
-    struct SphereLight
-    {
-        struct Attenuation
-        {
-            real_t constant;
-            real_t linear;
-            real_t quadratic;
-        };
-        
-        SphereLight();
-        
-        // The position of the light, relative to world origin.
-        Vector3 position;
-        // The color of the light (both diffuse and specular)
-        Color3 color;
-        // attenuation
-        Attenuation attenuation;
-        
-        // point light radius
-        real_t radius;
-        
-        //        // type = 0: sphere light
-        //        // type = 1: parallelogram light
-        //        real_t type;
-        //
-        //        // two vectors for parallelogram light
-        //        Vector3 vertex1;
-        //        Vector3 vertex2;
-        //        Vector3 normal;
-        //        real_t depth;
-    };
-    
-    /**
-     * @brief Data structure for intersection
-     */
-    struct HitRecord
-    {
-        Vector3 position;       // world position
-        Vector3 normal;         // world normal
-        
-        Color3 diffuse;         // Surface diffusive color
-        Color3 ambient;         // Surface ambien color
-        Color3 specular;        // Surface specular color
-        Color3 texture;         // Surface texture color
-        
-        GeometryType type;      // Type of Geometry
-        
-        real_t t;               // Hit time
-        real_t beta, gamma;     // Barycentric parameters for triangles
-        
-        real_t refractive_index;    // refractive index
-        
-        int phong;           // p value for blinn-phong model
-        
-        // Constructor
-        HitRecord()
-        {
-            position = Vector3::Zero();
-            normal = Vector3::Zero();
-            diffuse = Color3::White();
-            ambient = Color3::White();
-            specular = Color3::White();
-            
-            type = eNone;
-            t = beta = gamma = 0;
-            
-            phong = 0;
-        }
-        
-        Color3 getPhotonLambertianColor(Vector3 direction, Color3 photonColor)
-        {
-            Vector3 l = direction;//normalize(direction);
-            Vector3 n = this->normal;
-            
-            real_t dot_nl = dot(n, l);
-            
-            Color3 lambertian = this->diffuse * photonColor * (dot_nl > 0 ? dot_nl : 0);
-            return lambertian;
-        }
-    };
-    
     class Geometry
     {
     public:
@@ -183,6 +102,11 @@ namespace _462 {
          */
         virtual bool hit(Ray ray, real_t t0, real_t t1, HitRecord &rec) const = 0;
         
+        /**
+         * Virtual function for packetized ray tracing
+         */
+        virtual void packetHit(azPacket<Ray> &rays, azPacket<HitRecord> &hitInfo, float t0, float t1) const = 0;
+        
         bool initialize();
         
         real_t isLight;
@@ -234,20 +158,16 @@ namespace _462 {
         void add_geometry( Geometry* g );
         void add_material( Material* m );
         void add_mesh( Mesh* m );
-        void add_light( const SphereLight& l );
         void add_lights( Light *l );
         
         
     private:
         
-        typedef std::vector< SphereLight > SphereLightList;
         typedef std::vector< Material* > MaterialList;
         typedef std::vector< Mesh* > MeshList;
         typedef std::vector< Geometry* > GeometryList;
         typedef std::vector< Light * > LightList;
         
-        // list of all lights in the scene
-        SphereLightList point_lights;
         // all materials used by geometries
         MaterialList materials;
         // all meshes used by models

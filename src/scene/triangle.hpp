@@ -50,6 +50,9 @@ namespace _462 {
         
         // Override of virtual function from Geometry
         virtual bool hit(Ray ray, real_t t0, real_t t1, HitRecord &rec) const;
+        
+        // Override of virtual function for packetized ray hit
+        virtual void packetHit(azPacket<Ray> &ray, azPacket<HitRecord> &hitInfo, float t0, float t1) const;
     };
     
     

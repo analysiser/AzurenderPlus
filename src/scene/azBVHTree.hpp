@@ -74,6 +74,17 @@ namespace _462 {
         }
         
         template <typename FN>
+        void getRayPacketIntersectIndexList(azPacket<Ray> & rays,
+                                            std::vector<std::int64_t> & indexList, /* should be init outside */
+                                            std::vector<bool> segMask,
+                                            float& t0,
+                                            float& t1,
+                                            FN &func) {
+            
+            this->root()->bvtreeRayPacketIntersect(rays, indexList, segMask, t0, t1, func);
+        }
+        
+        template <typename FN>
         bool getFirstIntersectIndex(const Ray& r,
                                     real_t& t0,
                                     real_t& t1,
@@ -160,6 +171,57 @@ namespace _462 {
             void buildDown(std::vector<azBVNode>::iterator leavesBegin,
                            std::vector<azBVNode>::iterator leavesEnd);
             
+            // Ray packet intersect test
+            template <typename FN>
+            void bvtreeRayPacketIntersect(azPacket<Ray> &rayPacket,
+                                          std::vector<int64_t> & indexList,
+                                          std::vector<bool> segMask, /* Note here the segmask list is copied in stack */
+                                          float& t0,
+                                          float& t1,
+                                          FN &func)
+            {
+//                printf("segMask.size() = %ld, rayPacket.size() = %ld\n", segMask.size(), rayPacket.size());
+                assert(segMask.size() == rayPacket.size());
+                
+                bool isAnyIntersect = false;
+                for (size_t i = 0; i < rayPacket.size(); i++) {
+                    if (segMask[i])
+                    {
+                        segMask[i] = segMask[i] && this->intersect(rayPacket[i], t0, t1);
+                        isAnyIntersect = isAnyIntersect || segMask[i];
+                    }
+                }
+                
+                if (isAnyIntersect)
+                {
+                    // Call FN for generating index list
+                    if (this->isLeaf())
+                    {
+                        for (size_t i = 0; i < rayPacket.size(); i++) {
+                            if (segMask[i])
+                            {
+                                auto & r = rayPacket[i];
+                                real_t tt;
+                                
+                                if (func(r, t0, r.maxt, tt, this->idx2_)) {
+                                    indexList[i] = this->idx2_;
+                                }
+                            }
+                        }
+                    }
+                    // Recursively test left and right child
+                    else
+                    {
+                        if (this->leftChild_ != nullptr) {
+                            this->leftChild_->bvtreeRayPacketIntersect(rayPacket, indexList, segMask, t0, t1, func);
+                        }
+                        if (this->rightChild_ != nullptr) {
+                            this->rightChild_->bvtreeRayPacketIntersect(rayPacket, indexList, segMask, t0, t1, func);
+                        }
+                    }
+                }
+            }
+            
             // Ray intersect with box
             template <typename FN>
             void intersectRayTest(const Ray& r,
@@ -189,9 +251,6 @@ namespace _462 {
                     }
                     
                 }
-                
-                
-                
             }
             
 //        private:

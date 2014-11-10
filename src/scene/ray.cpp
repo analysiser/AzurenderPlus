@@ -17,6 +17,18 @@ namespace _462 {
     {
         this->e = e;
         this->d = d;
+        this->mint = 0.f;
+        this->maxt = INFINITY;
+        this->time = 0.f;
+    }
+    
+    Ray::Ray(Vector3 e, Vector3 d, float start, float end, float time)
+    {
+        this->e = e;
+        this->d = d;
+        this->mint = start;
+        this->maxt = end;
+        this->time = time;
     }
     
     void Ray::init(const Camera& camera)

@@ -199,7 +199,7 @@ namespace _462 {
                 assert( buffer );
 //                printf("delta time = %f\n",delta_time);
 //                raytrace_finished = raytracer.raytrace( buffer, nullptr );
-                raytrace_finished = raytracer.packetRayTracer( buffer );
+                raytrace_finished = raytracer.PacketizedRayTrace( buffer );
             }
         } else {
             // copy camera over from camera control (if not raytracing)

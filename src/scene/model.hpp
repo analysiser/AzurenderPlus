@@ -11,6 +11,7 @@
 #include "scene/azBVHTree.hpp"
 #include "scene/mesh.hpp"
 #include "scene/scene.hpp"
+#include "BndBox.hpp"
 
 #include <iostream>
 #include <set>
@@ -32,6 +33,8 @@ namespace _462 {
         const Material* material;
         
         mutable azBVHTree *bvhTree;
+        
+        mutable BndBox *modelBndBox;
 
         Model();
 
@@ -47,6 +50,9 @@ namespace _462 {
         
         // Override of virtual function from Geometry
         virtual bool hit(Ray ray, real_t t0, real_t t1, HitRecord &rec) const;
+        
+        // Override of virtual function for packetized ray hit
+        virtual void packetHit(azPacket<Ray> &rays, azPacket<HitRecord> &hitInfo, float t0, float t1) const;
 
     };
     

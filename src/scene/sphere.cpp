@@ -128,6 +128,11 @@ namespace _462 {
 //        globalBBox->bounds[0] = gcenter - Vector3(radius, radius, radius);
 //        globalBBox->bounds[1] = gcenter + Vector3(radius, radius, radius);
     }
+    
+    void Sphere::packetHit(azPacket<Ray> &rays, azPacket<HitRecord> &hitInfo, float t0, float t1) const
+    {
+        
+    }
 
     
     bool Sphere::hit(Ray ray, real_t t0, real_t t1, HitRecord &rec) const
@@ -189,7 +194,6 @@ namespace _462 {
                 Vector3 localNormal = localIntersectPoint - c;
                 Vector3 worldNormal = normalize(normMat * localNormal);
                 
-                rec.type = eSphere;
                 rec.position = worldIntersectPoint;
                 rec.normal = worldNormal;
                 

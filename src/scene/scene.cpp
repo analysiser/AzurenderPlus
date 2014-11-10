@@ -33,16 +33,6 @@ namespace _462 {
         return true;
     }
     
-    SphereLight::SphereLight():
-    position(Vector3::Zero()),
-    color(Color3::White()),
-	radius(real_t(0))
-    {
-        attenuation.constant = 1;
-        attenuation.linear = 0;
-        attenuation.quadratic = 0;
-    }
-    
     Scene::Scene()
     {
         reset();
@@ -128,7 +118,6 @@ namespace _462 {
         geometries.clear();
         materials.clear();
         meshes.clear();
-        point_lights.clear();
         
         camera = Camera();
         
@@ -152,12 +141,7 @@ namespace _462 {
     {
         meshes.push_back( m );
     }
-    
-    void Scene::add_light( const SphereLight& l )
-    {
-        point_lights.push_back( l );
-    }
-    
+
     void Scene::add_lights( Light *l )
     {
         lights.push_back(l);

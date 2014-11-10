@@ -63,7 +63,7 @@ namespace _462 {
         bool initialize(Scene* scene, size_t num_samples,
                         size_t width, size_t height);
         
-        bool packetRayTracer(unsigned char* buffer);
+        bool PacketizedRayTrace(unsigned char* buffer);
         bool raytrace(unsigned char* buffer, real_t* max_time);
         
         void perPixelRender(unsigned char* buffer);
@@ -119,6 +119,8 @@ namespace _462 {
         unsigned int acc_kdtree_cons;
         
         Color3 *raytraceColorBuffer;
+        
+        Ray generateEyeRay(const Vector3 cameraPosition, size_t x, size_t y, float dx, float dy);
         
         Color3 trace_pixel(const Scene* scene,
                            size_t x,
@@ -196,12 +198,13 @@ namespace _462 {
         // Test: Shade c photons
         Color3 shade_cphotons(HitRecord &record, real_t radius, size_t num_samples);
         
+#pragma mark - Intersection Tests
+        void PacketizedRayIntersection(azPacket<Ray> &rayPacket, azPacket<HitRecord> &recordPacket, float t0, float t1);
+        
         // retrieve the closest hit record
         HitRecord getClosestHit(Ray r, real_t t0, real_t t1, bool *isHit, SceneLayer mask);
         
-        // sample a Light source on the volumn of sphere light
-//        Vector3 sampleLightSource(SphereLight light);
-                
+#pragma mark - Sampling
         // helper function for sampling a point on a given unit sphere
         Vector3 samplePointOnUnitSphere();
         

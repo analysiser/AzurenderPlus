@@ -85,7 +85,7 @@ namespace _462 {
     
     float dof_t = DOF_T;
     
-    static const unsigned STEP_SIZE = 4;
+    static const unsigned STEP_SIZE = 16;
     
     Raytracer::Raytracer()
     : scene(0), width(0), height(0) { }
@@ -366,6 +366,24 @@ namespace _462 {
     }
     
     /**
+     * Generate a ray from given (x, y) coordinates in screen space.
+     * @param scene The scene to trace.
+     * @param x The x-coordinate of the pixel to trace.
+     * @param y The y-coordinate of the pixel to trace.
+     * @param dx delta x
+     * @param dy delta y
+     */
+    Ray Raytracer::generateEyeRay(const Vector3 cameraPosition, size_t x, size_t y, float dx, float dy)
+    {
+        // pick a point within the pixel boundaries to fire our
+        // ray through.
+        float i = float(2)*(float(x)+random())*dx - float(1);
+        float j = float(2)*(float(y)+random())*dy - float(1);
+        
+        return Ray(cameraPosition, Ray::get_pixel_dir(i, j));
+    }
+    
+    /**
      * Performs a raytrace on the given pixel on the current scene.
      * The pixel is relative to the bottom-left corner of the image.
      * @param scene The scene to trace.
@@ -426,29 +444,63 @@ namespace _462 {
         return res*(float(1)/float(num_samples));
     }
     
-    bool Raytracer::packetRayTracer(unsigned char* buffer)
+    bool Raytracer::PacketizedRayTrace(unsigned char* buffer)
     {
         pass_start = SDL_GetTicks();
         
+        float dx = float(1)/width;
+        float dy = float(1)/height;
+        
+        // Ray generation
         while (current_row < height) {
             
             for (current_col = 0; current_col < width; current_col += STEP_SIZE) {
+                // Start making packets
+                azPacket<Ray> rayPacket;
+                // For each STEP rows
                 for (size_t i = 0; i < STEP_SIZE; i++) {
                     size_t y = current_row + i;
                     y = std::min(y, height);
+                    // For each STEP cols
                     for (size_t j = 0; j < STEP_SIZE; j++) {
                         size_t x = current_col + j;
                         x = std::min(x, width);
-                        // trace a pixel
-                        // Packet entrance
-                        Color3 color = trace_pixel(scene, x, y, width, height);
                         
+                        // TODO: generate ray packets
+                        Ray eyeRay = generateEyeRay(scene->camera.get_position(), x, y, dx, dy);
+                        rayPacket.add(eyeRay);
+                    }
+                }
+                
+                // TODO: scheduler
+                // Finished a STEP^2 rays packet
+                rayPacket.setReady();
+                azPacket<HitRecord> hitInfoPacket(STEP_SIZE * STEP_SIZE);
+                PacketizedRayIntersection(rayPacket, hitInfoPacket, EPSILON, INFINITY);
+
+                // TODO: shadow ray
+                // TODO: shading
+                for (size_t i = 0; i < hitInfoPacket.size(); i++) {
+                    int index = i;
+                    auto &hitInfo = hitInfoPacket[i];
+                    auto &ray = rayPacket[i];
+                    
+                    if (hitInfo.isHit)
+                    {
+//                        printf("%d\n", index);
+                        size_t x = current_col + index%STEP_SIZE;
+                        size_t y = current_row + index/STEP_SIZE;
+//                        std::cout<<x<<" "<<y<<std::endl;
+                        
+                        Color3 color = shade(ray, hitInfo, EPSILON, INFINITY, 1);
                         raytraceColorBuffer[(y * width + x)] += color;
                         Color3 progressiveColor = raytraceColorBuffer[(y * width + x)] * ((1.0)/(num_iteration));
                         progressiveColor = clamp(progressiveColor, 0.0, 1.0);
                         
                         progressiveColor.to_array(&buffer[4 * (y * width + x)]);
                     }
+
+                    
                 }
             }
             current_row += STEP_SIZE;
@@ -996,50 +1048,17 @@ namespace _462 {
         
         return color;
     }
-
-//    /**
-//     * @brief   Sampling light volumn by sampling on light 
-//     *          sphere with gaussian distribution
-//     * @param   light   Instance of SphereLight
-//     */
-//    Vector3 Raytracer::sampleLightSource(SphereLight light)
-//    {
-//        Vector3 ran = Vector3::Zero();
-//        
-//        // sphere light
-////        if (light.type == 1) {
-//        
-//            real_t x = _462::random_gaussian();
-//            real_t y = _462::random_gaussian();
-//            real_t z = _462::random_gaussian();
-//            
-//            ran = Vector3(x, y, z);
-//            
-//            ran = normalize(ran);
-//            ran *= light.radius;
-//            ran += light.position;
-//            
-////        }
-////        else if (light.type == 2)
-////        {
-////            real_t b = _462::random_uniform() * real_t(2) - real_t(1);
-////            real_t c = _462::random_uniform() * real_t(2) - real_t(1);//_462::random_uniform();
-//////            real_t h = random() + EPSILON;
-//////            real_t d = _462::random_uniform();
-////            
-////            Vector3 vec1 = light.vertex1 - light.position;
-////            Vector3 vec2 = light.vertex2 - light.position;
-//////            Vector3 vec3 = normalize(cross(vec2, vec1));
-////            
-////            ran = light.position + (vec1) * b + (vec2) * c ;// + vec3 * d;
-////        }
-////        else
-////        {
-////            printf("Wrong Light Type, must be 1 (sphere light) or 2(parallelogram light)\n");
-////        }
-////        
-//        return ran;
-//    }
+    
+    void Raytracer::PacketizedRayIntersection(azPacket<Ray> &rayPacket, azPacket<HitRecord> &recordPacket, float t0, float t1)
+    {
+        Geometry* const* geometries = scene->get_geometries();
+        for (size_t i = 0; i < scene->num_geometries(); i++)
+        {
+            // set packet is ready to do intersection tests with a new geometry
+            rayPacket.setReady();
+            geometries[i]->packetHit(rayPacket, recordPacket, t0, t1);
+        }
+    }
     
     
     /**
