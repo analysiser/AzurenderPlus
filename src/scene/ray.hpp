@@ -35,6 +35,13 @@ namespace _462 {
         float mint, maxt, time;
     };
     
+    struct Intersection
+    {
+        float t;
+        uint32_t shapeId;
+        uint32_t primitiveId;
+    };
+    
     /**
      * @brief Data structure for intersection
      */

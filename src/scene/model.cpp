@@ -20,11 +20,11 @@
 namespace _462 {
 
     Model::Model() : mesh( 0 ), material( 0 ) {
-        type = eModel;
         bvhTree = nullptr;
     }
     Model::~Model() {
-        delete modelBndBox;
+        if (modelBndBox)
+            delete modelBndBox;
     }
     
     void Model::render() const

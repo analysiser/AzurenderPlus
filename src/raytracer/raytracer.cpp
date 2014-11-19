@@ -172,6 +172,10 @@ namespace _462 {
         }
         
         
+        
+//        cout<<sizeof(Intersection)<<endl;
+        
+        
         // test:
         printf("c photon size = %ld, photon size = %ld, Vector3 size = %ld, Color size = %ld, TP size = %ld\n", sizeof(cPhoton),sizeof(Photon), sizeof(Vector3), sizeof(Color3), sizeof(unsigned char));
         // test end
@@ -484,7 +488,7 @@ namespace _462 {
                 PacketizedRayIntersection(rayPacket, hitInfoPacket, EPSILON, INFINITY);
 
                 // TODO: shadow ray
-                // TODO: shading
+                // TODO: deferred shading
                 for (size_t i = 0; i < hitInfoPacket.size(); i++) {
                     int index = i;
                     auto &hitInfo = hitInfoPacket[i];
@@ -558,10 +562,10 @@ namespace _462 {
         // rows at once for simplicity and efficiency.
         for (; !max_time || end_time > SDL_GetTicks(); current_row += STEP_SIZE)
         {
-            if (end_time > SDL_GetTicks())
-            {
-                std::cout<<"FINISH"<<std::endl;
-            }
+//            if (end_time > SDL_GetTicks())
+//            {
+//                std::cout<<"FINISH"<<std::endl;
+//            }
             // we're done if we finish the last row
             is_done = current_row >= height;
             // break if we finish

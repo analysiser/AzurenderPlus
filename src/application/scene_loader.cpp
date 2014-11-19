@@ -420,7 +420,7 @@ namespace _462 {
     {
         parse_geom_base( matmap, elem, geom );
         parse_lookup_data( meshmap, elem, STR_MESH, &geom->mesh );
-        parse_lookup_data( matmap, elem, STR_MATERIAL, &geom->material );
+//        parse_lookup_data( matmap, elem, STR_MATERIAL, &geom->material );
     }
     
     static void check_mem( void* ptr )

@@ -199,7 +199,8 @@ namespace _462 {
                 assert( buffer );
 //                printf("delta time = %f\n",delta_time);
 //                raytrace_finished = raytracer.raytrace( buffer, nullptr );
-                raytrace_finished = raytracer.PacketizedRayTrace( buffer );
+                raytrace_finished = raytracer.raytrace( buffer, &delta_time );
+//                raytrace_finished = raytracer.PacketizedRayTrace( buffer );
             }
 
         } else {

@@ -20,7 +20,6 @@ namespace _462 {
         bbox_local = new BndBox();
         bbox_world = new BndBox();
         
-        type = eTriangle;
     }
     
     Triangle::~Triangle() {

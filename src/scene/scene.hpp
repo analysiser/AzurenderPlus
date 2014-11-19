@@ -24,14 +24,6 @@
 
 namespace _462 {
     
-    enum GeometryType
-    {
-        eNone = 0,
-        eTriangle = 1,
-        eSphere = 2,
-        eModel = 3,
-    };
-    
     enum SceneLayer
     {
         Layer_Default         = 0,
@@ -51,8 +43,6 @@ namespace _462 {
     public:
         Geometry();
         virtual ~Geometry();
-        
-        GeometryType type;
         SceneLayer layer;
         
         /*

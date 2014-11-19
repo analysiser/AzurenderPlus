@@ -79,7 +79,6 @@ namespace _462 {
 //        globalBBox = new Box(Vector3::Zero(), Vector3::Zero());
         bbox_local = new BndBox();
         bbox_world = new BndBox();
-        type = eSphere;
 //        c = invMat.transform_point(position);
     }
     

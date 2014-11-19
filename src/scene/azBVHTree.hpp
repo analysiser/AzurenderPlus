@@ -253,8 +253,6 @@ namespace _462 {
                 }
             }
             
-//        private:
-//            UINT8 edge_;
             UINT8 d_;
             UINT32 idx1_, idx2_;
             real_t edgeValue_;
