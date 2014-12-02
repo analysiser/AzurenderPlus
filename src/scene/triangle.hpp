@@ -25,13 +25,14 @@ namespace _462 {
     {
     public:
         
+        // 72 * 3 bytes
         struct Vertex
         {
             // note that position and normal are in local space
-            Vector3 position;
-            Vector3 normal;
-            Vector2 tex_coord;
-            const Material* material;
+            Vector3 position; // 3 * (8) = 24 buyes
+            Vector3 normal;   // 24
+            Vector2 tex_coord; // 16
+            const Material* material; //8
         };
         
         // the triangle's vertices, in CCW order

@@ -258,26 +258,6 @@ namespace _462 {
         camera->orientation = normalize( ori );
     }
     
-    //    static void parse_point_light( const TiXmlElement* elem, SphereLight* light )
-    //    {
-    //        parse_elem( elem, false, STR_ACON,      &light->attenuation.constant );
-    //        parse_elem( elem, false, STR_ALIN,      &light->attenuation.linear );
-    //        parse_elem( elem, false, STR_AQUAD,     &light->attenuation.quadratic );
-    //        parse_elem( elem, true,  STR_POSITION,  &light->position );
-    //        parse_elem( elem, true,  STR_COLOR,     &light->color );
-    //        parse_elem( elem, false, STR_RADIUS,    &light->radius );
-    ////        parse_elem( elem, false, STR_TEST,      &light->test);
-    //
-    ////        // indicate light type
-    ////        parse_elem(elem, true, STR_LIGHT_TYPE, &light->type);
-    ////
-    ////        // only for square light
-    ////        parse_elem(elem, false, STR_LIGHT_P1, &light->vertex1);
-    ////        parse_elem(elem, false, STR_LIGHT_P2, &light->vertex2);
-    ////        parse_elem(elem, false, STR_LIGHT_DEPTH, &light->depth);
-    ////        parse_elem(elem, false, STR_NORMAL, &light->normal);
-    //    }
-    
     // parse lights
     static void parse_light_point( const TiXmlElement *elem, PointLight *light )
     {
@@ -376,7 +356,6 @@ namespace _462 {
         parse_elem( elem, true,  STR_POSITION,  &geom->position );
         parse_elem( elem, false, STR_ORIENT,    &ori );
         parse_elem( elem, false, STR_SCALE,     &geom->scale );
-        //        parse_elem( elem, false, STR_ISLIGHT,   &geom->isLight );
         
         // normalize orientation
         geom->orientation = normalize( ori );
@@ -420,7 +399,7 @@ namespace _462 {
     {
         parse_geom_base( matmap, elem, geom );
         parse_lookup_data( meshmap, elem, STR_MESH, &geom->mesh );
-//        parse_lookup_data( matmap, elem, STR_MATERIAL, &geom->material );
+        parse_lookup_data( matmap, elem, STR_MATERIAL, &geom->material );
     }
     
     static void check_mem( void* ptr )
