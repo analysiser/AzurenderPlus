@@ -22,7 +22,7 @@ namespace _462 {
         
         float x, y, z;
         ConcentricSampleDisk(u1, u2, &x, &y);
-        z = std::sqrtf(std::max(0.f, 1.f - x * x - y * y));
+        z = std::sqrt(std::max(0.f, 1.f - x * x - y * y));
         return Vector3(x, y, z);
     }
 }

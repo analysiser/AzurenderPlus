@@ -21,58 +21,58 @@
 #include "scene/ray.hpp"
 
 namespace _462 {
-    
+
     typedef std::int64_t INT64;
     typedef std::uint32_t UINT32;
     typedef std::uint8_t  UINT8;
-    
+
     class azBVHTree
     {
     public:
-        
+
         class azBVNode;
         typedef std::vector<azBVNode> azBVNodesArray;
-        
+
         azBVHTree () {}
-        
+
         azBVHTree (const UINT32 &leafSize) {
-            
+
             leafsize_ = leafSize;
             branchsize_ = leafSize - 1;
             size_ = leafsize_ + branchsize_;
-            
+
             leafNodes_ = azBVNodesArray(leafsize_);
             branchNodes_ = azBVNodesArray(branchsize_);
             root_ = &branchNodes_[0];
         }
-        
+
         azBVNodesArray getLeafNodes() { return leafNodes_; }
         UINT32 getLeafSize() { return leafsize_; }
-        
+
         azBVNodesArray getBranchNodes() { return branchNodes_; }
         UINT32 getBranchSize() { return branchsize_; }
-        
+
         void setLeaf(BndBox bbox, UINT32 index) {
             assert(index < leafsize_);
             leafNodes_[index] = azBVNode(bbox, index);
         }
-        
+
         azBVNode *root() {
-            
+
             assert(branchsize_ > 0);
             return &branchNodes_[0];
         }
-        
+
         void buildBVHTree() {
-            
+
             assert(root_ != nullptr);
             assert(leafsize_ > 0);
             assert(branchsize_ > 0);
-            
+
             root_ = &*branchNodes_.begin();
             root_->buildDown(leafNodes_.begin(), leafNodes_.end());
         }
-        
+
         template <typename FN>
         void getRayPacketIntersectIndexList(azPacket<Ray> & rays,
                                             std::vector<std::int64_t> & indexList, /* should be init outside */
@@ -80,10 +80,10 @@ namespace _462 {
                                             float& t0,
                                             float& t1,
                                             FN &func) {
-            
+
             this->root()->bvtreeRayPacketIntersect(rays, indexList, segMask, t0, t1, func);
         }
-        
+
         template <typename FN>
         bool getFirstIntersectIndex(const Ray& r,
                                     real_t& t0,
@@ -98,8 +98,8 @@ namespace _462 {
             }
             return false;
         }
-        
-        
+
+
         // Nested class azBVNode, supporting structure for BVHTree
         class azBVNode : public BndBox {
 
@@ -108,14 +108,14 @@ namespace _462 {
              * The number of dimensions.
              */
             static const size_t DIM = 3;
-            
+
             azBVNode() : idx1_(0),
             idx2_(std::numeric_limits<unsigned int>::max()),
             edgeValue_(0), isLeaf_(0), leftChild_(0), rightChild_(0)
             { }
-            
+
             azBVNode(const BndBox &bbox, UINT32 index) {
-                
+
                 this->d_ = 0;
                 this->pMin = bbox.pMin;
                 this->pMax = bbox.pMax;
@@ -125,7 +125,7 @@ namespace _462 {
                 this->leftChild_ = nullptr;
                 this->rightChild_ = nullptr;
             }
-            
+
             azBVNode(const azBVNode *other)
             {
                 this->d_ = other->d_;
@@ -136,9 +136,9 @@ namespace _462 {
                 this->isLeaf_ = other->isLeaf_;
                 this->leftChild_ = other->leftChild_;
                 this->rightChild_ = other->rightChild_;
-                
+
             }
-            
+
             UINT8 getLongestEdge() {
                 UINT8 d = 0;
                 real_t longest = getEdgeValue(d);
@@ -151,26 +151,26 @@ namespace _462 {
                 }
                 return d;
             }
-            
+
             real_t getEdgeValue(UINT8 d) {
                 return (pMax[d] - pMin[d]);
             }
-            
+
             UINT32 getLeafIndex() {
                 assert(idx1_ == 0);
                 return idx2_;
             }
-            
+
             bool isLeaf(){ return isLeaf_; }
-            
+
             // Build the bounding box for all nodes from leavesBegin to leavesEnd
             void buildBoundingBox(std::vector<azBVNode>::iterator leavesBegin,
                                   std::vector<azBVNode>::iterator leavesEnd);
-            
+
             // Build down
             void buildDown(std::vector<azBVNode>::iterator leavesBegin,
                            std::vector<azBVNode>::iterator leavesEnd);
-            
+
             // Ray packet intersect test
             template <typename FN>
             void bvtreeRayPacketIntersect(azPacket<Ray> &rayPacket,
@@ -182,7 +182,7 @@ namespace _462 {
             {
 //                printf("segMask.size() = %ld, rayPacket.size() = %ld\n", segMask.size(), rayPacket.size());
                 assert(segMask.size() == rayPacket.size());
-                
+
                 bool isAnyIntersect = false;
                 for (size_t i = 0; i < rayPacket.size(); i++) {
                     if (segMask[i])
@@ -191,7 +191,7 @@ namespace _462 {
                         isAnyIntersect = isAnyIntersect || segMask[i];
                     }
                 }
-                
+
                 if (isAnyIntersect)
                 {
                     // Call FN for generating index list
@@ -202,7 +202,7 @@ namespace _462 {
                             {
                                 auto & r = rayPacket[i];
                                 real_t tt;
-                                
+
                                 if (func(r, t0, r.maxt, tt, this->idx2_)) {
                                     indexList[i] = this->idx2_;
                                 }
@@ -221,7 +221,7 @@ namespace _462 {
                     }
                 }
             }
-            
+
             // Ray intersect with box
             template <typename FN>
             void intersectRayTest(const Ray& r,
@@ -229,7 +229,7 @@ namespace _462 {
                                   real_t& t1,
                                   int64_t& index,
                                   FN &func) {
-                
+
                 if (this->intersect(r, t0, t1)) {
                     if (this->isLeaf()) {
                         real_t tt;
@@ -246,33 +246,33 @@ namespace _462 {
                         if (this->rightChild_ != nullptr) {
                             this->rightChild_->intersectRayTest(r, t0, t1, index, func);
                         }
-                        
-                        
+
+
                     }
-                    
+
                 }
             }
-            
+
             UINT8 d_;
             UINT32 idx1_, idx2_;
             real_t edgeValue_;
             bool isLeaf_;
-            
+
             azBVNode *leftChild_, *rightChild_;
-        
+
         };
-        
+
     private:
         UINT32 size_, leafsize_, branchsize_;
         azBVNode *root_;
         azBVNodesArray leafNodes_;
         azBVNodesArray branchNodes_;
-        
-        
+
+
     };
-    
-    
-    
+
+
+
 }
 
 
