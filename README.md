@@ -17,7 +17,8 @@ Added OPEN MPI Supports. OPEN MPI libs are required.
 For Mac OSX: Use Homebrew install openmpi
 For Ubuntu:  Use apt-get
 
-To run the sample code on main.cpp, in your BUILD directory, cd into Debug, do as following: mpirun -np 4 ./raytracer scenes/dragon_only.scene
+To run the sample code on main.cpp, in your BUILD directory, cd into Debug, do as following: 
+mpirun -np 4 ./raytracer scenes/dragon_only.scene
 
 Ideally, you should see:
 
