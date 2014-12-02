@@ -28,34 +28,34 @@ namespace _462 {
     class Model : public Geometry
     {
     public:
-        
+
         const Mesh* mesh;
         const Material* material;
-        
+
         mutable azBVHTree *bvhTree;
-        
+
         mutable BndBox *modelBndBox;
 
         Model();
 
-        
+
         virtual ~Model();
 
-        
+
         virtual void render() const;
 
-        
+
         //
         virtual void createBoundingBox() const;
-        
+
         // Override of virtual function from Geometry
         virtual bool hit(Ray ray, real_t t0, real_t t1, HitRecord &rec) const;
-        
+
         // Override of virtual function for packetized ray hit
         virtual void packetHit(azPacket<Ray> &rays, azPacket<HitRecord> &hitInfo, float t0, float t1) const;
 
     };
-    
+
 } /* _462 */
 
 #endif /* _462_SCENE_MODEL_HPP_ */
