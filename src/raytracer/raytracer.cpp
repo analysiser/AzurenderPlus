@@ -25,17 +25,6 @@
 #include <SDL_timer.h>
 #include <iostream>
 
-//#include <pthread.h>
-
-
-#ifdef OPENMP // just a defense in case OpenMP is not installed.
-
-#ifndef __APPLE__
-#include <omp.h>
-#endif
-
-#endif
-
 #define RAYTRACE_DEPTH          5
 #define PHOTON_TRACE_DEPTH      5
 
