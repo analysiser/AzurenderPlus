@@ -38,14 +38,11 @@ namespace _462 {
 
         Model();
 
-
         virtual ~Model();
-
 
         virtual void render() const;
 
-
-        //
+        // Create the bounding box for the whole mesh
         virtual void createBoundingBox() const;
 
         // Override of virtual function from Geometry

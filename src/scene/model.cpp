@@ -40,24 +40,6 @@ namespace _462 {
 
     void Model::createBoundingBox() const
     {
-        // if already have bounding boxes, then no need to recalculate again
-        // reduced about 10 MB for each time a new ray tracing happens
-//        if (this->bBox.bounds[0] == Vector3::Zero() && this->bBox.bounds[1] == Vector3::Zero()) {
-//            MeshTriangle const *triangles = mesh->get_triangles();
-//
-//            for (size_t i = 0; i < mesh->num_triangles(); i++) {
-//
-//                Vector3 A = mesh->vertices[triangles[i].vertices[0]].position;
-//                Vector3 B = mesh->vertices[triangles[i].vertices[1]].position;
-//                Vector3 C = mesh->vertices[triangles[i].vertices[2]].position;
-//
-//                Box boundingBox = getBoundingBoxForTriangle(A, B, C);
-//
-//                BoxNode *newNode = modelBoxNodes->create(boundingBox, i);
-//                modelBoxNodes->append(newNode);
-//            }
-//        }
-
         if (bvhTree == nullptr) {
 
             MeshTriangle const *triangles = mesh->get_triangles();
