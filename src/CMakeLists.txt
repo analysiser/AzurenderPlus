@@ -8,6 +8,8 @@ include_directories(
     ${SDL_INCLUDE_DIR}
     ${GLEW_INCLUDE_DIRS}
     ${PNG_INCLUDE_DIRS}
+    ${MPI_INCLUDE_PATH}
+
 )
 
 add_subdirectory(utils)
