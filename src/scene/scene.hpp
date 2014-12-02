@@ -66,17 +66,15 @@ namespace _462 {
         Vector3 scale;
         
         // Transformation matrix
-        Matrix4 wmat;
+        Matrix4 matLocalToWorld;
         
         // Inverse transformation matrix
         // Local transformation matrix: transform world to local
-        Matrix4 lmat;
+        Matrix4 matWorldToLocal;
         
         // Normal transformation matrix
         Matrix3 normMat;
-        
-        //        float isLight;
-        
+                
         /**
          * Renders this geometry using OpenGL in the local coordinate space.
          */

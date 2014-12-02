@@ -24,11 +24,11 @@ namespace _462 {
     bool Geometry::initialize()
     {
         orientation = normalize(orientation);
-        make_inverse_transformation_matrix(&lmat, position, orientation, scale);
-        make_transformation_matrix(&wmat, position, orientation, scale);
-        make_normal_matrix(&normMat, wmat);
+        make_inverse_transformation_matrix(&matWorldToLocal, position, orientation, scale);
+        make_transformation_matrix(&matLocalToWorld, position, orientation, scale);
+        make_normal_matrix(&normMat, matLocalToWorld);
         
-        position_local = lmat.transform_point(position);
+        position_local = matWorldToLocal.transform_point(position);
         
         return true;
     }

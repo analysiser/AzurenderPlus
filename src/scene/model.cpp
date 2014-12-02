@@ -59,9 +59,8 @@ namespace _462 {
             }
 
             bvhTree->buildBVHTree();
-            modelBndBox = new BndBox(wmat.transform_point(bvhTree->root()->pMin),
-                                     wmat.transform_point(bvhTree->root()->pMax));
-
+            modelBndBox = new BndBox(matLocalToWorld.transform_point(bvhTree->root()->pMin),
+                                     matLocalToWorld.transform_point(bvhTree->root()->pMax));
         }
     }
 
@@ -89,7 +88,7 @@ namespace _462 {
             // initialization phase
             for (size_t i = 0; i < rays.size(); i++) {
                 // TODO: reduce rays to track
-                Ray r = Ray( lmat.transform_point(rays[i].e), lmat.transform_vector(rays[i].d), rays[i].mint, rays[i].maxt, rays[i].time );
+                Ray r = Ray( matWorldToLocal.transform_point(rays[i].e), matWorldToLocal.transform_vector(rays[i].d), rays[i].mint, rays[i].maxt, rays[i].time );
                 localRays.add(r);
                 segMask.push_back(rays.getMask(i));
                 indexList.push_back(-1);
@@ -193,7 +192,7 @@ namespace _462 {
 
     bool Model::hit(Ray ray, real_t t0, real_t t1, HitRecord &rec) const
     {
-        Ray r = Ray(lmat.transform_point(ray.e), lmat.transform_vector(ray.d));
+        Ray r = Ray(matWorldToLocal.transform_point(ray.e), matWorldToLocal.transform_vector(ray.d));
 
         auto rayTriangleIntersectionTest = [this](Ray rr, real_t tt0, real_t tt1, real_t &tt, INT64 triIndex){
             MeshTriangle const *triangles = mesh->get_triangles();

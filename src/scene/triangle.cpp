@@ -66,7 +66,7 @@ namespace _462 {
         for (int i = 0; i < 3; i++) {
             // local bounding box
             bbox_local->include(vertices[i].position);
-            bbox_world->include(wmat.transform_point(vertices[i].position));
+            bbox_world->include(matLocalToWorld.transform_point(vertices[i].position));
         }
     }
     
@@ -88,7 +88,7 @@ namespace _462 {
         
         while (!rayIterator.isDone()) {
             // Transform ray to triangle's local space
-            Ray r = Ray(lmat.transform_point(rayIterator.getCurItem().e), lmat.transform_vector(rayIterator.getCurItem().d));
+            Ray r = Ray(matWorldToLocal.transform_point(rayIterator.getCurItem().e), matWorldToLocal.transform_vector(rayIterator.getCurItem().d));
             
             /// result.x = beta, result.y = gamma, result.z = t
             Vector3 result = getResultTriangleIntersection(r, A.position, B.position, C.position);
@@ -118,7 +118,7 @@ namespace _462 {
             }
             
             rec->isHit = true;
-            rec->position = wmat.transform_point(r.e + result.z * r.d);
+            rec->position = matLocalToWorld.transform_point(r.e + result.z * r.d);
             
             real_t beta = result.x;
             real_t gamma = result.y;
@@ -168,7 +168,7 @@ namespace _462 {
             return false;
         
         // Transform ray to triangle's local space
-        Ray r = Ray(lmat.transform_point(ray.e), lmat.transform_vector(ray.d));
+        Ray r = Ray(matWorldToLocal.transform_point(ray.e), matWorldToLocal.transform_vector(ray.d));
 
         Vertex A = vertices[0];
         Vertex B = vertices[1];
