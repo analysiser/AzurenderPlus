@@ -15,6 +15,7 @@
 #include "scene/material.hpp"
 #include "scene/mesh.hpp"
 #include "scene/azLights.hpp"
+#include "scene/BndBox.hpp"
 
 //#include "scene/bvh.hpp"
 #include "ray.hpp"
@@ -148,6 +149,10 @@ namespace _462 {
         void add_mesh( Mesh* m );
         void add_lights( Light *l );
         
+        int node_size;      //!< total nodes number
+        int node_rank;      //!< current node rank
+        BndBox *nodeBndBox;     //!< bounding box list for all nodes
+        
         
     private:
         
@@ -164,6 +169,9 @@ namespace _462 {
         GeometryList geometries;
         
         LightList lights;
+        
+        
+        
         
     private:
         
