@@ -347,9 +347,13 @@ namespace _462 {
         // if we weren't given a file, use a default name
         if (!filename)
         {
+            char add = this->scene.node_rank + '0';
             imageio_gen_name(buf, MAX_LEN);
+            string tmp = "";
+            tmp += add;
+            tmp += buf;
             
-            filename = buf;
+            filename = tmp.c_str();
         }
 
         if (imageio_save_image(filename, buffer, buf_width, buf_height))
