@@ -124,8 +124,12 @@ namespace _462 {
             // load all textures
             for ( size_t i = 0; i < scene.num_materials(); ++i )
             {
-                if ( !materials[i]->load() ||
-                    ( load_gl && !materials[i]->create_gl_data() ) )
+                if (!materials[i]->load())
+                {
+                    std::cout << "Error loading texture, aborting.\n";
+                    return false;
+                }
+                if (!materials[i]->create_gl_data())
                 {
                     std::cout << "Error loading texture, aborting.\n";
                     return false;
@@ -135,8 +139,12 @@ namespace _462 {
             // load all meshes
             for ( size_t i = 0; i < scene.num_meshes(); ++i )
             {
-                if ( !meshes[i]->load() ||
-                    ( load_gl && !meshes[i]->create_gl_data() ) )
+                if ( !meshes[i]->load() )
+                {
+                    std::cout << "Error loading mesh, aborting.\n";
+                    return false;
+                }
+                if (!meshes[i]->create_gl_data())
                 {
                     std::cout << "Error loading mesh, aborting.\n";
                     return false;
@@ -660,6 +668,9 @@ int main(int argc, char* argv[])
 
         // raytrace until done
         app.raytracer.raytrace( app.buffer, 0);
+//        for (int i = 0; i < 800 * 600; i++) {
+//            app.buffer[3 * i + 0] = 128;
+//        }
         // output result
         app.output_image();
         return 0;
