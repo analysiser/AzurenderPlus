@@ -38,10 +38,6 @@ namespace _462 {
         // the triangle's vertices, in CCW order
         Vertex vertices[3];
         
-        // Bounding box for triangle mesh
-        BndBox *bbox_local;
-        BndBox *bbox_world;
-        
         Triangle();
         virtual ~Triangle();
         virtual void render() const;

@@ -2025,6 +2025,42 @@ namespace _462 {
 
 
 
+    // synchronize root bounding boxes of all nodes
+    void Raytracer::syncStageNodeBoundingBox(int procs, int procId)
+    {
+        // TODO
+        // 1.create node bounding box
+        BndBox nodeBBox;
+        for (size_t i = 0; i < scene->num_geometries(); i++) {
+//            nodeBBox.include(scene->get_geometries()[i].)
+        }
+    }
+    
+    // each node generate and distribute eye rays to corresponding nodes
+    void Raytracer::syncStageDistributeEyeRays(int procs, int procId)
+    {
+        // TODO
+    }
+    
+    // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
+    // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
+    void Raytracer::syncStageLocalRayTracing(int procs, int procId)
+    {
+        // TODO
+    }
+    
+    // each node takes in shadow ray, do local ray tracing, maintain shadow ray
+    // hit records, send records to corresponding nodes
+    void Raytracer::syncStageShadowRayTracing(int procs, int procId)
+    {
+        // TODO
+    }
+    
+    // take in every nodes' shadow ray hit records, do local pixel shading.
+    void Raytracer::syncStagePixelShading(int procs, int procId)
+    {
+        // TODO
+    }
 
 
 

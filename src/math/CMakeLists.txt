@@ -1,2 +1,2 @@
-add_library(math camera.cpp color.cpp math.cpp matrix.cpp quaternion.cpp
-            vector.cpp)
+add_library(math camera.cpp camera.hpp color.cpp color.hpp math.cpp math.hpp matrix.cpp matrix.hpp quaternion.cpp quaternion.hpp
+            vector.cpp vector.hpp)

@@ -23,8 +23,6 @@ namespace _462 {
         bvhTree = nullptr;
     }
     Model::~Model() {
-        if (modelBndBox)
-            delete modelBndBox;
     }
 
     void Model::render() const
@@ -59,8 +57,8 @@ namespace _462 {
             }
 
             bvhTree->buildBVHTree();
-            modelBndBox = new BndBox(matLocalToWorld.transform_point(bvhTree->root()->pMin),
-                                     matLocalToWorld.transform_point(bvhTree->root()->pMax));
+            bbox_local = new BndBox(bvhTree->root()->pMin, bvhTree->root()->pMax);
+            bbox_world = new BndBox(matLocalToWorld.transform_bbox(*bbox_local));
         }
     }
 
@@ -70,7 +68,7 @@ namespace _462 {
         azPacket<Ray>::Iterator it(rays);
         while (!it.isDone()) {
             auto & aRay = it.getCurItem();
-            rays.setMask(it.getCurrentIndex(), modelBndBox->intersect(aRay, t0, t1));
+            rays.setMask(it.getCurrentIndex(), bbox_world->intersect(aRay, t0, t1));
             it.moveNext();
         }
 

@@ -19,7 +19,14 @@ namespace _462 {
         
     }
     
-    Geometry::~Geometry() { }
+    Geometry::~Geometry() {
+        if (bbox_local) {
+            delete bbox_local;
+        }
+        if (bbox_world) {
+            delete bbox_world;
+        }
+    }
     
     bool Geometry::initialize()
     {

@@ -34,7 +34,7 @@ namespace _462 {
 
         mutable azBVHTree *bvhTree;
 
-        mutable BndBox *modelBndBox;
+//         BndBox *modelBndBox;
 
         Model();
 

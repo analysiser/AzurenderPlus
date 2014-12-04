@@ -11,13 +11,15 @@
 
 #include <iostream>
 
-#include "math/matrix.hpp"
-#include "math/quaternion.hpp"
+//#include "math/matrix.hpp"
+//#include "math/quaternion.hpp"
 #include "math/vector.hpp"
 
 #include "scene/ray.hpp"
 
 namespace _462 {
+    
+    class Ray;
     
     class BndBox
     {

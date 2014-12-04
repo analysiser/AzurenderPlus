@@ -23,10 +23,7 @@ public:
 
     real_t radius;
     const Material* material;
-    BndBox *bbox_local;
-    BndBox *bbox_world;
-//    Box *boundingBox;
-//    Box *globalBBox;
+
 
     Sphere();
     virtual ~Sphere();

@@ -172,7 +172,7 @@ namespace _462 {
             scene.ambient_light.to_array( arr );
             glLightModelfv( GL_LIGHT_MODEL_AMBIENT, arr );
 
-           Light* const* lights = scene.get_lights();
+            Light* const* lights = scene.get_lights();
 
             for ( size_t i = 0; i < NUM_GL_LIGHTS && i < scene.num_lights(); i++ )
             {
@@ -653,10 +653,6 @@ int main(int argc, char* argv[])
         << opt.input_filename << ". Aborting.\n";
         return 1;
     }
-
-//    float dof[14] = {6.8f, 7.4f, 8.0f, 8.6f, 9.2f, 9.8f, 10.4f, 11.0f, 11.6f, 12.2f, 12.8f, 13.4f, 14.0f, 14.6f};
-    
-
 
     // either launch a window or do a full raytrace without one,
     // depending on the option

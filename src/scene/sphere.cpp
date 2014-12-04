@@ -111,21 +111,11 @@ namespace _462 {
     void Sphere::createBoundingBox() const
     {
         // Transform ray to sphere's local space
-//        Vector3 center = invMat.transform_point(position);
-//        Box box = Box(center - Vector3(radius, radius, radius), center + Vector3(radius, radius, radius));
-//        
-//        boundingBox->bounds[0] = box.bounds[0];
-//        boundingBox->bounds[1] = box.bounds[1];
         bbox_local->include(position_local - Vector3(radius, radius, radius));
         bbox_local->include(position_local + Vector3(radius, radius, radius));
         
         bbox_world->include(position - Vector3(radius, radius, radius));
         bbox_world->include(position + Vector3(radius, radius, radius));
-        
-        // create global bounding box
-//        Vector3 gcenter = position;
-//        globalBBox->bounds[0] = gcenter - Vector3(radius, radius, radius);
-//        globalBBox->bounds[1] = gcenter + Vector3(radius, radius, radius);
     }
     
     void Sphere::packetHit(azPacket<Ray> &rays, azPacket<HitRecord> &hitInfo, float t0, float t1) const
