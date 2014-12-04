@@ -149,8 +149,8 @@ namespace _462 {
         void add_mesh( Mesh* m );
         void add_lights( Light *l );
         
-        int node_size;      //!< total nodes number
-        int node_rank;      //!< current node rank
+        int node_size = 0;      //!< total nodes number
+        int node_rank = -1;      //!< current node rank
         BndBox *nodeBndBox;     //!< bounding box list for all nodes
         
         

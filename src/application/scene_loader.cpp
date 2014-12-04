@@ -80,6 +80,7 @@ namespace _462 {
     static const char STR_MODEL[] = "model";
     static const char STR_SKYBOX[] = "skybox";
     static const char STR_MESH[] = "mesh";
+    static const char STR_NODE_RANK[] = "rank";
     
     // light
     // add by xiao li
@@ -499,18 +500,48 @@ namespace _462 {
             // parse the meshes
             elem = root->FirstChildElement( STR_MESH );
             while ( elem ) {
-                Mesh* mesh = new Mesh();
-                check_mem( mesh );
-                scene->add_mesh( mesh );
-                const char* name = parse_mesh( elem, mesh );
-                assert( name );
-                // place each mesh in map by it's name, so we can associate geometries
-                // with them when loading geometries
-                if ( !meshes.insert( std::make_pair( name, mesh ) ).second ) {
-                    print_error_header( elem );
-                    std::cout << "Mesh '" << name << "' multiply defined.\n";
-                    throw std::exception();
+                // If the scene is using open mpi
+                if ( (scene->node_rank != -1) && (scene->node_size > 0) ) {
+                    int mesh_rank;
+                    // only when node has rank, we need to check if the mesh belongs to the scene
+                    parse_attrib_int(elem, true, STR_NODE_RANK, &mesh_rank);
+                    
+                    assert(mesh_rank < scene->node_size);
+                    
+                    // we load the mesh for this node rank
+                    if (mesh_rank == scene->node_rank)
+                    {
+                        Mesh* mesh = new Mesh();
+                        check_mem( mesh );
+                        scene->add_mesh( mesh );
+                        const char* name = parse_mesh( elem, mesh );
+                        assert( name );
+                        // place each mesh in map by it's name, so we can associate geometries
+                        // with them when loading geometries
+                        if ( !meshes.insert( std::make_pair( name, mesh ) ).second ) {
+                            print_error_header( elem );
+                            std::cout << "Mesh '" << name << "' multiply defined.\n";
+                            throw std::exception();
+                        }
+                    }
+                    
                 }
+                else {
+                    // We load every mesh
+                    Mesh* mesh = new Mesh();
+                    check_mem( mesh );
+                    scene->add_mesh( mesh );
+                    const char* name = parse_mesh( elem, mesh );
+                    assert( name );
+                    // place each mesh in map by it's name, so we can associate geometries
+                    // with them when loading geometries
+                    if ( !meshes.insert( std::make_pair( name, mesh ) ).second ) {
+                        print_error_header( elem );
+                        std::cout << "Mesh '" << name << "' multiply defined.\n";
+                        throw std::exception();
+                    }
+                }
+                
                 elem = elem->NextSiblingElement( STR_MESH );
             }
             
@@ -559,13 +590,33 @@ namespace _462 {
             // models
             elem = root->FirstChildElement( STR_MODEL );
             while ( elem ) {
-                Model* geom = new Model();
-                check_mem( geom );
-                scene->add_geometry( geom );
-                parse_geom_model( materials, meshes, elem, geom );
-                geom->layer = Layer_Default;
-
+                // if we are using open mpi for tracking down node rank
+                if ((scene->node_size > 0) && (scene->node_rank != -1))
+                {
+                    int model_rank;
+                    // we only parse and load the models we have mesh for
+                    parse_attrib_int(elem, true, STR_NODE_RANK, &model_rank);
+                    assert(model_rank < scene->node_size);
+                    
+                    if (model_rank == scene->node_rank) {
+                        Model* geom = new Model();
+                        check_mem( geom );
+                        scene->add_geometry( geom );
+                        parse_geom_model( materials, meshes, elem, geom );
+                        geom->layer = Layer_Default;
+                    }
+                }
+                // else we parse all the models
+                else {
+                    Model* geom = new Model();
+                    check_mem( geom );
+                    scene->add_geometry( geom );
+                    parse_geom_model( materials, meshes, elem, geom );
+                    geom->layer = Layer_Default;
+                }
+                
                 elem = elem->NextSiblingElement( STR_MODEL );
+                
             }
             
             // skybox
