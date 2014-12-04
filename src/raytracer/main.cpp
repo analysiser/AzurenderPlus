@@ -30,11 +30,6 @@
 
 #include "RaytracerApplication.hpp"
 
-namespace _462 {
-
-
-} /* _462 */
-
 using namespace _462;
 
 /**
