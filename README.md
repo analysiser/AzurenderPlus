@@ -7,13 +7,13 @@ Project proposal page: http://photonmap.blogspot.com/2014/11/15-869-final-projec
 
 <h3>Change Logs:</h3>
 
-11/5/2014
+<strong>11/5/2014</strong>
 Removed path tracing code and photon mapping code from original Azurender code base for simplicity. This is the baseline.
 
-11/6/2014
+<strong>11/6/2014</strong>
 Update baseline for the final project. Added azRayPacket class for further working.
 
-12/2/2014
+<strong>12/2/2014</strong>
 Added OPEN MPI Supports. OPEN MPI libs are required. 
 For Mac OSX: Use Homebrew install openmpi
 For Ubuntu:  Use apt-get
@@ -33,8 +33,8 @@ Ideally, you should see:
 <code>Hello world from processor CMU-853713.WV.CC.CMU.EDU, rank 2 out of 4 processors</code>
 
 
-12/3 Got multiple machines on GHC running on independent instances simultaneously.
-To do this, change your .cshrc file, add the following lines for setting up environment variables
+<strong>12/3/2014</strong>
+Got multiple machines on GHC running on independent instances simultaneously. To do this, change your .cshrc file, add the following lines for setting up environment variables
 
 <code>setenv PATH "/usr/lib64/openmpi/bin:/usr/local/bin:${PATH}"</code>
 <code>setenv LD_LIBRARY_PATH "/usr/lib64/openmpi/lib"</code>
