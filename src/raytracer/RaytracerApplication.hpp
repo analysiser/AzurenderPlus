@@ -33,7 +33,6 @@ namespace _462 {
 
 
 
-
     // pretty sure these are sequential, but use an array just in case
     static const GLenum LightConstants[] = {
         GL_LIGHT0, GL_LIGHT1, GL_LIGHT2, GL_LIGHT3,
@@ -42,7 +41,7 @@ namespace _462 {
     static const size_t NUM_GL_LIGHTS = 8;
 
     // renders a scene using opengl
-    static void render_scene( const Scene& scene , Raytracer raytracer);
+    void render_scene( const Scene& scene , Raytracer raytracer);
 
     /**
      * Struct of the program options.
@@ -103,7 +102,7 @@ namespace _462 {
 
         // MPI related function
 
-        void gather_mpi_results();
+        void gather_mpi_results(int world_rank);
 
 
     };

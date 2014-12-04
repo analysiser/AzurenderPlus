@@ -197,7 +197,7 @@ int main(int argc, char* argv[])
 
         MPI_Barrier(MPI_COMM_WORLD);
 
-        app.gather_mpi_results();
+        app.gather_mpi_results(world_rank);
 
         MPI_Barrier(MPI_COMM_WORLD);
 

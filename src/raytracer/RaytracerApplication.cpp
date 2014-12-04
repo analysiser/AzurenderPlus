@@ -255,7 +255,46 @@ namespace _462 {
   }
 
 
-  static void render_scene( const Scene& scene , Raytracer raytracer)
+
+  void RaytracerApplication::gather_mpi_results(int world_rank)
+  {
+    int num_node;
+    MPI_Comm_size(MPI_COMM_WORLD, &num_node);
+    MPI_Datatype AllImg;
+    MPI_Type_contiguous(
+        BUFFER_SIZE(buf_width, buf_height),
+        MPI_CHAR,
+        &AllImg);
+    MPI_Type_commit(&AllImg);
+
+    if (world_rank == 0)
+    {
+      // I am the root
+      unsigned char *rbuf = (unsigned char *)malloc(
+          num_node * BUFFER_SIZE(buf_width, buf_width));
+      MPI_Gather(NULL, 0,
+          MPI_CHAR,
+          rbuf, 1, AllImg,
+          0, MPI_COMM_WORLD);
+
+      // TODO: merge the frame buffer
+
+
+
+      free(rbuf);
+    }
+    else
+    {
+      // I am the slave
+      MPI_Gather(buffer, BUFFER_SIZE(buf_width, buf_width),
+          MPI_CHAR,
+          NULL, 0, MPI_CHAR,
+          0, MPI_COMM_WORLD);
+    }
+  }
+
+
+  void render_scene( const Scene& scene , Raytracer raytracer)
   {
     // backup state so it doesn't mess up raytrace image rendering
     glPushAttrib( GL_ALL_ATTRIB_BITS );
@@ -280,17 +319,10 @@ namespace _462 {
     glMatrixMode( GL_PROJECTION );
     glLoadIdentity();
 
-    //#ifdef __APPLE__
-    //        GLKMatrix4MakePerspective( camera.get_fov_degrees(),
-    //                                  camera.get_aspect_ratio(),
-    //                                  camera.get_near_clip(),
-    //                                  camera.get_far_clip() );
-    //#else
     gluPerspective( camera.get_fov_degrees(),
         camera.get_aspect_ratio(),
         camera.get_near_clip(),
         camera.get_far_clip() );
-    //#endif
 
     const Vector3& campos = camera.get_position();
     const Vector3 camref = camera.get_direction() + campos;
@@ -299,15 +331,9 @@ namespace _462 {
     glMatrixMode( GL_MODELVIEW );
     glLoadIdentity();
 
-    //#ifdef __APPLE__
-    //        GLKMatrix4MakeLookAt( campos.x, campos.y, campos.z,
-    //                            camref.x, camref.y, camref.z,
-    //                            camup.x,  camup.y,  camup.z );
-    //#else
     gluLookAt( campos.x, campos.y, campos.z,
         camref.x, camref.y, camref.z,
         camup.x,  camup.y,  camup.z );
-    //#endif
     // set light data
     float arr[4];
     arr[3] = 1.0; // w is always 1
@@ -327,12 +353,6 @@ namespace _462 {
       lights[i]->color.to_array( arr );
       glLightfv( LightConstants[i], GL_DIFFUSE, arr );
       glLightfv( LightConstants[i], GL_SPECULAR, arr );
-      //            glLightf( LightConstants[i], GL_CONSTANT_ATTENUATION,
-      //                     light.attenuation.constant );
-      //            glLightf( LightConstants[i], GL_LINEAR_ATTENUATION,
-      //                     light.attenuation.linear );
-      //            glLightf( LightConstants[i], GL_QUADRATIC_ATTENUATION,
-      //                     light.attenuation.quadratic );
       lights[i]->position.to_array( arr );
       glLightfv( LightConstants[i], GL_POSITION, arr );
     }
@@ -392,42 +412,5 @@ namespace _462 {
 
     glPopClientAttrib();
     glPopAttrib();
-  }
-
-  void RaytracerApplication::gather_mpi_results()
-  {
-    int num_node;
-    MPI_Comm_size(MPI_COMM_WORLD, &num_node);
-    MPI_Datatype AllImg;
-    MPI_Type_contiguous(
-        BUFFER_SIZE(buf_width, buf_height),
-        MPI_CHAR,
-        &AllImg);
-    MPI_Type_commit(&AllImg);
-
-    if (world_rank == 0)
-    {
-      // I am the root
-      unsigned char *rbuf = (unsigned char *)malloc(
-          num_node * BUFFER_SIZE(buf_width, buf_width));
-      MPI_Gather(NULL, 0,
-          MPI_CHAR,
-          rbuf, 1, AllImg,
-          0, MPI_COMM_WORLD);
-
-      // TODO: merge the frame buffer
-
-
-
-      free(rbuf);
-    }
-    else
-    {
-      // I am the slave
-      MPI_Gather(buffer, BUFFER_SIZE(buf_width, buf_width),
-          MPI_CHAR,
-          NULL, 0, MPI_CHAR,
-          0, MPI_COMM_WORLD);
-    }
   }
 }  // namespace _462
