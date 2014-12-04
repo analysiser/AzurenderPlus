@@ -14,9 +14,9 @@ include_directories(
 
 add_subdirectory(utils)
 add_subdirectory(application)
+add_subdirectory(scene)
 add_subdirectory(math)
 add_subdirectory(raytracer)
-add_subdirectory(scene)
 add_subdirectory(tinyxml)
 
 if(APPLE)

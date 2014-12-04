@@ -16,15 +16,9 @@ namespace _462 {
         vertices[0].material = 0;
         vertices[1].material = 0;
         vertices[2].material = 0;
-        
-        bbox_local = new BndBox();
-        bbox_world = new BndBox();
-        
     }
     
     Triangle::~Triangle() {
-        delete bbox_local;
-        delete bbox_world;
     }
     
     void Triangle::render() const
@@ -65,9 +59,10 @@ namespace _462 {
     {
         for (int i = 0; i < 3; i++) {
             // local bounding box
-            bbox_local->include(vertices[i].position);
-            bbox_world->include(matLocalToWorld.transform_point(vertices[i].position));
+            bbox_local.include(vertices[i].position);
+            
         }
+        bbox_world = BndBox::transform_bbox(matLocalToWorld, bbox_local);
     }
     
     void Triangle::packetHit(azPacket<Ray> &rays, azPacket<HitRecord> &hitInfo, float t0, float t1) const
@@ -76,7 +71,7 @@ namespace _462 {
         while (!rayIterator.isDone()) {
             // get current and calculate
             auto r = rayIterator.getCurItem();
-            rays.setMask(rayIterator.getCurrentIndex(), bbox_world->intersect(r, t0, t1));
+            rays.setMask(rayIterator.getCurrentIndex(), bbox_world.intersect(r, t0, t1));
             rayIterator.moveNext();
         }
         
@@ -164,7 +159,7 @@ namespace _462 {
     
     bool Triangle::hit(Ray ray, real_t t0, real_t t1, HitRecord &rec) const
     {
-        if(!bbox_world->intersect(ray, t0, t1))
+        if(!bbox_world.intersect(ray, t0, t1))
             return false;
         
         // Transform ray to triangle's local space
