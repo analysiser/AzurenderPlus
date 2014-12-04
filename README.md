@@ -33,3 +33,15 @@ Ideally, you should see:
 <code>Hello world from processor CMU-853713.WV.CC.CMU.EDU, rank 2 out of 4 processors</code>
 
 
+12/3 Got multiple machines on GHC running on independent instances simultaneously.
+To do this, change your .cshrc file, add the following lines for setting up environment variables
+
+<code>setenv PATH "/usr/lib64/openmpi/bin:/usr/local/bin:${PATH}"</code>
+<code>setenv LD_LIBRARY_PATH "/usr/lib64/openmpi/lib"</code>
+
+Then go to your build directory where the bin file exists, run the ray tracer with following command:
+
+<code>mpirun -np 2 --host 128.2.100.173,128.2.100.175 ./raytracer scenes/dragon_only.scene -r</code>
+
+The two ip addresses are GHC40 and GHC42. <code>-r</code> flag would prevent machines from opening a window, they would instead run the ray tracer on specific scene, and generate two independent png files.
+
