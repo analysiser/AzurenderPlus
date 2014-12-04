@@ -640,9 +640,12 @@ int main(int argc, char* argv[])
 
     RaytracerApplication app( opt );
     
-    // Initialize the scene with MPI info
-    app.scene.node_size = world_size;
-    app.scene.node_rank = world_rank;
+    if (world_size > 1)
+    {
+        // Initialize the scene with MPI info
+        app.scene.node_size = world_size;
+        app.scene.node_rank = world_rank;
+    }
 
     // load the given scene
     if ( !load_scene( &app.scene, opt.input_filename ) ) {
