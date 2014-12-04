@@ -100,6 +100,12 @@ namespace _462 {
         bool raytracing;
         // false if there is more raytracing to do
         bool raytrace_finished;
+
+        // MPI related function
+
+        void gather_mpi_results();
+
+
     };
 
 }  //namespace _462
