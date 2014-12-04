@@ -2,10 +2,6 @@
  * @file raytacer.hpp
  * @brief Raytracer class
  *
- * Implement these functions for project 3.
- *
- * @author H. Q. Bovik (hqbovik)
- * @bug Unimplemented
  */
 
 #ifndef _462_RAYTRACER_HPP_
@@ -65,8 +61,25 @@ namespace _462 {
 
         bool PacketizedRayTrace(unsigned char* buffer);
         bool raytrace(unsigned char* buffer, real_t* max_time);
-
-        void perPixelRender(unsigned char* buffer);
+        
+        // Open MPI stages:
+        // synchronize root bounding boxes of all nodes
+        void syncStageNodeBoundingBox(int procs, int procId);
+        
+        // each node generate and distribute eye rays to corresponding nodes
+        void syncStageDistributeEyeRays(int procs, int procId);
+        
+        // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
+        // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
+        void syncStageLocalRayTracing(int procs, int procId);
+        
+        // each node takes in shadow ray, do local ray tracing, maintain shadow ray
+        // hit records, send records to corresponding nodes
+        void syncStageShadowRayTracing(int procs, int procId);
+        
+        // take in every nodes' shadow ray hit records, do local pixel shading.
+        void syncStagePixelShading(int procs, int procId);
+        
 
         // indirect and caustics list for photons to trace
         std::vector<Photon> photon_indirect_list;

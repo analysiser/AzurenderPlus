@@ -2,10 +2,6 @@
  * @file raytacer.cpp
  * @brief Raytracer class
  *
- * Implement these functions for project 4.
- *
- * @author H. Q. Bovik (hqbovik)
- * @bug Unimplemented
  */
 
 #include "raytracer.hpp"
@@ -624,18 +620,18 @@ namespace _462 {
         return is_done;
     }
 
-    void Raytracer::perPixelRender(unsigned char* buffer)
-    {
-        printf("Final Rendering\n");
-        for (size_t y = 0; y < height; y++)
-        {
-            for (size_t x = 0; x < width; x++)
-            {
-                Color3 color = raytraceColorBuffer[(y * width + x)] * (1.0/(real_t)(TOTAL_ITERATION));
-                color.to_array(&buffer[4 * (y * width + x)]);
-            }
-        }
-    }
+//    void Raytracer::perPixelRender(unsigned char* buffer)
+//    {
+//        printf("Final Rendering\n");
+//        for (size_t y = 0; y < height; y++)
+//        {
+//            for (size_t x = 0; x < width; x++)
+//            {
+//                Color3 color = raytraceColorBuffer[(y * width + x)] * (1.0/(real_t)(TOTAL_ITERATION));
+//                color.to_array(&buffer[4 * (y * width + x)]);
+//            }
+//        }
+//    }
 
     /**
      * Do Photon tracing, store photons according to their type into indirect map or caustics map
