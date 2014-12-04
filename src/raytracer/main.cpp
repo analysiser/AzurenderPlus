@@ -197,7 +197,36 @@ int main(int argc, char* argv[])
 
         MPI_Barrier(MPI_COMM_WORLD);
 
+        int num_node;
+        MPI_Comm_size(MPI_COMM_WORLD, &num_node);
+        MPI_Datatype AllImg;
+        MPI_Type_contiguous(
+            BUFFER_SIZE(app.buf_width, app.buf_height),
+            MPI_CHAR,
+            &AllImg);
+        MPI_Type_commit(&AllImg);
 
+        if (world_rank == 0)
+        {
+          // I am the root
+          unsigned char *rbuf = (unsigned char *)malloc(
+              num_node * BUFFER_SIZE(app.buf_width, app.buf_width));
+          MPI_Gather(NULL, 0,
+              MPI_CHAR,
+              rbuf, 1, AllImg,
+              0, MPI_COMM_WORLD);
+
+
+        }
+        else
+        {
+          // I am the slave
+          MPI_Gather(app.buffer, BUFFER_SIZE(app.buf_width, app.buf_width),
+              MPI_CHAR,
+              NULL, 0, MPI_CHAR,
+              0, MPI_COMM_WORLD);
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
 
         // output result
         app.output_image();
