@@ -11,7 +11,7 @@
 
 #include <iostream>
 
-//#include "math/matrix.hpp"
+#include "math/matrix.hpp"
 //#include "math/quaternion.hpp"
 #include "math/vector.hpp"
 
@@ -20,10 +20,10 @@
 namespace _462 {
     
     class Ray;
+    class Matrix4;
     
     class BndBox
     {
-        friend class azBVHTree;
     public:
         BndBox () {
             pMin = Vector3(INFINITY, INFINITY, INFINITY);
@@ -52,6 +52,18 @@ namespace _462 {
             return d.x * d.y * d.z;
         }
         
+        static BndBox transform_bbox(const Matrix4 &M, const BndBox& b) {
+            BndBox ret(           M.transform_point(Vector3(b.pMin.x, b.pMin.y, b.pMin.z)) );
+            ret = ret.expand(ret, M.transform_point(Vector3(b.pMax.x, b.pMin.y, b.pMin.z)));
+            ret = ret.expand(ret, M.transform_point(Vector3(b.pMin.x, b.pMax.y, b.pMin.z)));
+            ret = ret.expand(ret, M.transform_point(Vector3(b.pMin.x, b.pMin.y, b.pMax.z)));
+            ret = ret.expand(ret, M.transform_point(Vector3(b.pMin.x, b.pMax.y, b.pMax.z)));
+            ret = ret.expand(ret, M.transform_point(Vector3(b.pMax.x, b.pMax.y, b.pMin.z)));
+            ret = ret.expand(ret, M.transform_point(Vector3(b.pMax.x, b.pMin.y, b.pMax.z)));
+            ret = ret.expand(ret, M.transform_point(Vector3(b.pMax.x, b.pMax.y, b.pMax.z)));
+            return ret;
+        }
+        
         void include(const Vector3 &p);
         void include(const BndBox &bbox);
         
@@ -66,6 +78,9 @@ namespace _462 {
         
         Vector3 pMin, pMax;
     };
+    
+
+    
     
 }
 

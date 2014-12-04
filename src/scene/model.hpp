@@ -11,7 +11,7 @@
 #include "scene/azBVHTree.hpp"
 #include "scene/mesh.hpp"
 #include "scene/scene.hpp"
-#include "BndBox.hpp"
+#include "scene/BndBox.hpp"
 
 #include <iostream>
 #include <set>

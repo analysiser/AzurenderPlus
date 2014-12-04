@@ -57,8 +57,8 @@ namespace _462 {
             }
 
             bvhTree->buildBVHTree();
-            bbox_local = new BndBox(bvhTree->root()->pMin, bvhTree->root()->pMax);
-            bbox_world = new BndBox(matLocalToWorld.transform_bbox(*bbox_local));
+            bbox_local = BndBox(bvhTree->root()->pMin, bvhTree->root()->pMax);
+            bbox_world = BndBox::transform_bbox(matLocalToWorld, bbox_local);
         }
     }
 
@@ -68,7 +68,7 @@ namespace _462 {
         azPacket<Ray>::Iterator it(rays);
         while (!it.isDone()) {
             auto & aRay = it.getCurItem();
-            rays.setMask(it.getCurrentIndex(), bbox_world->intersect(aRay, t0, t1));
+            rays.setMask(it.getCurrentIndex(), bbox_world.intersect(aRay, t0, t1));
             it.moveNext();
         }
 

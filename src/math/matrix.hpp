@@ -12,12 +12,9 @@
 #include "math/math.hpp"
 #include "math/vector.hpp"
 
-#include "scene/BndBox.hpp"
-
 #include <cassert>
 
 namespace _462 {
-    
     /*
      This file defines 2 matrix classes: 3x3 and 4x4.
      Each comes with several operators and functions.
@@ -261,20 +258,6 @@ namespace _462 {
         Vector3 transform_point( const Vector3& v ) const {
             return project( *this *  Vector4( v, 1 ) );
         }
-        
-        BndBox transform_bbox(const BndBox& b) const {
-            const Matrix4 &M = *this;
-            BndBox ret(           M.transform_point(Vector3(b.pMin.x, b.pMin.y, b.pMin.z)) );
-            ret = ret.expand(ret, M.transform_point(Vector3(b.pMax.x, b.pMin.y, b.pMin.z)));
-            ret = ret.expand(ret, M.transform_point(Vector3(b.pMin.x, b.pMax.y, b.pMin.z)));
-            ret = ret.expand(ret, M.transform_point(Vector3(b.pMin.x, b.pMin.y, b.pMax.z)));
-            ret = ret.expand(ret, M.transform_point(Vector3(b.pMin.x, b.pMax.y, b.pMax.z)));
-            ret = ret.expand(ret, M.transform_point(Vector3(b.pMax.x, b.pMax.y, b.pMin.z)));
-            ret = ret.expand(ret, M.transform_point(Vector3(b.pMax.x, b.pMin.y, b.pMax.z)));
-            ret = ret.expand(ret, M.transform_point(Vector3(b.pMax.x, b.pMax.y, b.pMax.z)));
-            return ret;
-        }
-
         
         /**
          * Transforms the given vector as if it were a direction.

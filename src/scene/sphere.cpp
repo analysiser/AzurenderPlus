@@ -75,18 +75,10 @@ namespace _462 {
     Sphere::Sphere()
     : radius(0), material(0)
     {
-//        boundingBox = new Box(Vector3::Zero(), Vector3::Zero());
-//        globalBBox = new Box(Vector3::Zero(), Vector3::Zero());
-        bbox_local = new BndBox();
-        bbox_world = new BndBox();
-//        c = invMat.transform_point(position);
     }
     
     Sphere::~Sphere()
     {
-        delete bbox_local;
-        delete bbox_world;
-//        delete globalBBox;
     }
     
     void Sphere::render() const
@@ -111,11 +103,9 @@ namespace _462 {
     void Sphere::createBoundingBox() const
     {
         // Transform ray to sphere's local space
-        bbox_local->include(position_local - Vector3(radius, radius, radius));
-        bbox_local->include(position_local + Vector3(radius, radius, radius));
-        
-        bbox_world->include(position - Vector3(radius, radius, radius));
-        bbox_world->include(position + Vector3(radius, radius, radius));
+        bbox_local.include(position_local - Vector3(radius, radius, radius));
+        bbox_local.include(position_local + Vector3(radius, radius, radius));
+        bbox_world = BndBox::transform_bbox(matLocalToWorld, bbox_local);
     }
     
     void Sphere::packetHit(azPacket<Ray> &rays, azPacket<HitRecord> &hitInfo, float t0, float t1) const
@@ -126,7 +116,7 @@ namespace _462 {
     
     bool Sphere::hit(Ray ray, real_t t0, real_t t1, HitRecord &rec) const
     {
-        if (!bbox_world->intersect(ray, t0, t1))
+        if (!bbox_world.intersect(ray, t0, t1))
             return false;
         
         // Transform ray to sphere's local space

@@ -76,8 +76,8 @@ namespace _462 {
         // Normal transformation matrix
         Matrix3 normMat;
         
-        mutable BndBox *bbox_local;
-        mutable BndBox *bbox_world;
+        mutable BndBox bbox_local;
+        mutable BndBox bbox_world;
                 
         /**
          * Renders this geometry using OpenGL in the local coordinate space.
