@@ -521,6 +521,19 @@ namespace _462 {
 
         return true;
     }
+    
+    bool Raytracer::mpiTrace(unsigned char* buffer, real_t* max_time)
+    {
+        mpiStageDistributeEyeRays(scene->node_size, scene->node_rank);
+        
+        mpiStageLocalRayTracing(scene->node_size, scene->node_rank);
+        
+        mpiStageShadowRayTracing(scene->node_size, scene->node_rank);
+        
+        mpiStagePixelShading(scene->node_size, scene->node_rank);
+        
+        return true;
+    }
 
     /**
      * Raytraces some portion of the scene. Should raytrace for about
@@ -2062,7 +2075,51 @@ namespace _462 {
     // each node generate and distribute eye rays to corresponding nodes
     void Raytracer::mpiStageDistributeEyeRays(int procs, int procId)
     {
-        // TODO
+        int wstep = width / scene->node_size;
+        int hstep = height;
+        real_t dx = real_t(1)/width;
+        real_t dy = real_t(1)/height;
+        
+        RayList ray_list;
+        int *ray_size_list = new int[procs];
+        int *recv_ray_size_list = new int[procs];
+        
+        // Generate all eye rays in screen region, bin them
+        for (int y = 0; y < hstep; y++) {
+            for (int x = wstep * procId; x < wstep * (procId + 1); x++) {
+                
+                // pick a point within the pixel boundaries to fire our
+                // ray through.
+                real_t i = real_t(2)*(real_t(x)+random())*dx - real_t(1);
+                real_t j = real_t(2)*(real_t(y)+random())*dy - real_t(1);
+                
+                Ray r = Ray(scene->camera.get_position(), Ray::get_pixel_dir(i, j));
+                for (int node_id = 0; node_id < procs; node_id++) {
+                    BndBox nodeBBox = scene->nodeBndBox[node_id];
+                    if (nodeBBox.intersect(r, EPSILON, TMAX)) {
+                        // push ray into node's ray list
+                        ray_list[node_id].push_back(r);
+                    }
+                }
+                
+            }
+        }
+        
+        // Send eye rays to nodes
+        // generate ray size list
+        for (int i = 0; i < procs; i++) {
+            ray_size_list[i] = ray_list[i].size();
+        }
+        
+        int status = -1;
+        status = MPI_Alltoall(ray_size_list, 1, MPI_INT, recv_ray_size_list, procs, MPI_INT, MPI_COMM_WORLD);
+        if (status != 0)
+        {
+            throw exception();
+        }
+        
+        // send all rays by MPI alltoallv
+        
     }
     
     // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
