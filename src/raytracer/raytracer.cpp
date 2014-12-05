@@ -22,6 +22,8 @@
 #include <SDL_timer.h>
 #include <iostream>
 
+#include "ray_list.hpp"
+
 #define RAYTRACE_DEPTH          5
 #define PHOTON_TRACE_DEPTH      5
 
@@ -133,12 +135,12 @@ namespace _462 {
 
         // Construction of BVH tree and bounding volumes
         int start_time = SDL_GetTicks();
-        
+
         // Initialization of bounding boxes
         for (size_t i = 0; i < scene->num_geometries(); i++) {
             scene->get_geometries()[i]->createBoundingBox();
         }
-        
+
         // send node bounding boxes to all other nodes
         mpiStageNodeBoundingBox(scene->node_size, scene->node_rank);
 
@@ -521,17 +523,17 @@ namespace _462 {
 
         return true;
     }
-    
+
     bool Raytracer::mpiTrace(unsigned char* buffer, real_t* max_time)
     {
         mpiStageDistributeEyeRays(scene->node_size, scene->node_rank);
-        
+
         mpiStageLocalRayTracing(scene->node_size, scene->node_rank);
-        
+
         mpiStageShadowRayTracing(scene->node_size, scene->node_rank);
-        
+
         mpiStagePixelShading(scene->node_size, scene->node_rank);
-        
+
         return true;
     }
 
@@ -2056,7 +2058,7 @@ namespace _462 {
                                                             scene->get_geometries()[i]->bbox_world.pMax));
             }
         }
-        
+
         int sendsize = sizeof(curNodeBndBox);
         int status = MPI_Allgather(&curNodeBndBox, sendsize, MPI_BYTE, scene->nodeBndBox, sendsize, MPI_BYTE, MPI_COMM_WORLD);
         if (status != 0)
@@ -2064,14 +2066,14 @@ namespace _462 {
             printf("MPI error: %d\n", status);
             throw exception();
         }
-        
+
         // DEBUG: check
 //        for (int i = 0; i < procs; i++)
 //        {
 //            std::cout<<"current Id = "<<procId<<" from proc:"<<i<<": ("<<scene->nodeBndBox[i].pMin<<", "<<scene->nodeBndBox[i].pMax<<")"<<std::endl;
 //        }
     }
-    
+
     // each node generate and distribute eye rays to corresponding nodes
     void Raytracer::mpiStageDistributeEyeRays(int procs, int procId)
     {
@@ -2079,63 +2081,58 @@ namespace _462 {
         int hstep = height;
         real_t dx = real_t(1)/width;
         real_t dy = real_t(1)/height;
-        
+
         RayList ray_list;
-        int *ray_size_list = new int[procs];
-        int *recv_ray_size_list = new int[procs];
-        
+
         // Generate all eye rays in screen region, bin them
         for (int y = 0; y < hstep; y++) {
             for (int x = wstep * procId; x < wstep * (procId + 1); x++) {
-                
+
                 // pick a point within the pixel boundaries to fire our
                 // ray through.
                 real_t i = real_t(2)*(real_t(x)+random())*dx - real_t(1);
                 real_t j = real_t(2)*(real_t(y)+random())*dy - real_t(1);
-                
+
                 Ray r = Ray(scene->camera.get_position(), Ray::get_pixel_dir(i, j));
                 for (int node_id = 0; node_id < procs; node_id++) {
                     BndBox nodeBBox = scene->nodeBndBox[node_id];
                     if (nodeBBox.intersect(r, EPSILON, TMAX)) {
                         // push ray into node's ray list
-                        ray_list[node_id].push_back(r);
+                        ray_list.push_back(r, node_id);
                     }
                 }
-                
+
             }
         }
-        
-        // Send eye rays to nodes
-        // generate ray size list
-        for (int i = 0; i < procs; i++) {
-            ray_size_list[i] = ray_list[i].size();
-        }
-        
+
+        // Communicating with all the other nodes.
+        int *recv_ray_size_list = new int[procs];
+
         int status = -1;
-        status = MPI_Alltoall(ray_size_list, 1, MPI_INT, recv_ray_size_list, procs, MPI_INT, MPI_COMM_WORLD);
+        status = MPI_Alltoall(ray_list.get_ray_size_list(), 1, MPI_INT, recv_ray_size_list, procs, MPI_INT, MPI_COMM_WORLD);
         if (status != 0)
         {
             throw exception();
         }
-        
+
         // send all rays by MPI alltoallv
-        
+
     }
-    
+
     // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
     // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
     void Raytracer::mpiStageLocalRayTracing(int procs, int procId)
     {
         // TODO
     }
-    
+
     // each node takes in shadow ray, do local ray tracing, maintain shadow ray
     // hit records, send records to corresponding nodes
     void Raytracer::mpiStageShadowRayTracing(int procs, int procId)
     {
         // TODO
     }
-    
+
     // take in every nodes' shadow ray hit records, do local pixel shading.
     void Raytracer::mpiStagePixelShading(int procs, int procId)
     {
