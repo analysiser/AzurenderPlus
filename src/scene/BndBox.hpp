@@ -36,6 +36,16 @@ namespace _462 {
             pMax = Vector3(std::max(p1.x, p2.x), std::max(p1.y, p2.y), std::max(p1.z, p2.z));
         }
         
+        // deserialize
+        BndBox(void *bytes)
+        {
+            size_t size = sizeof(BndBox);
+            memcpy((char *)this, (char *)bytes, size);
+//            BndBox *in = (BndBox *)bytes;
+//            pMin = in->pMin;
+//            pMax = in->pMax;
+        }
+        
         bool isInside(const Vector3 &pt) const {
             return (pt.x >= pMin.x && pt.x <= pMax.x &&
                     pt.y >= pMin.y && pt.y <= pMax.y &&
@@ -70,6 +80,14 @@ namespace _462 {
         BndBox expand(const BndBox &b, const Vector3 &p);
         BndBox expand(const BndBox &b, const BndBox &b2);
         
+        size_t serialize(void **bytes)
+        {
+            size_t size = sizeof(BndBox);
+            *bytes = (char *)malloc(sizeof(size));
+            memcpy(*bytes, (char *)this, size);
+            return size;
+        }
+
         // Test if a given ray hits a bounding box
         /**
          * out tt: output the nearest hit value of t

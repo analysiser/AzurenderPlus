@@ -17,6 +17,7 @@
 #include "scene/sphere.hpp"
 
 #include "utils/Parallel.h"
+#include <mpi.h>
 
 #include <SDL_timer.h>
 #include <iostream>
@@ -132,10 +133,14 @@ namespace _462 {
 
         // Construction of BVH tree and bounding volumes
         int start_time = SDL_GetTicks();
-        // Initialization or precompuation before the trace
+        
+        // Initialization of bounding boxes
         for (size_t i = 0; i < scene->num_geometries(); i++) {
             scene->get_geometries()[i]->createBoundingBox();
         }
+        
+        // send node bounding boxes to all other nodes
+        mpiStageNodeBoundingBox(scene->node_size, scene->node_rank);
 
         // initialize debug variables
         radius_clear = 0;
@@ -2026,38 +2031,56 @@ namespace _462 {
 
 
     // synchronize root bounding boxes of all nodes
-    void Raytracer::syncStageNodeBoundingBox(int procs, int procId)
+    void Raytracer::mpiStageNodeBoundingBox(int procs, int procId)
     {
-        // TODO
+        scene->nodeBndBox = new BndBox[procs];
+        BndBox curNodeBndBox = BndBox(Vector3::Zero());
         // 1.create node bounding box
-        BndBox nodeBBox;
-        for (size_t i = 0; i < scene->num_geometries(); i++) {
-//            nodeBBox.include(scene->get_geometries()[i].)
+        if (scene->num_geometries()) {
+            curNodeBndBox = BndBox(scene->get_geometries()[0]->bbox_world.pMin, scene->get_geometries()[0]->bbox_world.pMax);
+            for (size_t i = 1; i < scene->num_geometries(); i++) {
+                curNodeBndBox = curNodeBndBox.expand(curNodeBndBox, BndBox(scene->get_geometries()[i]->bbox_world.pMin,
+                                                            scene->get_geometries()[i]->bbox_world.pMax));
+            }
         }
+        
+        int sendsize = sizeof(curNodeBndBox);
+        int status = MPI_Allgather(&curNodeBndBox, sendsize, MPI_BYTE, scene->nodeBndBox, sendsize, MPI_BYTE, MPI_COMM_WORLD);
+        if (status != 0)
+        {
+            printf("MPI error: %d\n", status);
+            throw exception();
+        }
+        
+        // DEBUG: check
+//        for (int i = 0; i < procs; i++)
+//        {
+//            std::cout<<"current Id = "<<procId<<" from proc:"<<i<<": ("<<scene->nodeBndBox[i].pMin<<", "<<scene->nodeBndBox[i].pMax<<")"<<std::endl;
+//        }
     }
     
     // each node generate and distribute eye rays to corresponding nodes
-    void Raytracer::syncStageDistributeEyeRays(int procs, int procId)
+    void Raytracer::mpiStageDistributeEyeRays(int procs, int procId)
     {
         // TODO
     }
     
     // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
     // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
-    void Raytracer::syncStageLocalRayTracing(int procs, int procId)
+    void Raytracer::mpiStageLocalRayTracing(int procs, int procId)
     {
         // TODO
     }
     
     // each node takes in shadow ray, do local ray tracing, maintain shadow ray
     // hit records, send records to corresponding nodes
-    void Raytracer::syncStageShadowRayTracing(int procs, int procId)
+    void Raytracer::mpiStageShadowRayTracing(int procs, int procId)
     {
         // TODO
     }
     
     // take in every nodes' shadow ray hit records, do local pixel shading.
-    void Raytracer::syncStagePixelShading(int procs, int procId)
+    void Raytracer::mpiStagePixelShading(int procs, int procId)
     {
         // TODO
     }

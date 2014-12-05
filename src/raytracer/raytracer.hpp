@@ -64,21 +64,21 @@ namespace _462 {
         
         // Open MPI stages:
         // synchronize root bounding boxes of all nodes
-        void syncStageNodeBoundingBox(int procs, int procId);
+        void mpiStageNodeBoundingBox(int procs, int procId);
         
         // each node generate and distribute eye rays to corresponding nodes
-        void syncStageDistributeEyeRays(int procs, int procId);
+        void mpiStageDistributeEyeRays(int procs, int procId);
         
         // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
         // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
-        void syncStageLocalRayTracing(int procs, int procId);
+        void mpiStageLocalRayTracing(int procs, int procId);
         
         // each node takes in shadow ray, do local ray tracing, maintain shadow ray
         // hit records, send records to corresponding nodes
-        void syncStageShadowRayTracing(int procs, int procId);
+        void mpiStageShadowRayTracing(int procs, int procId);
         
         // take in every nodes' shadow ray hit records, do local pixel shading.
-        void syncStagePixelShading(int procs, int procId);
+        void mpiStagePixelShading(int procs, int procId);
         
 
         // indirect and caustics list for photons to trace
