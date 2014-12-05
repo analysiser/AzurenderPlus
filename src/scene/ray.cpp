@@ -13,6 +13,11 @@ namespace _462 {
     
     Ray::Ray(){}
     
+    Ray::Ray(Ray *ray)
+    {
+        Ray(ray->e, ray->d);
+    }
+    
     Ray::Ray(Vector3 e, Vector3 d)
     {
         this->e = e;

@@ -16,13 +16,14 @@ namespace _462 {
     
     using namespace std;
     
-    class Ray
+    struct Ray
     {
         
     public:
         Vector3 e;
         Vector3 d;
         Ray();
+        Ray(Ray *ray);
         Ray(Vector3 e, Vector3 d);
         Ray(Vector3 e, Vector3 d, float start, float end, float time);
         
