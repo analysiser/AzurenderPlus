@@ -107,7 +107,6 @@ namespace _462 {
 
         unsigned int num_iteration;
         
-        typedef std::vector<std::vector<Ray>> RayList;
 
 
     private:
