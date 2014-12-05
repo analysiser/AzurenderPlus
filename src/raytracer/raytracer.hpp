@@ -211,13 +211,11 @@ namespace _462 {
         // Test: Shade c photons
         Color3 shade_cphotons(HitRecord &record, real_t radius, size_t num_samples);
 
-#pragma mark - Intersection Tests
         void PacketizedRayIntersection(azPacket<Ray> &rayPacket, azPacket<HitRecord> &recordPacket, float t0, float t1);
 
         // retrieve the closest hit record
         HitRecord getClosestHit(Ray r, real_t t0, real_t t1, bool *isHit, SceneLayer mask);
 
-#pragma mark - Sampling
         // helper function for sampling a point on a given unit sphere
         Vector3 samplePointOnUnitSphere();
 
