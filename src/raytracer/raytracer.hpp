@@ -61,6 +61,7 @@ namespace _462 {
 
         bool PacketizedRayTrace(unsigned char* buffer);
         bool raytrace(unsigned char* buffer, real_t* max_time);
+        bool mpiTrace(unsigned char* buffer, real_t* max_time);
         
         // Open MPI stages:
         // synchronize root bounding boxes of all nodes
@@ -105,6 +106,8 @@ namespace _462 {
         KDNode *vvh_caustics_root;
 
         unsigned int num_iteration;
+        
+        typedef std::vector<std::vector<Ray>> RayList;
 
 
     private:
@@ -130,6 +133,8 @@ namespace _462 {
         unsigned int shadow_count;
         unsigned int acc_pass_spent;
         unsigned int acc_kdtree_cons;
+        
+        RayList nodeRayList;
 
         Color3 *raytraceColorBuffer;
 
