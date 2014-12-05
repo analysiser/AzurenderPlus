@@ -2044,7 +2044,7 @@ namespace _462 {
 
 
     // synchronize root bounding boxes of all nodes
-    void Raytracer::mpiStageNodeBoundingBox(int procs, int procId)
+    void Raytracer::mpiStageNodeBoundingBox(int procs, int /* procId */)
     {
         scene->nodeBndBox = new BndBox[procs];
         BndBox curNodeBndBox = BndBox(Vector3::Zero());
