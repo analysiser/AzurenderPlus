@@ -7,28 +7,34 @@ namespace _462
   class RayList
   {
     public:
+      typedef std::vector<std::vector<Ray *>> RayListType;
+
       RayList(int num_nodes);
       RayList(void *bytes);
       ~RayList();
-
-      typedef std::vector<std::vector<Ray *>> RayListType;
 
       void push_back(Ray &ray, int32_t node_id);
       void push_back(Ray *ray, int32_t node_id);
       size_t serialize(char **bytes);
 
-      int *get_ray_size_list();
-
-      RayListType ray_list_;
+      RayListType &get_ray_list();
 
     private:
+      RayListType ray_list_;
       int num_nodes_;
-      int *ray_size_list_;
       int num_ray_;
 
-      size_t get_ray_size_list_size()
+      // Is the memory owned by the class or outside the class.
+      // If outside the class. The creator of the class is responsible
+      // for free the memory.
+      bool internal_mem_;
+
+      struct ray_list_header
       {
-        return num_nodes_ * sizeof(int);
-      }
+        size_t num_rays;
+        ray_list_header(int num_ray) : num_rays(num_ray) {}
+        ray_list_header() {}
+      };
+
   };
 }  // namespace _462

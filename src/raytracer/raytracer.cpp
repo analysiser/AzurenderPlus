@@ -2082,7 +2082,7 @@ namespace _462 {
         real_t dx = real_t(1)/width;
         real_t dy = real_t(1)/height;
 
-        RayList ray_list;
+        RayList ray_list(procs);
 
         // Generate all eye rays in screen region, bin them
         for (int y = 0; y < hstep; y++) {
@@ -2106,6 +2106,7 @@ namespace _462 {
         }
 
         // Communicating with all the other nodes.
+        /*
         int *recv_ray_size_list = new int[procs];
 
         int status = -1;
@@ -2114,6 +2115,7 @@ namespace _462 {
         {
             throw exception();
         }
+        */
 
         // send all rays by MPI alltoallv
 

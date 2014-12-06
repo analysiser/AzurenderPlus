@@ -1,47 +1,47 @@
 #include "ray_list.hpp"
+#include <cstring>
 
 namespace _462
 {
 
   RayList::RayList(int num_nodes)
-    : num_nodes(num_nodes),
-    ray_size_list_(new int[num_nodes]),
-    num_ray_(0);
+    : num_nodes_(num_nodes),
+    num_ray_(0),
+    internal_mem_(true)
   {
   }
 
   RayList::RayList(void *bytes)
+    :internal_mem_(false)
   {
     int offset = 0;
-    memcpy(ray_size_list_, bytes, get_ray_size_list_size());
-    offset += get_ray_size_list_size();
 
-    int sum = 0;
-    for (int i = 0; i < num_nodes_; i++)
-    {
-      sum += ray_size_list_[i];
-    }
+    struct ray_list_header header;
+    memcpy(&header, bytes, sizeof(header));
+    offset += sizeof(header);
 
-    for (int i = 0; i < sum; i++)
+    for (size_t i = 0; i < header.num_rays; i++)
     {
-      Ray r * = new Ray(reinterpret_cast<Ray *>(bytes + offset));
+      Ray *r = reinterpret_cast<Ray *>(reinterpret_cast<char *>(bytes) + offset);
       push_back(r, 0);
       offset += sizeof(Ray);
     }
-
   }
 
   RayList::~RayList()
   {
-    for (int i = 0; i < ray_list_.size(); i++)
+    if (!internal_mem_)
     {
-      for (int j = 0; j < ray_list_[i].size(); j++)
+      return;
+    }
+    for (size_t i = 0; i < ray_list_.size(); i++)
+    {
+      for (size_t j = 0; j < ray_list_[i].size(); j++)
       {
         if (ray_list_[i][j] != NULL)
           delete ray_list_[i][j];
       }
     }
-    delete [] ray_size_list_;
   }
 
   void RayList::push_back(Ray &ray, int32_t node_id)
@@ -52,7 +52,6 @@ namespace _462
 
   void RayList::push_back(Ray *ray, int32_t node_id)
   {
-    ray_size_list_[node_id]++;
     num_ray_++;
     return ray_list_[node_id].push_back(ray);
   }
@@ -61,25 +60,30 @@ namespace _462
   {
     // Calculate the size needed
     size_t size = num_ray_ * sizeof(Ray);
-    size += get_ray_size_list_size();
     *bytes = new char[size];
     int offset = 0;
-    memcpy(*bytes, ray_size_list_, get_ray_size_list_size());
-    offset += get_ray_size_list_size();
-    for (int i = 0; i < ray_list_.size(); i++)
+
+    struct ray_list_header header(num_ray_);
+
+
+    memcpy(*bytes, &header, sizeof(header));
+    offset += sizeof(header);
+
+    for (size_t i = 0; i < ray_list_.size(); i++)
     {
-      for (int j = 0; j < ray_list_[i].size(); j++)
+      for (size_t j = 0; j < ray_list_[i].size(); j++)
       {
         Ray *r = ray_list_[i][j];
         memcpy(*bytes + offset, r, sizeof(Ray));
         offset += sizeof(Ray);
       }
     }
+    return size;
   }
 
-  int *RayList::get_ray_size_list()
+  RayList::RayListType &RayList::get_ray_list()
   {
-    return ray_size_list_;
+    return ray_list_;
   }
 
 } // namespace _462
