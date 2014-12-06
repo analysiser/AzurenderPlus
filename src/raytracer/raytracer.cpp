@@ -532,7 +532,7 @@ namespace _462 {
         mpiStageDistributeEyeRays(scene->node_size, scene->node_rank, &eyerays);
         
         // Take in distributed eye rays, do local ray tracing
-        mpiStageLocalRayTracing(scene->node_size, scene->node_rank, eyerays);
+        mpiStageLocalRayTracing(scene->node_size, scene->node_rank, eyerays, buffer);
 
         mpiStageShadowRayTracing(scene->node_size, scene->node_rank);
 
@@ -2096,6 +2096,8 @@ namespace _462 {
                     BndBox nodeBBox = scene->nodeBndBox[node_id];
                     if (nodeBBox.intersect(r, EPSILON, TMAX)) {
                         // push ray into node's ray list
+                        r.x = x;
+                        r.y = y;
                         currentNodeRayList.push_back(node_id, r);
                     }
                 }
@@ -2146,7 +2148,7 @@ namespace _462 {
 
         std::vector<Ray> recvRayList(total);
         std::copy(recvbuf, recvbuf+total, recvRayList.begin());
-        eyerays = &recvRayList;
+        *eyerays = recvRayList;
         
         delete sendbuf;
         delete sendcounts;
@@ -2162,9 +2164,20 @@ namespace _462 {
 
     // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
     // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
-    void Raytracer::mpiStageLocalRayTracing(int procs, int procId, std::vector<Ray> &rays)
+    void Raytracer::mpiStageLocalRayTracing(int procs, int procId, std::vector<Ray> &rays, unsigned char* buffer)
     {
-        // TODO
+        printf("mpiStageLocalRayTracing\n");
+        for (size_t i = 0; i < rays.size(); i++) {
+            Ray ray = rays[i];
+            bool isHit = false;
+            HitRecord record = getClosestHit(ray, EPSILON, INFINITY, &isHit, Layer_All);
+            if (isHit) {
+                Color3 c = Color3::Red();
+                
+                c.to_array(&buffer[4 * (ray.y * width + ray.x)]);
+            }
+        }
+        printf("~mpiStageLocalRayTracing\n");
     }
 
     // each node takes in shadow ray, do local ray tracing, maintain shadow ray

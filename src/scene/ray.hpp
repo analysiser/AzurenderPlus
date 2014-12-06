@@ -34,6 +34,8 @@ namespace _462 {
         static void init(const Camera& camera);
         
         float mint, maxt, time;
+        int x, y;
+        int depth;
     };
     
     typedef std::vector<std::vector<Ray> > NodeRayVector;

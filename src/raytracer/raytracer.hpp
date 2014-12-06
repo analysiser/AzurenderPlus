@@ -72,7 +72,7 @@ namespace _462 {
         
         // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
         // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
-        void mpiStageLocalRayTracing(int procs, int procId, std::vector<Ray> &rays);
+        void mpiStageLocalRayTracing(int procs, int procId, std::vector<Ray> &rays, unsigned char* buffer);
         
         // each node takes in shadow ray, do local ray tracing, maintain shadow ray
         // hit records, send records to corresponding nodes
