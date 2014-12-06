@@ -4,8 +4,8 @@
 
 namespace _462
 {
-  class RayList
-  {
+    class RayList
+    {
     public:
       typedef std::vector<std::vector<Ray *>> RayListType;
 

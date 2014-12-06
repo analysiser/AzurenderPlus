@@ -193,7 +193,8 @@ int main(int argc, char* argv[])
         }
         assert( app.buffer );
         // raytrace until done
-        app.raytracer.raytrace( app.buffer, 0);
+//        app.raytracer.raytrace( app.buffer, 0);
+        app.raytracer.mpiTrace(app.buffer, 0);
 
         MPI_Barrier(MPI_COMM_WORLD);
 

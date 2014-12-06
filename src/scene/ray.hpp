@@ -34,6 +34,76 @@ namespace _462 {
         static void init(const Camera& camera);
         
         float mint, maxt, time;
+        int x, y;
+        int depth;
+    };
+    
+    typedef std::vector<std::vector<Ray> > NodeRayVector;
+    class RayBucket {
+    public:
+        RayBucket() {}
+        ~RayBucket() {
+            for (int i = 0; i < node_size_; i++) {
+                nodeRayVector[i].clear();
+            }
+            nodeRayVector.clear();
+            node_size_ = 0;
+        }
+        
+        RayBucket(int node_size)
+        {
+            assert(node_size > 0);
+            node_size_ = node_size;
+            for (int i = 0; i < node_size; i++) {
+                std::vector<Ray> aList;
+                nodeRayVector.push_back(aList);
+            }
+        }
+        
+        // push a ray to group numbered "rank"
+        void push_back(int rank, const Ray &r)
+        {
+            assert(rank < node_size_);
+            nodeRayVector[rank].push_back(r);
+        }
+        
+        /*! 
+         @brief Call this only when you done of pushing all elements, it is used 
+                for generate basic data for open MPI_Alltoallv sending
+         @param out raybucket: c-style node ray array
+         @param out sendoffset: sender buffer displacements of j group from raybucket
+         @param out sendcounts: sender buffer element counts of j group
+         @note  Very important! Numbers used in the sendoffset and sendcounts are COUNTS
+                These two value array cannot by used directly for sending MPI information
+         */
+        void mpi_datagen(Ray **raybucket, int **sendoffset, int **sendcounts)
+        {
+            size_t size = nodeRayVector.size();
+            if (size == 0) {
+                printf("No rays for current node!\n");
+                return;
+            }
+            *sendcounts = new int[size];
+            *sendoffset = new int[size];
+            size_t total = 0;
+            
+            for (size_t i = 0; i < size; i++) {
+                (*sendcounts)[i] = nodeRayVector[i].size();
+                (*sendoffset)[i] = total;
+                total += (*sendcounts)[i];
+            }
+            
+            *raybucket = new Ray[total];
+            
+            for (size_t i = 0; i < size; i++) {
+                std::copy(nodeRayVector[i].begin(), nodeRayVector[i].end(), *raybucket + (*sendoffset)[i]);
+            }
+        }
+        
+    private:
+        NodeRayVector nodeRayVector;
+        int node_size_;
+        
     };
     
     struct Intersection

@@ -526,9 +526,13 @@ namespace _462 {
 
     bool Raytracer::mpiTrace(unsigned char* buffer, real_t* max_time)
     {
-        mpiStageDistributeEyeRays(scene->node_size, scene->node_rank);
-
-        mpiStageLocalRayTracing(scene->node_size, scene->node_rank);
+        std::vector<Ray> eyerays;
+        
+        // generate and redistribute eye rays through open mpi to different nodes
+        mpiStageDistributeEyeRays(scene->node_size, scene->node_rank, &eyerays);
+        
+        // Take in distributed eye rays, do local ray tracing
+        mpiStageLocalRayTracing(scene->node_size, scene->node_rank, eyerays, buffer);
 
         mpiStageShadowRayTracing(scene->node_size, scene->node_rank);
 
@@ -2043,10 +2047,8 @@ namespace _462 {
         }
     }
 
-
-
     // synchronize root bounding boxes of all nodes
-    void Raytracer::mpiStageNodeBoundingBox(int procs, int procId)
+    void Raytracer::mpiStageNodeBoundingBox(int procs, int /* procId */)
     {
         scene->nodeBndBox = new BndBox[procs];
         BndBox curNodeBndBox = BndBox(Vector3::Zero());
@@ -2066,23 +2068,20 @@ namespace _462 {
             printf("MPI error: %d\n", status);
             throw exception();
         }
-
-        // DEBUG: check
-//        for (int i = 0; i < procs; i++)
-//        {
-//            std::cout<<"current Id = "<<procId<<" from proc:"<<i<<": ("<<scene->nodeBndBox[i].pMin<<", "<<scene->nodeBndBox[i].pMax<<")"<<std::endl;
-//        }
     }
 
     // each node generate and distribute eye rays to corresponding nodes
-    void Raytracer::mpiStageDistributeEyeRays(int procs, int procId)
+    void Raytracer::mpiStageDistributeEyeRays(int procs, int procId, std::vector<Ray> *eyerays)
     {
+        printf("mpiStageDistributeEyeRays called by %d\n", procId);
         int wstep = width / scene->node_size;
         int hstep = height;
         real_t dx = real_t(1)/width;
         real_t dy = real_t(1)/height;
 
         RayList ray_list(procs);
+        // node ray list to send out rays
+        //RayBucket currentNodeRayList(procs);
 
         // Generate all eye rays in screen region, bin them
         for (int y = 0; y < hstep; y++) {
@@ -2098,10 +2097,11 @@ namespace _462 {
                     BndBox nodeBBox = scene->nodeBndBox[node_id];
                     if (nodeBBox.intersect(r, EPSILON, TMAX)) {
                         // push ray into node's ray list
-                        ray_list.push_back(r, node_id);
+                        r.x = x;
+                        r.y = y;
+                        currentNodeRayList.push_back(node_id, r);
                     }
                 }
-
             }
         }
 
@@ -2122,11 +2122,51 @@ namespace _462 {
             MPI_COMM_WORLD);
         if (status != 0)
         {
+          throw exception();
+        }
+       /* 
+        Ray *sendbuf;
+        int *sendcounts;
+        int *sendoffsets;
+        // generate data to send
+        currentNodeRayList.mpi_datagen(&sendbuf, &sendoffsets, &sendcounts);
+        
+        // but first we need to send how many data each node are going to receive
+        int status = -1;
+        int *recvcounts = new int[procs];
+        status = MPI_Alltoall(sendcounts, 1, MPI_INT, recvcounts, 1, MPI_INT, MPI_COMM_WORLD);
+        if (status != 0) {
+            printf("Fail to send and receive ray count info!\n");
             throw exception();
         }
-
+        
+        // Received ray buffer
+        int *recvoffsets = new int[procs];
+        int total = 0;
+        for (int i = 0; i < procs; i++) {
+            recvoffsets[i] = total;
+            total += recvcounts[i];
+        }
+        Ray *recvbuf = new Ray[total];
+        
+        
+        // reset counts, offsets for byte sized send/recv
+        size_t raysize = sizeof(Ray);
+        for (int i = 0; i < procs; i++) {
+            sendcounts[i] *= raysize;
+            sendoffsets[i] *= raysize;
+            
+            recvcounts[i] *= raysize;
+            recvoffsets[i] *= raysize;
+        }
+        
         // send all rays by MPI alltoallv
-
+        status = MPI_Alltoallv(sendbuf, sendcounts, sendoffsets, MPI_BYTE, recvbuf, recvcounts, recvoffsets, MPI_BYTE, MPI_COMM_WORLD);
+        if (status != 0) {
+            printf("Fail to send and receive rays!\n");
+            throw exception();
+        }
+*/
         char *send_buf;
         ray_list.serialize(&send_buf);
 
@@ -2171,13 +2211,40 @@ namespace _462 {
         {
             throw exception();
         }
+        /*
+        std::vector<Ray> recvRayList(total);
+        std::copy(recvbuf, recvbuf+total, recvRayList.begin());
+        *eyerays = recvRayList;
+        
+        delete sendbuf;
+        delete sendcounts;
+        delete sendoffsets;
+        
+        delete recvbuf;
+        delete recvcounts;
+        delete recvoffsets;
+        
+        
+        printf("~mpiStageDistributeEyeRays\n");
+        */
     }
 
     // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
     // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
-    void Raytracer::mpiStageLocalRayTracing(int procs, int procId)
+    void Raytracer::mpiStageLocalRayTracing(int procs, int procId, std::vector<Ray> &rays, unsigned char* buffer)
     {
-        // TODO
+        printf("mpiStageLocalRayTracing\n");
+        for (size_t i = 0; i < rays.size(); i++) {
+            Ray ray = rays[i];
+            bool isHit = false;
+            HitRecord record = getClosestHit(ray, EPSILON, INFINITY, &isHit, Layer_All);
+            if (isHit) {
+                Color3 c = Color3::Red();
+                
+                c.to_array(&buffer[4 * (ray.y * width + ray.x)]);
+            }
+        }
+        printf("~mpiStageLocalRayTracing\n");
     }
 
     // each node takes in shadow ray, do local ray tracing, maintain shadow ray

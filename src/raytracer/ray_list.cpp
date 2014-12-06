@@ -3,7 +3,6 @@
 
 namespace _462
 {
-
   RayList::RayList(int num_nodes)
     : num_nodes_(num_nodes),
     num_ray_(0),
