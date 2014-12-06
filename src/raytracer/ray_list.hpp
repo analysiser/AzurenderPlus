@@ -10,7 +10,7 @@ namespace _462
       typedef std::vector<std::vector<Ray *>> RayListType;
 
       RayList(int num_nodes);
-      RayList(void *bytes);
+      RayList(void *bytes, int num_received);
       ~RayList();
 
       void push_back(Ray &ray, int32_t node_id);
@@ -18,6 +18,10 @@ namespace _462
       size_t serialize(char **bytes);
 
       RayListType &get_ray_list();
+
+      void get_ray_bin_size(int *list);
+      void get_serialize_displacement(int *list);
+      void get_send_buf_size_list(int *list);
 
     private:
       RayListType ray_list_;
@@ -28,13 +32,6 @@ namespace _462
       // If outside the class. The creator of the class is responsible
       // for free the memory.
       bool internal_mem_;
-
-      struct ray_list_header
-      {
-        size_t num_rays;
-        ray_list_header(int num_ray) : num_rays(num_ray) {}
-        ray_list_header() {}
-      };
 
   };
 }  // namespace _462

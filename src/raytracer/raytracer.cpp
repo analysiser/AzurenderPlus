@@ -2106,19 +2106,71 @@ namespace _462 {
         }
 
         // Communicating with all the other nodes.
-        /*
-        int *recv_ray_size_list = new int[procs];
+        int ray_size_list[procs];
+        ray_list.get_ray_bin_size(ray_size_list);
+
+        int recv_ray_size_list[procs];
 
         int status = -1;
-        status = MPI_Alltoall(ray_list.get_ray_size_list(), 1, MPI_INT, recv_ray_size_list, procs, MPI_INT, MPI_COMM_WORLD);
+        status = MPI_Alltoall(
+            ray_size_list,
+            1,
+            MPI_INT,
+            recv_ray_size_list,
+            procs,
+            MPI_INT,
+            MPI_COMM_WORLD);
         if (status != 0)
         {
             throw exception();
         }
-        */
 
         // send all rays by MPI alltoallv
 
+        char *send_buf;
+        ray_list.serialize(&send_buf);
+
+        int send_displacement[procs];
+        ray_list.get_serialize_displacement(send_displacement);
+
+        int send_buf_size_list[procs];
+        ray_list.get_send_buf_size_list(send_buf_size_list);
+
+        int recv_bytes_size_list[procs];
+        for (int i = 0; i < procs; i++)
+        {
+          recv_bytes_size_list[i] = recv_ray_size_list[i] * sizeof(Ray);
+        }
+
+        int recv_sum = 0;
+        for (int i = 0; i < procs; i++)
+        {
+          recv_sum += recv_ray_size_list[i];
+        }
+        char *recv_buf = new char[recv_sum * sizeof(Ray)];
+
+        int recv_displacement[procs];
+        recv_displacement[0] = 0;
+        for (int i = 0; i < procs-1; i++)
+        {
+          recv_displacement[i+1] = recv_displacement[i] + recv_bytes_size_list[i];
+        }
+
+        status = MPI_Alltoallv(
+            send_buf,
+            send_buf_size_list,
+            send_displacement,
+            MPI_BYTE,
+            recv_buf,
+            recv_bytes_size_list,
+            recv_displacement,
+            MPI_BYTE,
+            MPI_COMM_WORLD
+            );
+        if (status != 0)
+        {
+            throw exception();
+        }
     }
 
     // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox

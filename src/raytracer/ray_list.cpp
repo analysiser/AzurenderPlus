@@ -11,16 +11,12 @@ namespace _462
   {
   }
 
-  RayList::RayList(void *bytes)
+  RayList::RayList(void *bytes, int num_received)
     :internal_mem_(false)
   {
     int offset = 0;
 
-    struct ray_list_header header;
-    memcpy(&header, bytes, sizeof(header));
-    offset += sizeof(header);
-
-    for (size_t i = 0; i < header.num_rays; i++)
+    for (int i = 0; i < num_received; i++)
     {
       Ray *r = reinterpret_cast<Ray *>(reinterpret_cast<char *>(bytes) + offset);
       push_back(r, 0);
@@ -63,12 +59,6 @@ namespace _462
     *bytes = new char[size];
     int offset = 0;
 
-    struct ray_list_header header(num_ray_);
-
-
-    memcpy(*bytes, &header, sizeof(header));
-    offset += sizeof(header);
-
     for (size_t i = 0; i < ray_list_.size(); i++)
     {
       for (size_t j = 0; j < ray_list_[i].size(); j++)
@@ -84,6 +74,35 @@ namespace _462
   RayList::RayListType &RayList::get_ray_list()
   {
     return ray_list_;
+  }
+
+  void RayList::get_ray_bin_size(int *list)
+  {
+    for (int i = 0; i < num_nodes_; i++)
+    {
+      list[i] = ray_list_[i].size();
+    }
+    return;
+  }
+
+
+  void RayList::get_serialize_displacement(int *list)
+  {
+    list[0] = 0;
+    for (int i = 0; i < num_nodes_-1; i++)
+    {
+      list[i+1] = list[i] + (ray_list_[i].size()) * sizeof(Ray) + 1;
+    }
+    return;
+  }
+
+  void RayList::get_send_buf_size_list(int *list)
+  {
+    for (int i = 0; i < num_nodes_; i++)
+    {
+      list[i] = (ray_list_[i].size()) * sizeof(Ray);
+    }
+    return;
   }
 
 } // namespace _462
