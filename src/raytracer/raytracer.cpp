@@ -529,7 +529,7 @@ namespace _462 {
         std::vector<Ray> eyerays;
         
         // generate and redistribute eye rays through open mpi to different nodes
-        mpiStageDistributeEyeRays(scene->node_size, scene->node_rank, &eyerays);
+        mpiStageDistributeEyeRaysWorking(scene->node_size, scene->node_rank, &eyerays);
         
         // Take in distributed eye rays, do local ray tracing
         mpiStageLocalRayTracing(scene->node_size, scene->node_rank, eyerays, buffer);
@@ -2069,6 +2069,97 @@ namespace _462 {
             throw exception();
         }
     }
+    
+    void Raytracer::mpiStageDistributeEyeRaysWorking(int procs, int procId, std::vector<Ray> *eyerays)
+    {
+        printf("mpiStageDistributeEyeRays called by %d\n", procId);
+        int wstep = width / scene->node_size;
+        int hstep = height;
+        real_t dx = real_t(1)/width;
+        real_t dy = real_t(1)/height;
+        
+        // node ray list to send out rays
+        RayBucket currentNodeRayList(procs);
+        
+        // Generate all eye rays in screen region, bin them
+        for (int y = 0; y < hstep; y++) {
+            for (int x = wstep * procId; x < wstep * (procId + 1); x++) {
+                
+                // pick a point within the pixel boundaries to fire our
+                // ray through.
+                real_t i = real_t(2)*(real_t(x)+random())*dx - real_t(1);
+                real_t j = real_t(2)*(real_t(y)+random())*dy - real_t(1);
+                
+                Ray r = Ray(scene->camera.get_position(), Ray::get_pixel_dir(i, j));
+                for (int node_id = 0; node_id < procs; node_id++) {
+                    BndBox nodeBBox = scene->nodeBndBox[node_id];
+                    if (nodeBBox.intersect(r, EPSILON, TMAX)) {
+                        // push ray into node's ray list
+                        r.x = x;
+                        r.y = y;
+                        currentNodeRayList.push_back(node_id, r);
+                    }
+                }
+            }
+        }
+        
+        Ray *sendbuf;
+        int *sendcounts;
+        int *sendoffsets;
+        // generate data to send
+        currentNodeRayList.mpi_datagen(&sendbuf, &sendoffsets, &sendcounts);
+        
+        // but first we need to send how many data each node are going to receive
+        int status = -1;
+        int *recvcounts = new int[procs];
+        status = MPI_Alltoall(sendcounts, 1, MPI_INT, recvcounts, 1, MPI_INT, MPI_COMM_WORLD);
+        if (status != 0) {
+            printf("Fail to send and receive ray count info!\n");
+            throw exception();
+        }
+        
+        // Received ray buffer
+        int *recvoffsets = new int[procs];
+        int total = 0;
+        for (int i = 0; i < procs; i++) {
+            recvoffsets[i] = total;
+            total += recvcounts[i];
+        }
+        Ray *recvbuf = new Ray[total];
+        
+        
+        // reset counts, offsets for byte sized send/recv
+        size_t raysize = sizeof(Ray);
+        for (int i = 0; i < procs; i++) {
+            sendcounts[i] *= raysize;
+            sendoffsets[i] *= raysize;
+            
+            recvcounts[i] *= raysize;
+            recvoffsets[i] *= raysize;
+        }
+        
+        // send all rays by MPI alltoallv
+        status = MPI_Alltoallv(sendbuf, sendcounts, sendoffsets, MPI_BYTE, recvbuf, recvcounts, recvoffsets, MPI_BYTE, MPI_COMM_WORLD);
+        if (status != 0) {
+            printf("Fail to send and receive rays!\n");
+            throw exception();
+        }
+        
+        std::vector<Ray> recvRayList(total);
+        std::copy(recvbuf, recvbuf+total, recvRayList.begin());
+        *eyerays = recvRayList;
+        
+        delete sendbuf;
+        delete sendcounts;
+        delete sendoffsets;
+        
+        delete recvbuf;
+        delete recvcounts;
+        delete recvoffsets;
+        
+        
+        printf("~mpiStageDistributeEyeRays\n");
+    }
 
     // each node generate and distribute eye rays to corresponding nodes
     void Raytracer::mpiStageDistributeEyeRays(int procs, int procId, std::vector<Ray> *eyerays)
@@ -2099,7 +2190,8 @@ namespace _462 {
                         // push ray into node's ray list
                         r.x = x;
                         r.y = y;
-                        currentNodeRayList.push_back(node_id, r);
+                        ray_list.push_back(r, node_id);
+//                        currentNodeRayList.push_back(node_id, r);
                     }
                 }
             }
