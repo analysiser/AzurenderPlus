@@ -526,9 +526,13 @@ namespace _462 {
 
     bool Raytracer::mpiTrace(unsigned char* buffer, real_t* max_time)
     {
-        mpiStageDistributeEyeRays(scene->node_size, scene->node_rank);
-
-        mpiStageLocalRayTracing(scene->node_size, scene->node_rank);
+        std::vector<Ray> eyerays;
+        
+        // generate and redistribute eye rays through open mpi to different nodes
+        mpiStageDistributeEyeRays(scene->node_size, scene->node_rank, &eyerays);
+        
+        // Take in distributed eye rays, do local ray tracing
+        mpiStageLocalRayTracing(scene->node_size, scene->node_rank, eyerays);
 
         mpiStageShadowRayTracing(scene->node_size, scene->node_rank);
 
@@ -2043,8 +2047,6 @@ namespace _462 {
         }
     }
 
-
-
     // synchronize root bounding boxes of all nodes
     void Raytracer::mpiStageNodeBoundingBox(int procs, int /* procId */)
     {
@@ -2066,16 +2068,10 @@ namespace _462 {
             printf("MPI error: %d\n", status);
             throw exception();
         }
-
-        // DEBUG: check
-//        for (int i = 0; i < procs; i++)
-//        {
-//            std::cout<<"current Id = "<<procId<<" from proc:"<<i<<": ("<<scene->nodeBndBox[i].pMin<<", "<<scene->nodeBndBox[i].pMax<<")"<<std::endl;
-//        }
     }
 
     // each node generate and distribute eye rays to corresponding nodes
-    void Raytracer::mpiStageDistributeEyeRays(int procs, int procId)
+    void Raytracer::mpiStageDistributeEyeRays(int procs, int procId, std::vector<Ray> *eyerays)
     {
         printf("mpiStageDistributeEyeRays called by %d\n", procId);
         int wstep = width / scene->node_size;
@@ -2130,6 +2126,17 @@ namespace _462 {
         }
         Ray *recvbuf = new Ray[total];
         
+        
+        // reset counts, offsets for byte sized send/recv
+        size_t raysize = sizeof(Ray);
+        for (int i = 0; i < procs; i++) {
+            sendcounts[i] *= raysize;
+            sendoffsets[i] *= raysize;
+            
+            recvcounts[i] *= raysize;
+            recvoffsets[i] *= raysize;
+        }
+        
         // send all rays by MPI alltoallv
         status = MPI_Alltoallv(sendbuf, sendcounts, sendoffsets, MPI_BYTE, recvbuf, recvcounts, recvoffsets, MPI_BYTE, MPI_COMM_WORLD);
         if (status != 0) {
@@ -2139,6 +2146,7 @@ namespace _462 {
 
         std::vector<Ray> recvRayList(total);
         std::copy(recvbuf, recvbuf+total, recvRayList.begin());
+        eyerays = &recvRayList;
         
         delete sendbuf;
         delete sendcounts;
@@ -2154,7 +2162,7 @@ namespace _462 {
 
     // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
     // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
-    void Raytracer::mpiStageLocalRayTracing(int procs, int procId)
+    void Raytracer::mpiStageLocalRayTracing(int procs, int procId, std::vector<Ray> &rays)
     {
         // TODO
     }

@@ -65,7 +65,15 @@ namespace _462 {
             nodeRayVector[rank].push_back(r);
         }
         
-        // Call this only when you done of pushing all elements
+        /*! 
+         @brief Call this only when you done of pushing all elements, it is used 
+                for generate basic data for open MPI_Alltoallv sending
+         @param out raybucket: c-style node ray array
+         @param out sendoffset: sender buffer displacements of j group from raybucket
+         @param out sendcounts: sender buffer element counts of j group
+         @note  Very important! Numbers used in the sendoffset and sendcounts are COUNTS
+                These two value array cannot by used directly for sending MPI information
+         */
         void mpi_datagen(Ray **raybucket, int **sendoffset, int **sendcounts)
         {
             size_t size = nodeRayVector.size();
