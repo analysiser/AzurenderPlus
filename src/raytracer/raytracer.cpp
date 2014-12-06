@@ -2077,6 +2077,7 @@ namespace _462 {
     // each node generate and distribute eye rays to corresponding nodes
     void Raytracer::mpiStageDistributeEyeRays(int procs, int procId)
     {
+        printf("mpiStageDistributeEyeRays called by %d\n", procId);
         int wstep = width / scene->node_size;
         int hstep = height;
         real_t dx = real_t(1)/width;
@@ -2098,12 +2099,10 @@ namespace _462 {
                 for (int node_id = 0; node_id < procs; node_id++) {
                     BndBox nodeBBox = scene->nodeBndBox[node_id];
                     if (nodeBBox.intersect(r, EPSILON, TMAX)) {
-
                         // push ray into node's ray list
-                        currentNodeRayList.push_back(procId, r);
+                        currentNodeRayList.push_back(node_id, r);
                     }
                 }
-
             }
         }
         
@@ -2132,7 +2131,7 @@ namespace _462 {
         Ray *recvbuf = new Ray[total];
         
         // send all rays by MPI alltoallv
-        status = MPI_Alltoallv(sendbuf, sendcounts, sendoffsets, MPI_BYTE, recvbuf, sendcounts, recvoffsets, MPI_BYTE, MPI_COMM_WORLD);
+        status = MPI_Alltoallv(sendbuf, sendcounts, sendoffsets, MPI_BYTE, recvbuf, recvcounts, recvoffsets, MPI_BYTE, MPI_COMM_WORLD);
         if (status != 0) {
             printf("Fail to send and receive rays!\n");
             throw exception();
@@ -2148,6 +2147,9 @@ namespace _462 {
         delete recvbuf;
         delete recvcounts;
         delete recvoffsets;
+        
+        
+        printf("~mpiStageDistributeEyeRays\n");
     }
 
     // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
