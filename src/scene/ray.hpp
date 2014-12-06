@@ -69,22 +69,25 @@ namespace _462 {
         void mpi_datagen(Ray **raybucket, int **sendoffset, int **sendcounts)
         {
             size_t size = nodeRayVector.size();
+            if (size == 0) {
+                printf("No rays for current node!\n");
+                return;
+            }
             *sendcounts = new int[size];
             *sendoffset = new int[size];
             size_t total = 0;
             
             for (size_t i = 0; i < size; i++) {
-                *sendcounts[i] = nodeRayVector[i].size();
-                *sendoffset[i] = total;
-                total += *sendcounts[i];
+                (*sendcounts)[i] = nodeRayVector[i].size();
+                (*sendoffset)[i] = total;
+                total += (*sendcounts)[i];
             }
             
-            *raybucket = new Ray[total]();
+            *raybucket = new Ray[total];
             
             for (size_t i = 0; i < size; i++) {
-                std::copy(nodeRayVector[i].begin(), nodeRayVector[i].end(), *raybucket + *sendoffset[i]);
+                std::copy(nodeRayVector[i].begin(), nodeRayVector[i].end(), *raybucket + (*sendoffset)[i]);
             }
-            
         }
         
     private:
