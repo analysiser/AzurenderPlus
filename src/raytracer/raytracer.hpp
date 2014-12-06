@@ -133,7 +133,7 @@ namespace _462 {
         unsigned int acc_pass_spent;
         unsigned int acc_kdtree_cons;
         
-        RayList nodeRayList;
+//        RayList nodeRayList;
 
         Color3 *raytraceColorBuffer;
 

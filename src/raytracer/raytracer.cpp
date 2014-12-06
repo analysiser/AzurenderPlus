@@ -2082,7 +2082,8 @@ namespace _462 {
         real_t dx = real_t(1)/width;
         real_t dy = real_t(1)/height;
 
-        RayList ray_list;
+        // node ray list to send out rays
+        RayBucket currentNodeRayList(procs);
 
         // Generate all eye rays in screen region, bin them
         for (int y = 0; y < hstep; y++) {
@@ -2097,26 +2098,56 @@ namespace _462 {
                 for (int node_id = 0; node_id < procs; node_id++) {
                     BndBox nodeBBox = scene->nodeBndBox[node_id];
                     if (nodeBBox.intersect(r, EPSILON, TMAX)) {
+
                         // push ray into node's ray list
-                        ray_list.push_back(r, node_id);
+                        currentNodeRayList.push_back(procId, r);
                     }
                 }
 
             }
         }
-
-        // Communicating with all the other nodes.
-        int *recv_ray_size_list = new int[procs];
-
+        
+        Ray *sendbuf;
+        int *sendcounts;
+        int *sendoffsets;
+        // generate data to send
+        currentNodeRayList.mpi_datagen(&sendbuf, &sendoffsets, &sendcounts);
+        
+        // but first we need to send how many data each node are going to receive
         int status = -1;
-        status = MPI_Alltoall(ray_list.get_ray_size_list(), 1, MPI_INT, recv_ray_size_list, procs, MPI_INT, MPI_COMM_WORLD);
-        if (status != 0)
-        {
+        int *recvcounts = new int[procs];
+        status = MPI_Alltoall(sendcounts, 1, MPI_INT, recvcounts, 1, MPI_INT, MPI_COMM_WORLD);
+        if (status != 0) {
+            printf("Fail to send and receive ray count info!\n");
+            throw exception();
+        }
+        
+        // Received ray buffer
+        int *recvoffsets = new int[procs];
+        int total = 0;
+        for (int i = 0; i < procs; i++) {
+            recvoffsets[i] = total;
+            total += recvcounts[i];
+        }
+        Ray *recvbuf = new Ray[total];
+        
+        // send all rays by MPI alltoallv
+        status = MPI_Alltoallv(sendbuf, sendcounts, sendoffsets, MPI_BYTE, recvbuf, sendcounts, recvoffsets, MPI_BYTE, MPI_COMM_WORLD);
+        if (status != 0) {
+            printf("Fail to send and receive rays!\n");
             throw exception();
         }
 
-        // send all rays by MPI alltoallv
-
+        std::vector<Ray> recvRayList(total);
+        std::copy(recvbuf, recvbuf+total, recvRayList.begin());
+        
+        delete sendbuf;
+        delete sendcounts;
+        delete sendoffsets;
+        
+        delete recvbuf;
+        delete recvcounts;
+        delete recvoffsets;
     }
 
     // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
