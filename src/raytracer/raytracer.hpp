@@ -82,7 +82,7 @@ namespace _462 {
         
         // each node takes in shadow ray, do local ray tracing, maintain shadow ray
         // hit records, send records to corresponding nodes
-        void mpiStageShadowRayTracing(int procs, int procId);
+        void mpiStageShadowRayTracing(int procs, int procId, unsigned char *buffer, std::vector<Ray> &shadowrays);
         
         // take in every nodes' shadow ray hit records, do local pixel shading.
         void mpiStagePixelShading(int procs, int procId);

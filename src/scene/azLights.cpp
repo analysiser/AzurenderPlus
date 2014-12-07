@@ -39,15 +39,21 @@ namespace _462 {
     
     
     // p and light in world position, need xform in future
-    Color3 PointLight::SampleLight(const Vector3 &p, const Vector3 &normal, float t0, float t1) const
+    Color3 PointLight::SampleLight(const Vector3 &p, const Vector3 &normal, float t0, float t1, Vector3 *sample, float *tl) const
     {
         Vector3 surfP = SamplePointOnLight();//position + ran * radius;
         Vector3 diff  = surfP - p;
         Vector3 diffn = normalize(diff);
-        float tl = diff.x / diffn.x;
+        float tlight = diff.x / diffn.x;
+        if (tl) {
+            *tl = tlight;
+        }
+        if (sample) {
+            *sample = surfP;
+        }
         
         // could sample
-        if (tl > t0 && tl < t1) {
+        if (tlight > t0 && tlight < t1) {
             
             Vector3 l = diffn;
             Vector3 n = normal;
@@ -127,11 +133,19 @@ namespace _462 {
         return true;
     }
     
-    Color3 DistantLight::SampleLight(const Vector3 &/* p */, const Vector3 &normal, float t0, float t1) const
+    Color3 DistantLight::SampleLight(const Vector3 & /*p*/, const Vector3 &normal, float t0, float t1, Vector3 *sample, float *tl) const
     {
-        float tl = 200;
+        // TODO: distant light t
+        float tlight = 200;
+        if (tl) {
+            *tl = tlight;
+        }
+        if (sample) {
+            *sample = position;
+        }
+        
         // visible
-        if (tl > t0 && tl <= t1) {
+        if (tlight > t0 && tlight <= t1) {
             Vector3 l = inversed_direction;
             Vector3 n = normal;
             real_t dot_nl = dot(n, l);

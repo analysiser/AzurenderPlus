@@ -30,7 +30,7 @@ namespace _462 {
         virtual ~Light();
         
         // SampleLight, returns the radiance arriving at point p due to this light
-        virtual Color3 SampleLight(const Vector3 &p, const Vector3 &normal, float t0, float t1) const = 0;
+        virtual Color3 SampleLight(const Vector3 &p, const Vector3 &normal, float t0, float t1, Vector3 *sample, float *tl) const = 0;
         
         // return a sample point on light surface
         virtual Vector3 SamplePointOnLight() const = 0;
@@ -89,7 +89,7 @@ namespace _462 {
         bool initialize() const;
         
         // TODO: add falloff operator
-        Color3 SampleLight(const Vector3 &p, const Vector3 &normal, float t0, float t1) const;
+        Color3 SampleLight(const Vector3 &p, const Vector3 &normal, float t0, float t1, Vector3 *sample, float *tl) const;
         
         // sample a point on light surface
         Vector3 SamplePointOnLight() const;
@@ -124,7 +124,7 @@ namespace _462 {
         
         bool initialize() const;
         
-        Color3 SampleLight(const Vector3 &p, const Vector3 &normal, float t0, float t1) const;
+        Color3 SampleLight(const Vector3 &p, const Vector3 &normal, float t0, float t1, Vector3 *sample, float *tl) const;
         
         // sample a point on light surface
         Vector3 SamplePointOnLight() const;

@@ -35,6 +35,7 @@ namespace _462 {
         
         Color3 color;
         float mint, maxt, time;
+        int lightIndex;
         int x, y;
         int depth;
     };
