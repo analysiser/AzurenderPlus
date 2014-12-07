@@ -1,0 +1,61 @@
+<scene>
+    <camera>
+        <fov v="1.0471975511"/>
+        <near_clip v=".01"/>
+        <far_clip v="100.0"/>
+        <position x="0.0" y="2.0" z="9.2"/>
+        <orientation a="0.0" x="0.0" y="1.0" z="0.0"/>
+    </camera>
+
+    <background_color r="0.0" g="0.0" b="0.0"/>
+
+    <refractive_index v="1.0"/>
+
+    <ambient_light r="0.1" g="0.1" b="0.1"/>
+
+    <point_light>
+        <position x="0.0" y="5.0" z="4.0"/>
+        <color r="0.7" g="0.7" b="0.7"/>
+        <radius v="0.0"/>
+        <intensity v="100.0"/>
+    </point_light>
+
+    <material name="white">
+        <ambient r="0.8" g="0.8" b="0.8"/>
+        <diffuse r="1.0" g="1.0" b="1.0"/>
+        <specular r="0.1" g="0.1" b="0.1"/>
+    </material>
+
+    <mesh name="dragon0" rank="0" filename="models/dragon.obj"/>
+    <mesh name="dragon1" rank="1" filename="models/dragon.obj"/>
+    <mesh name="dragon2" rank="2" filename="models/dragon.obj"/>
+    <mesh name="dragon3" rank="3" filename="models/dragon.obj"/>
+
+    <model material="white" rank="0" mesh="dragon0">
+        <position x="0.0" y="0" z="0.0"/>
+        <scale x="3.0" y="3.0" z="3.0"/>
+        <orientation a="1.4" x="-1.0" y="0.0" z="0.0"/>
+    </model> 
+
+    <model material="white" rank="1" mesh="dragon1">
+        <position x="0.0" y="2" z="-2.0"/>
+        <scale x="3.0" y="3.0" z="3.0"/>
+        <orientation a="1.4" x="-1.0" y="0.0" z="0.0"/>
+    </model>
+
+    <model material="white" rank="2" mesh="dragon2">
+        <position x="0.0" y="4" z="-4.0"/>
+        <scale x="3.0" y="3.0" z="3.0"/>
+        <orientation a="1.4" x="-1.0" y="0.0" z="0.0"/>
+    </model>
+
+    <model material="white" rank="3" mesh="dragon3">
+        <position x="0.0" y="6" z="-6.0"/>
+        <scale x="3.0" y="3.0" z="3.0"/>
+        <orientation a="1.4" x="-1.0" y="0.0" z="0.0"/>
+    </model>
+
+
+
+
+</scene>
