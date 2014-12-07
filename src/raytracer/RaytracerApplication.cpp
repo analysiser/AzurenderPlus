@@ -260,48 +260,88 @@ namespace _462 {
     {
         int num_node;
         MPI_Comm_size(MPI_COMM_WORLD, &num_node);
-        MPI_Datatype AllImg;
-        MPI_Type_contiguous(BUFFER_SIZE(buf_width, buf_height), MPI_UNSIGNED_CHAR, &AllImg);
-        MPI_Type_commit(&AllImg);
+        
+        MPI_Request *requestList = (MPI_Request *)malloc(num_node * sizeof(MPI_Request));
+        MPI_Status *status = (MPI_Status *)malloc(num_node * sizeof(MPI_Status));
         
         unsigned char *rbuf;
-        if (world_rank == 0) {
-            // I am the root
-            rbuf = (unsigned char *)malloc(num_node * BUFFER_SIZE(buf_width, buf_height));
-        }
-        
-        try {
-        int status = MPI_Gather(buffer, BUFFER_SIZE(buf_width, buf_height), MPI_UNSIGNED_CHAR,
-                   rbuf, 1, AllImg,
-                   0, MPI_COMM_WORLD);
-        }
-        catch(int e)
+        // root
+        if (world_rank == 0)
         {
-            printf("%d\n", e);
-        }
-        
-        
-        MPI_Barrier(MPI_COMM_WORLD);
-        
-        // TODO: merge the frame buffer
-        if (world_rank == 0) {
-            int step = buf_width * buf_height;
+            size_t buffersize = BUFFER_SIZE(buf_width, buf_height);
+            rbuf = (unsigned char *)malloc(buffersize * (num_node - 1));
+            for (int i = 1; i < num_node; i++)
+            {
+                MPI_Recv(rbuf + (i - 1) * buffersize, buffersize, MPI_UNSIGNED_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            }
+            
+            // merge buffer
             for (int i = 0; i < buf_width * buf_height; i++) {
-                Color3 color(&rbuf[(i + step)*4]);
-//                for (int j = 1; j < world_rank; j++) {
-//                    Color3 proc_color(&rbuf[(i+j*step) * 4]);
-//                    if (proc_color != Color3::Black()) {
-//                        color = proc_color;
-//                    }
-//                }
-//                real_t co = real_t(1)/real_t(world_rank);
-//                color *= co;
-                color.to_array(&buffer[4 * i]);
+                int count = buffer[i * 4 + 3] == 0 ? 0 : 1;
+                Color3 color = Color3(&buffer[i * 4]);
+                // traverse buffer results from other nodes
+                for (int j = 0; j < num_node - 1; j++) {
+                    int index = j * buffersize + i * 4;
+                    if (rbuf[index + 3] != 0)
+                    {
+                        count += 1;
+                        color += Color3(&rbuf[index]);
+                    }
+                }
+                if (count > 0)
+                {
+                    color *= float(1)/float(count);
+                }
+                color.to_array(&buffer[i*4]);
             }
             
         }
+        // other
+        else
+        {
+            MPI_Send((unsigned char *)buffer, BUFFER_SIZE(buf_width, buf_height), MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
+        }
         
-free(rbuf);
+        
+//        MPI_Datatype AllImg;
+//        MPI_Type_contiguous(BUFFER_SIZE(buf_width, buf_height), MPI_UNSIGNED_CHAR, &AllImg);
+//        MPI_Type_commit(&AllImg);
+//        
+//        unsigned char *rbuf;
+//        if (world_rank == 0) {
+//            // I am the root
+//            rbuf = (unsigned char *)malloc(num_node * BUFFER_SIZE(buf_width, buf_height));
+//        }
+//        
+//
+//        int status = MPI_Gather(buffer, BUFFER_SIZE(buf_width, buf_height), MPI_UNSIGNED_CHAR,
+//                   rbuf, 1, AllImg,
+//                   0, MPI_COMM_WORLD);
+//        
+//
+//        
+//        
+//        MPI_Barrier(MPI_COMM_WORLD);
+        
+        // TODO: merge the frame buffer
+//        if (world_rank == 0) {
+//            int step = buf_width * buf_height;
+//            for (int i = 0; i < buf_width * buf_height; i++) {
+//                Color3 color(&rbuf[(i + step)*4]);
+////                for (int j = 1; j < world_rank; j++) {
+////                    Color3 proc_color(&rbuf[(i+j*step) * 4]);
+////                    if (proc_color != Color3::Black()) {
+////                        color = proc_color;
+////                    }
+////                }
+////                real_t co = real_t(1)/real_t(world_rank);
+////                color *= co;
+//                color.to_array(&buffer[4 * i]);
+//            }
+//            
+//        }
+//        
+//free(rbuf);
         
 
     }
