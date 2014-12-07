@@ -524,16 +524,18 @@ namespace _462 {
         return true;
     }
 
-    bool Raytracer::mpiTrace(unsigned char* buffer, real_t* max_time)
+    bool Raytracer::mpiTrace(unsigned char* buffer, real_t* /*max_time*/)
     {
         std::vector<Ray> eyerays;
+        std::vector<Ray> shadowrays;
         
         // generate and redistribute eye rays through open mpi to different nodes
         mpiStageDistributeEyeRaysWorking(scene->node_size, scene->node_rank, &eyerays);
         
-        // Take in distributed eye rays, do local ray tracing
-        mpiStageLocalRayTracing(scene->node_size, scene->node_rank, eyerays, buffer);
-
+        // Take in distributed eye rays, do local ray tracing, distribute shadow rays to corresponding nodes
+        mpiStageLocalRayTracing(scene->node_size, scene->node_rank, eyerays, &shadowrays);
+        
+        
         mpiStageShadowRayTracing(scene->node_size, scene->node_rank);
 
         mpiStagePixelShading(scene->node_size, scene->node_rank);
@@ -2097,66 +2099,16 @@ namespace _462 {
                         // push ray into node's ray list
                         r.x = x;
                         r.y = y;
+                        r.color = Color3::Black();
+                        r.depth = 2;
                         currentNodeRayList.push_back(node_id, r);
                     }
                 }
             }
         }
         
-        Ray *sendbuf;
-        int *sendcounts;
-        int *sendoffsets;
-        // generate data to send
-        currentNodeRayList.mpi_datagen(&sendbuf, &sendoffsets, &sendcounts);
-        
-        // but first we need to send how many data each node are going to receive
-        int status = -1;
-        int *recvcounts = new int[procs];
-        status = MPI_Alltoall(sendcounts, 1, MPI_INT, recvcounts, 1, MPI_INT, MPI_COMM_WORLD);
-        if (status != 0) {
-            printf("Fail to send and receive ray count info!\n");
-            throw exception();
-        }
-        
-        // Received ray buffer
-        int *recvoffsets = new int[procs];
-        int total = 0;
-        for (int i = 0; i < procs; i++) {
-            recvoffsets[i] = total;
-            total += recvcounts[i];
-        }
-        Ray *recvbuf = new Ray[total];
-        
-        
-        // reset counts, offsets for byte sized send/recv
-        size_t raysize = sizeof(Ray);
-        for (int i = 0; i < procs; i++) {
-            sendcounts[i] *= raysize;
-            sendoffsets[i] *= raysize;
-            
-            recvcounts[i] *= raysize;
-            recvoffsets[i] *= raysize;
-        }
-        
-        // send all rays by MPI alltoallv
-        status = MPI_Alltoallv(sendbuf, sendcounts, sendoffsets, MPI_BYTE, recvbuf, recvcounts, recvoffsets, MPI_BYTE, MPI_COMM_WORLD);
-        if (status != 0) {
-            printf("Fail to send and receive rays!\n");
-            throw exception();
-        }
-        
-        std::vector<Ray> recvRayList(total);
-        std::copy(recvbuf, recvbuf+total, recvRayList.begin());
-        *eyerays = recvRayList;
-        
-        delete sendbuf;
-        delete sendcounts;
-        delete sendoffsets;
-        
-        delete recvbuf;
-        delete recvcounts;
-        delete recvoffsets;
-        
+        // all to all distribute eye rays
+        mpiAlltoallRayDistribution(procs, procId, currentNodeRayList, eyerays);
         
         printf("~mpiStageDistributeEyeRays\n");
     }
@@ -2323,19 +2275,58 @@ namespace _462 {
 
     // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
     // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
-    void Raytracer::mpiStageLocalRayTracing(int procs, int procId, std::vector<Ray> &rays, unsigned char* buffer)
+    void Raytracer::mpiStageLocalRayTracing(int procs, int procId, std::vector<Ray> &eyerays, std::vector<Ray> *shadowRays)
     {
         printf("mpiStageLocalRayTracing\n");
-        for (size_t i = 0; i < rays.size(); i++) {
-            Ray ray = rays[i];
+        
+        // shadow ray list used for shading
+        RayBucket nodeShadowRayList(procs);
+        
+        // for each eye ray
+        for (size_t i = 0; i < eyerays.size(); i++) {
+            Ray ray = eyerays[i];
             bool isHit = false;
             HitRecord record = getClosestHit(ray, EPSILON, INFINITY, &isHit, Layer_All);
             if (isHit) {
-                Color3 c = Color3::Red();
                 
-                c.to_array(&buffer[4 * (ray.y * width + ray.x)]);
+                if (record.diffuse != Color3::Black() && record.refractive_index == 0)
+                {
+                    // for each light
+                    for (size_t i = 0; i < scene->num_lights(); i++) {
+                        
+                        size_t sample_num_per_light = NUM_SAMPLE_PER_LIGHT;
+                        Light *aLight = scene->get_lights()[i];
+                        // TODO: optimize
+                        // shade the hit point color direclty
+                        Color3 shadingColor = record.diffuse * aLight->SampleLight(record.position, record.normal, EPSILON, TMAX);
+                        
+                        // for each light sample
+                        for (size_t j = 0; j < sample_num_per_light; j++)
+                        {
+                            Vector3 d_shadowRay_normolized = aLight->getPointToLightDirection(record.position,
+                                                                                              aLight->SamplePointOnLight());
+                            
+                            Ray shadowRay = Ray(record.position + EPSILON * d_shadowRay_normolized, d_shadowRay_normolized);
+                            shadowRay.x = ray.x;
+                            shadowRay.y = ray.y;
+                            shadowRay.depth = ray.depth - 1;
+                            shadowRay.color = shadingColor;
+                            
+                            // for each node bounding box
+                            for (int bidx = 0; bidx < procs; bidx++) {
+                                BndBox nodeBndBox = scene->nodeBndBox[bidx];
+                                if (nodeBndBox.intersect(shadowRay, EPSILON, TMAX)) {
+                                    nodeShadowRayList.push_back(bidx, shadowRay);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
+        
+        mpiAlltoallRayDistribution(procs, procId, nodeShadowRayList, shadowRays);
+        
         printf("~mpiStageLocalRayTracing\n");
     }
 
@@ -2351,7 +2342,63 @@ namespace _462 {
     {
         // TODO
     }
-
+    
+    void Raytracer::mpiAlltoallRayDistribution(int procs, int /* procId */, RayBucket &inputRayBucket, std::vector<Ray> *outputRayList)
+    {
+        Ray *sendbuf;
+        int *sendcounts;
+        int *sendoffsets;
+        // generate data to send
+        inputRayBucket.mpi_datagen(&sendbuf, &sendoffsets, &sendcounts);
+        
+        // but first we need to send how many data each node are going to receive
+        int status = -1;
+        int *recvcounts = new int[procs];
+        status = MPI_Alltoall(sendcounts, 1, MPI_INT, recvcounts, 1, MPI_INT, MPI_COMM_WORLD);
+        if (status != 0) {
+            printf("Fail to send and receive ray count info!\n");
+            throw exception();
+        }
+        
+        // Received ray buffer
+        int *recvoffsets = new int[procs];
+        int total = 0;
+        for (int i = 0; i < procs; i++) {
+            recvoffsets[i] = total;
+            total += recvcounts[i];
+        }
+        Ray *recvbuf = new Ray[total];
+        
+        
+        // reset counts, offsets for byte sized send/recv
+        size_t raysize = sizeof(Ray);
+        for (int i = 0; i < procs; i++) {
+            sendcounts[i] *= raysize;
+            sendoffsets[i] *= raysize;
+            
+            recvcounts[i] *= raysize;
+            recvoffsets[i] *= raysize;
+        }
+        
+        // send all rays by MPI alltoallv
+        status = MPI_Alltoallv(sendbuf, sendcounts, sendoffsets, MPI_BYTE, recvbuf, recvcounts, recvoffsets, MPI_BYTE, MPI_COMM_WORLD);
+        if (status != 0) {
+            printf("Fail to send and receive rays!\n");
+            throw exception();
+        }
+        
+        std::vector<Ray> recvRayList(total);
+        std::copy(recvbuf, recvbuf+total, recvRayList.begin());
+        *outputRayList = recvRayList;
+        
+        delete sendbuf;
+        delete sendcounts;
+        delete sendoffsets;
+        
+        delete recvbuf;
+        delete recvcounts;
+        delete recvoffsets;
+    }
 
 
 } /* _462 */

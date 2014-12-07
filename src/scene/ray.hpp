@@ -33,6 +33,7 @@ namespace _462 {
         static Vector3 get_pixel_dir(real_t x, real_t y);
         static void init(const Camera& camera);
         
+        Color3 color;
         float mint, maxt, time;
         int x, y;
         int depth;

@@ -18,6 +18,7 @@
 #include "scene/scene.hpp"
 #include "raytracer/Photon.hpp"
 #include "raytracer/Utils.h"
+#include "scene/ray.hpp"
 #include <stack>
 #include <thread>
 
@@ -72,12 +73,12 @@ namespace _462 {
         // each node generate and distribute eye rays to corresponding nodes
         void mpiStageDistributeEyeRays(int procs, int procId, std::vector<Ray> *eyerays);
         
-        //
+        // the working version of eye rays distribution
         void mpiStageDistributeEyeRaysWorking(int procs, int procId, std::vector<Ray> *eyerays);
         
         // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
         // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
-        void mpiStageLocalRayTracing(int procs, int procId, std::vector<Ray> &rays, unsigned char* buffer);
+        void mpiStageLocalRayTracing(int procs, int procId, std::vector<Ray> &eyerays, std::vector<Ray> *shadowRays);
         
         // each node takes in shadow ray, do local ray tracing, maintain shadow ray
         // hit records, send records to corresponding nodes
@@ -85,6 +86,10 @@ namespace _462 {
         
         // take in every nodes' shadow ray hit records, do local pixel shading.
         void mpiStagePixelShading(int procs, int procId);
+        
+        // Helper functions for MPI_Alltoall sending and gathering rays
+        void mpiAlltoallRayDistribution(int procs, int procId, RayBucket &inputRayBucket, std::vector<Ray> *outputRayList);
+
         
 
         // indirect and caustics list for photons to trace
