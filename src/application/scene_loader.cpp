@@ -596,7 +596,7 @@ namespace _462 {
                     int model_rank;
                     // we only parse and load the models we have mesh for
                     parse_attrib_int(elem, true, STR_NODE_RANK, &model_rank);
-                    assert(model_rank < scene->node_size);
+//                    assert(model_rank < scene->node_size);
                     
                     if (model_rank == scene->node_rank) {
                         Model* geom = new Model();
