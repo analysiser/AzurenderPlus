@@ -8,12 +8,15 @@ Project proposal page: http://photonmap.blogspot.com/2014/11/15-869-final-projec
 <h3>Change Logs:</h3>
 
 <strong>11/5/2014</strong>
+
 Removed path tracing code and photon mapping code from original Azurender code base for simplicity. This is the baseline.
 
 <strong>11/6/2014</strong>
+
 Update baseline for the final project. Added azRayPacket class for further working.
 
 <strong>12/2/2014</strong>
+
 Added OPEN MPI Supports. OPEN MPI libs are required. 
 For Mac OSX: Use Homebrew install openmpi
 For Ubuntu:  Use apt-get
@@ -34,6 +37,7 @@ Ideally, you should see:
 
 
 <strong>12/3/2014</strong>
+
 Got multiple machines on GHC running on independent instances simultaneously. To do this, change your .cshrc file, add the following lines for setting up environment variables
 
 <code>setenv PATH "/usr/lib64/openmpi/bin:/usr/local/bin:${PATH}"</code>
@@ -58,4 +62,6 @@ Finished MPI stage for eye ray redistribution, shadow ray distribution and local
 
 <strong>12/7/2014 - 12/8/2014</strong>
 
-Finished node framebuffer merging, refactored original single framebuffer to framebuffer with zbuffer integrated.
+Finished node framebuffer merging, refactored original single framebuffer to framebuffer with zbuffer integrated. Now we have a basic rendered result of piled stanford dragon:
+
+![alt tag](https://raw.githubusercontent.com/analysiser/AzurenderPlus/926acf2de96a1af6fbb6e76fcf38233932d6094d/resources/images/2014120800.png)
