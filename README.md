@@ -45,3 +45,17 @@ Then go to your build directory where the bin file exists, run the ray tracer wi
 
 The two ip addresses are GHC40 and GHC42. <code>-r</code> flag would prevent machines from opening a window, they would instead run the ray tracer on specific scene, and generate two independent png files.
 
+
+<strong>12/4/2014</strong>
+
+Created stanford dragon scene for testing. Added MPI basic interface and integrated data structure for ray redistribution through Open MPI. Refactorting of the matrix, ray class for  distributed ray tracing. Finished the redistribution of MPI nodes bounding boxes.
+
+
+<strong>12/5/2014 - 12/6/2014</strong>
+
+Finished MPI stage for eye ray redistribution, shadow ray distribution and local independent shading. 
+
+
+<strong>12/7/2014 - 12/8/2014</strong>
+
+Finished node framebuffer merging, refactored original single framebuffer to framebuffer with zbuffer integrated.
