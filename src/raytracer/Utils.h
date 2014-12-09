@@ -60,7 +60,7 @@ struct FrameBuffer
     {
         assert(width > 0 && height > 0);
         cbuffer = (unsigned char *)malloc(BUFFER_SIZE(width, height));
-        zbuffer = (float *)malloc(width * height * sizeof(float));
+        zbuffer = new float[width * height];
     }
     
     void dealloc()
@@ -83,7 +83,7 @@ struct FrameBuffer
     void cleanbuffer(int width, int height)
     {
         memset((unsigned char *)cbuffer, 0, BUFFER_SIZE(width, height));
-        memset((float *)zbuffer, FLT_MAX, width * height * sizeof(float));
+        std::fill_n((float *)zbuffer, width * height, 200);
     }
 };
 

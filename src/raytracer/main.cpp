@@ -193,6 +193,7 @@ int main(int argc, char* argv[])
         }
         assert( app.buffer.isready() );
         
+        app.buffer.cleanbuffer(opt.width, opt.height);
         // raytrace until done
 //        app.raytracer.raytrace( app.buffer, 0);
         app.raytracer.mpiTrace( app.buffer, 0 );

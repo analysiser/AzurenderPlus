@@ -309,26 +309,24 @@ namespace _462 {
             
             // TODO: make it clearer
             for (int i = 0; i < buf_width * buf_height; i++) {
-                float zmin = zbuf[i];
+                float zmin = buffer.zbuffer[i];
                 int rank = 0;
                 for (int j = 1; j < num_node; j++) {
+                    int zbufidx = j * buf_width * buf_height + i;
                     int rbufidx = j * buffersize + i * 4;
-                    if (rbuf[rbufidx + 3] != 0)
+
+                    float zj = zbuf[zbufidx];
+                    if (zj < zmin )
                     {
-//                        rank = j;
-//                        break;
-                        float zj = zbuf[i + j * buf_width * buf_height];
-                        if (zj < zmin )
-                        {
-                            rank = j;
-                            zmin = zj;
-                        }
+                        rank = j;
+                        zmin = zj;
                     }
                 }
             
                 int copyFromIndex = rank * buffersize + i * 4;
                 Color3 color = Color3(&rbuf[copyFromIndex]);
-                std::copy_n(&rbuf[copyFromIndex], 4, buffer.cbuffer + i * 4);
+                color.to_array(&buffer.cbuffer[i*4]);
+//                std::copy_n(&rbuf[copyFromIndex], 4, buffer.cbuffer + i * 4);
             }
         }
         // other

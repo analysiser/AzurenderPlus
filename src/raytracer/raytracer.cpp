@@ -2191,14 +2191,19 @@ namespace _462 {
             bool isHit = false;
             HitRecord shadowRecord = getClosestHit(ray, EPSILON, ray.maxt, &isHit, (Layer_IgnoreShadowRay));
             // TODO: path tracing shading
-            Color3 color = isHit ? Color3::Black() : ray.color;
+//            Color3 color = isHit ? Color3::Black() : ray.color;
             int x = ray.x;
             int y = ray.y;
-            raytraceColorBuffer[(y * width + x)] += color;
-            Color3 progressiveColor = raytraceColorBuffer[(y * width + x)] * ((1.0)/(num_iteration));
-            progressiveColor = clamp(progressiveColor, 0.0, 1.0);
-            progressiveColor.to_array(&buffer.cbuffer[4 * (y * width + x)]);
-            buffer.zbuffer[y * width + x] = ray.time;
+//            raytraceColorBuffer[(y * width + x)] += color;
+//            Color3 progressiveColor = raytraceColorBuffer[(y * width + x)] * ((1.0)/(num_iteration));
+//            progressiveColor = clamp(progressiveColor, 0.0, 1.0);
+//            progressiveColor.to_array(&buffer.cbuffer[4 * (y * width + x)]);
+            if (ray.time < buffer.zbuffer[y * width + x]) {
+                ray.color.to_array(&buffer.cbuffer[4 * (y * width + x)]);
+                buffer.zbuffer[y * width + x] = ray.time;
+            }
+            
+            
         }
         
         printf("~mpiStageShadowRayTracing\n");
