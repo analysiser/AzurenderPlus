@@ -529,13 +529,26 @@ namespace _462 {
         std::vector<Ray> eyerays;
         std::vector<Ray> shadowrays;
         
+        double start, end;
         // generate and redistribute eye rays through open mpi to different nodes
+        start = MPI_Wtime();
         mpiStageDistributeEyeRays(scene->node_size, scene->node_rank, &eyerays);
-        
+        end = MPI_Wtime();
+
+        printf("[thread %d] Distribute eye ray state took %f sec\n", scene->node_rank, end - start);
+
         // Take in distributed eye rays, do local ray tracing, distribute shadow rays to corresponding nodes
+        start = MPI_Wtime();
         mpiStageLocalRayTracing(scene->node_size, scene->node_rank, eyerays, &shadowrays);
-        
+        end = MPI_Wtime();
+
+        printf("[thread %d] LocalRayTracing state took %f sec\n", scene->node_rank, end - start);
+
+        start = MPI_Wtime();
         mpiStageShadowRayTracing(scene->node_size, scene->node_rank, buffer, shadowrays);
+        end = MPI_Wtime();
+
+        printf("[thread %d] Shadow state took %f sec\n", scene->node_rank, end - start);
 
         mpiStagePixelShading(scene->node_size, scene->node_rank);
 
@@ -2074,7 +2087,6 @@ namespace _462 {
     
     void Raytracer::mpiStageDistributeEyeRays(int procs, int procId, std::vector<Ray> *eyerays)
     {
-        printf("mpiStageDistributeEyeRays called by %d\n", procId);
         int wstep = width / scene->node_size;
         int hstep = height;
         real_t dx = real_t(1)/width;
@@ -2110,15 +2122,12 @@ namespace _462 {
         // all to all distribute eye rays
         mpiAlltoallRayDistribution(procs, procId, currentNodeRayList, eyerays);
         
-        printf("~mpiStageDistributeEyeRays\n");
     }
     
     // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
     // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
     void Raytracer::mpiStageLocalRayTracing(int procs, int procId, std::vector<Ray> &eyerays, std::vector<Ray> *shadowRays)
     {
-        printf("mpiStageLocalRayTracing\n");
-        
         // shadow ray list used for shading
         RayBucket nodeShadowRayList(procs);
         
@@ -2174,15 +2183,12 @@ namespace _462 {
         }
         
         mpiAlltoallRayDistribution(procs, procId, nodeShadowRayList, shadowRays);
-        
-        printf("~mpiStageLocalRayTracing\n");
     }
 
     // each node takes in shadow ray, do local ray tracing, maintain shadow ray
     // hit records, send records to corresponding nodes
     void Raytracer::mpiStageShadowRayTracing(int procs, int procId, FrameBuffer &buffer, std::vector<Ray> &shadowrays)
     {
-        printf("mpiStageShadowRayTracing\n");
         
         for (size_t i = 0; i < shadowrays.size(); i++)
         {
@@ -2206,7 +2212,6 @@ namespace _462 {
             
         }
         
-        printf("~mpiStageShadowRayTracing\n");
     }
 
     // take in every nodes' shadow ray hit records, do local pixel shading.
