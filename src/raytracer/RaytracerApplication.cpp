@@ -96,10 +96,10 @@ namespace _462 {
         if ( raytracing ) {
             // do part of the raytrace
             if ( !raytrace_finished ) {
-                assert( buffer );
+                assert( buffer.cbuffer );
                 //                printf("delta time = %f\n",delta_time);
                 //                raytrace_finished = raytracer.raytrace( buffer, nullptr );
-                raytrace_finished = raytracer.raytrace( buffer, &delta_time );
+                raytrace_finished = raytracer.raytrace( buffer.cbuffer, &delta_time );
                 //                raytrace_finished = raytracer.PacketizedRayTrace( buffer );
             }
             
@@ -133,11 +133,12 @@ namespace _462 {
         
         if ( raytracing ) {
             // if raytracing, just display the buffer
-            assert( buffer );
+            assert( buffer.cbuffer );
+            assert( buffer.zbuffer );
             glColor4d( 1.0, 1.0, 1.0, 1.0 );
             glRasterPos2f( -1.0f, -1.0f );
             glDrawPixels( buf_width, buf_height, GL_RGBA,
-                         GL_UNSIGNED_BYTE, &buffer[0] );
+                         GL_UNSIGNED_BYTE, &buffer.cbuffer[0] );
             
         } else {
             // else, render the scene using opengl
@@ -188,9 +189,12 @@ namespace _462 {
             // only re-allocate if the dimensions changed
             if ( buf_width != width || buf_height != height )
             {
-                free( buffer );
-                buffer = (unsigned char*) malloc( BUFFER_SIZE( width, height ) );
-                if ( !buffer ) {
+//                free( buffer );
+//                buffer = (unsigned char*) malloc( BUFFER_SIZE( width, height ) );
+                buffer.dealloc();
+                // TODO: need dealloc first
+                buffer.alloc(width, height);
+                if ( !buffer.isready() ) {
                     std::cout << "Unable to allocate buffer.\n";
                     return; // leave untoggled since we have no buffer.
                 }
@@ -213,7 +217,7 @@ namespace _462 {
         else
         {
             // clean buffer
-            memset((unsigned char *)buffer, 0, BUFFER_SIZE(width, height));
+            buffer.cleanbuffer(width, height);
         }
         
         raytracing = !raytracing;
@@ -225,7 +229,7 @@ namespace _462 {
         const char* filename;
         char buf[MAX_LEN];
         
-        if ( !buffer ) {
+        if ( !buffer.isready() ) {
             std::cout << "No image to output.\n";
             return;
         }
@@ -246,7 +250,7 @@ namespace _462 {
             filename = tmp.c_str();
         }
         
-        if (imageio_save_image(filename, buffer, buf_width, buf_height))
+        if (imageio_save_image(filename, buffer.cbuffer, buf_width, buf_height))
         {
             std::cout << "Saved raytraced image to '" << filename << "'.\n";
         } else {
@@ -261,45 +265,77 @@ namespace _462 {
         int num_node;
         MPI_Comm_size(MPI_COMM_WORLD, &num_node);
         
-        MPI_Request *requestList = (MPI_Request *)malloc(num_node * sizeof(MPI_Request));
-        MPI_Status *status = (MPI_Status *)malloc(num_node * sizeof(MPI_Status));
+//        MPI_Request *requestList = (MPI_Request *)malloc(num_node * sizeof(MPI_Request));
+//        MPI_Status *status = (MPI_Status *)malloc(num_node * sizeof(MPI_Status));
         
         unsigned char *rbuf;
+        float *zbuf;
         // root
         if (world_rank == 0)
         {
             size_t buffersize = BUFFER_SIZE(buf_width, buf_height);
-            rbuf = (unsigned char *)malloc(buffersize * (num_node - 1));
+            
+            rbuf = (unsigned char *)malloc(buffersize * (num_node));
+            zbuf = (float *)malloc(buffersize * (num_node));
+            
             for (int i = 1; i < num_node; i++)
             {
-                MPI_Recv(rbuf + (i - 1) * buffersize, buffersize, MPI_UNSIGNED_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(rbuf + (i) * buffersize, buffersize, MPI_UNSIGNED_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(zbuf + (i) * buf_width * buf_height, buf_width * buf_height, MPI_FLOAT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
+            
+            std::copy_n(buffer.cbuffer, buffersize, rbuf);
+            std::copy_n(buffer.zbuffer, buf_width * buf_height, zbuf);
             
             // merge buffer
+//            for (int i = 0; i < buf_width * buf_height; i++) {
+//                int count = buffer.cbuffer[i * 4 + 3] == 0 ? 0 : 1;
+//                Color3 color = Color3(&buffer.cbuffer[i * 4]);
+//                // traverse buffer results from other nodes
+//                for (int j = 1; j < num_node; j++) {
+//                    int index = j * buffersize + i * 4;
+//                    if (rbuf[index + 3] != 0)
+//                    {
+//                        count += 1;
+//                        color += Color3(&rbuf[index]);
+//                    }
+//                }
+//                if (count > 0)
+//                {
+//                    color *= float(1)/float(count);
+//                }
+//                color.to_array(&buffer.cbuffer[i*4]);
+//            }
+            
+            // TODO: make it clearer
             for (int i = 0; i < buf_width * buf_height; i++) {
-                int count = buffer[i * 4 + 3] == 0 ? 0 : 1;
-                Color3 color = Color3(&buffer[i * 4]);
-                // traverse buffer results from other nodes
-                for (int j = 0; j < num_node - 1; j++) {
-                    int index = j * buffersize + i * 4;
-                    if (rbuf[index + 3] != 0)
+                float zmin = zbuf[i];
+                int rank = 0;
+                for (int j = 1; j < num_node; j++) {
+                    int rbufidx = j * buffersize + i * 4;
+                    if (rbuf[rbufidx + 3] != 0)
                     {
-                        count += 1;
-                        color += Color3(&rbuf[index]);
+//                        rank = j;
+//                        break;
+                        float zj = zbuf[i + j * buf_width * buf_height];
+                        if (zj < zmin )
+                        {
+                            rank = j;
+                            zmin = zj;
+                        }
                     }
                 }
-                if (count > 0)
-                {
-                    color *= float(1)/float(count);
-                }
-                color.to_array(&buffer[i*4]);
-            }
             
+                int copyFromIndex = rank * buffersize + i * 4;
+                Color3 color = Color3(&rbuf[copyFromIndex]);
+                std::copy_n(&rbuf[copyFromIndex], 4, buffer.cbuffer + i * 4);
+            }
         }
         // other
         else
         {
-            MPI_Send((unsigned char *)buffer, BUFFER_SIZE(buf_width, buf_height), MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
+            MPI_Send((unsigned char *)buffer.cbuffer, BUFFER_SIZE(buf_width, buf_height), MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
+            MPI_Send((float *)buffer.zbuffer, buf_width * buf_height, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
         }
         
         

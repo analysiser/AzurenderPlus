@@ -48,7 +48,7 @@ namespace _462 {
 
 
     class Scene;
-    class Ray;
+    struct Ray;
     struct Intersection;
 
     class Raytracer
@@ -63,8 +63,11 @@ namespace _462 {
                         size_t width, size_t height);
 
         bool PacketizedRayTrace(unsigned char* buffer);
+        
         bool raytrace(unsigned char* buffer, real_t* max_time);
-        bool mpiTrace(unsigned char* buffer, real_t* max_time);
+        
+        
+        bool mpiTrace(FrameBuffer &buffer, real_t* max_time);
         
         // Open MPI stages:
         // synchronize root bounding boxes of all nodes
@@ -73,16 +76,13 @@ namespace _462 {
         // each node generate and distribute eye rays to corresponding nodes
         void mpiStageDistributeEyeRays(int procs, int procId, std::vector<Ray> *eyerays);
         
-        // the working version of eye rays distribution
-        void mpiStageDistributeEyeRaysWorking(int procs, int procId, std::vector<Ray> *eyerays);
-        
         // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
         // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
         void mpiStageLocalRayTracing(int procs, int procId, std::vector<Ray> &eyerays, std::vector<Ray> *shadowRays);
         
         // each node takes in shadow ray, do local ray tracing, maintain shadow ray
         // hit records, send records to corresponding nodes
-        void mpiStageShadowRayTracing(int procs, int procId, unsigned char *buffer, std::vector<Ray> &shadowrays);
+        void mpiStageShadowRayTracing(int procs, int procId, FrameBuffer &buffer, std::vector<Ray> &shadowrays);
         
         // take in every nodes' shadow ray hit records, do local pixel shading.
         void mpiStagePixelShading(int procs, int procId);

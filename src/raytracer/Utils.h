@@ -8,6 +8,11 @@
 
 //#include <stdio.h>
 
+#ifndef AZ_UTILS_H
+#define AZ_UTILS_H
+
+#define BUFFER_SIZE(w,h) ( (size_t) ( 4 * (w) * (h) ) )
+
 struct cPhoton
 {
 	/* data */
@@ -36,3 +41,50 @@ struct KDNode
     KDNode *left;
     KDNode *right;
 };
+
+/*!
+ * Struct of framebuffer
+ */
+struct FrameBuffer
+{
+    unsigned char *cbuffer; // Color buffer rgba
+    float *zbuffer;         // Z buffer
+    
+    void init()
+    {
+        cbuffer = nullptr;
+        zbuffer = nullptr;
+    }
+    
+    void alloc(int width, int height)
+    {
+        assert(width > 0 && height > 0);
+        cbuffer = (unsigned char *)malloc(BUFFER_SIZE(width, height));
+        zbuffer = (float *)malloc(width * height * sizeof(float));
+    }
+    
+    void dealloc()
+    {
+        if (cbuffer)
+        {
+            free(cbuffer);
+        }
+        if (zbuffer)
+        {
+            free(zbuffer);
+        }
+    }
+    
+    bool isready()
+    {
+        return (cbuffer && zbuffer);
+    }
+    
+    void cleanbuffer(int width, int height)
+    {
+        memset((unsigned char *)cbuffer, 0, BUFFER_SIZE(width, height));
+        memset((float *)zbuffer, FLT_MAX, width * height * sizeof(float));
+    }
+};
+
+#endif

@@ -6,6 +6,7 @@
 #include "application/opengl.hpp"
 #include "scene/scene.hpp"
 #include "raytracer/raytracer.hpp"
+#include "raytracer/Utils.h"
 
 #ifdef __APPLE__
 #include <GLKit/GLKMath.h>
@@ -25,8 +26,6 @@ namespace _462 {
 
 #define DEFAULT_WIDTH 800
 #define DEFAULT_HEIGHT 600
-
-#define BUFFER_SIZE(w,h) ( (size_t) ( 4 * (w) * (h) ) )
 
 #define KEY_RAYTRACE SDLK_r
 #define KEY_SCREENSHOT SDLK_f
@@ -58,14 +57,15 @@ namespace _462 {
         int width, height;
         int num_samples;
     };
+    
     class RaytracerApplication : public Application
     {
     public:
 
         RaytracerApplication( const Options& opt )
-        : options( opt ), buffer( 0 ), buf_width( 0 ),
-        buf_height( 0 ), raytracing( false ) { }
-        virtual ~RaytracerApplication() { free( buffer ); }
+        : options( opt ), buf_width( 0 ),
+        buf_height( 0 ), raytracing( false ) { buffer.init(); }
+        virtual ~RaytracerApplication() { buffer.dealloc(); }
 
         virtual bool initialize();
         virtual void destroy();
@@ -90,7 +90,7 @@ namespace _462 {
         CameraRoamControl camera_control;
 
         // the image buffer for raytracing
-        unsigned char* buffer;
+        FrameBuffer buffer;
         // width and height of the buffer
         int buf_width, buf_height;
         // true if we are in raytrace mode.

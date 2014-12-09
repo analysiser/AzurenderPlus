@@ -21,7 +21,7 @@
 
 namespace _462 {
 
-    class Ray;
+    struct Ray;
     class Matrix4;
 
     class BndBox

@@ -191,10 +191,11 @@ int main(int argc, char* argv[])
         if ( !app.raytracing ) {
             return 1; // some error occurred
         }
-        assert( app.buffer );
+        assert( app.buffer.isready() );
+        
         // raytrace until done
 //        app.raytracer.raytrace( app.buffer, 0);
-        app.raytracer.mpiTrace(app.buffer, 0);
+        app.raytracer.mpiTrace( app.buffer, 0 );
 
         MPI_Barrier(MPI_COMM_WORLD);
 
