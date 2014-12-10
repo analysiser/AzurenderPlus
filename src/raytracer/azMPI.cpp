@@ -1,11 +1,15 @@
 #include "azMPI.hpp"
 
 namespace _462 {
-    
-    void azMPI::mpiPathTrace()
+
+  void azMPI::mpiPathTrace()
+  {
+    if (procId == 0)
     {
-        // TODO
-        
+      std::vector<Ray> ray_list;
+      
     }
-    
+
+  }
+
 }
