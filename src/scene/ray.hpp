@@ -45,7 +45,8 @@ namespace _462 {
         float mint, maxt, time;
         int x, y;
         int depth;
-        int source;
+        int dest;
+        int count;
         ERayType raytype;
     };
     

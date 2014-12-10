@@ -21,6 +21,7 @@
 #include "scene/ray.hpp"
 #include <stack>
 #include <thread>
+#include <unordered_map>
 
 #include "ray_list.hpp"
 
@@ -94,8 +95,8 @@ namespace _462 {
         void mpiAlltoallRayDistribution(int procs, int procId, RayBucket &inputRayBucket, std::vector<Ray> *outputRayList);
 
         
-        void mpiGenerateEyeRay(int procs, int procId);
-        void mpiProcessEyeRay(int procs, int procId, Ray &ray);
+        void mpiGenerateEyeRay(int procs, int procId, vector<Ray> *outputRayList);
+        void mpiProcessEyeRay(int procs, int procId, vector<Ray> &eyerays);
         void mpiProcessShadowRay(int procs, int procId, Ray &ray);
         void mpiProcessDiffuseRay(int procs, int procId, Ray &ray);
         void mpiProcessLastRay(int procs, int procId, Ray &ray);

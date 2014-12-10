@@ -2281,131 +2281,212 @@ namespace _462 {
         int procs = scene->node_size;
         int procId = scene->node_rank;
         
+        // master node send out all eye rays
+        std::vector<Ray> eyerays;
+        mpiGenerateEyeRay(procs, procId, &eyerays);
+        
+        // all nodes do local ray tracing, not shading, until they got all information needed
+        
+        return true;
+    }
+    
+    void Raytracer::mpiGenerateEyeRay(int procs, int procId, vector<Ray> *outputRayList)
+    {
+        // prepare data to send
+        Ray *cRayList = nullptr;
+        int *cRayDisp = nullptr;
+        int *cRayCount = nullptr;
+        
         // 1. master node generate all eye rays
         if (procId == 0) {
-            int wstep = width / scene->node_size;
-            int hstep = height;
+            
+            unordered_map<int, vector<Ray> > raymap;
+            
             real_t dx = real_t(1)/width;
             real_t dy = real_t(1)/height;
             
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < width; x++) {
+            for (size_t y = 0; y < height; y++) {
+                for (size_t x = 0; x < width; x++) {
                     real_t i = real_t(2)*(real_t(x)+random())*dx - real_t(1);
                     real_t j = real_t(2)*(real_t(y)+random())*dy - real_t(1);
+                    
+                    int key = y * width + x;
                     
                     Ray r = Ray(scene->camera.get_position(), Ray::get_pixel_dir(i, j));
                     r.x = x;
                     r.y = y;
                     r.color = Color3::Black();
                     r.depth = 2;
-                    r.source = procId;
-                }
-            }
-            
-        }
-        // 1. slave nodes recv its eye rays
-        else {
-            
-        }
-        std::vector<Ray> eyerays;
-        
-//        mpiGenerateEyeRay(procs, procId);
-//        
-//        MPI_Status status;
-//        while (1) {
-//            
-//            MPI_Request req;
-//            Ray ray;
-//            MPI_Irecv(&ray, sizeof(Ray), MPI_BYTE, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &req);
-//            MPI_Wait(&req, MPI_STATUS_IGNORE);
-//            
-//            if (ray.raytype == eRayType_EyeRay) {
-//                mpiProcessEyeRay(procs, procId, ray);
-//            }
-//            else if (ray.raytype == eRayType_ShadowRay) {
-//                
-//            }
-//            else if (ray.raytype == eRayType_DiffuseRay) {
-//                
-//            }
-//            else if (ray.raytype == eRayType_LastRay) {
-//                break;
-//            }
-//        }
-        
-        
-        return true;
-    }
-    
-    void Raytracer::mpiGenerateEyeRay(int procs, int procId)
-    {
-        int wstep = width / scene->node_size;
-        int hstep = height;
-        real_t dx = real_t(1)/width;
-        real_t dy = real_t(1)/height;
-        
-        // node ray list to send out rays
-//        RayBucket currentNodeRayList(procs);
-        
-        // Generate all eye rays in screen region, bin them
-        for (int y = 0; y < hstep; y++) {
-            for (int x = wstep * procId; x < wstep * (procId + 1); x++) {
-                
-                // pick a point within the pixel boundaries to fire our
-                // ray through.
-                real_t i = real_t(2)*(real_t(x)+random())*dx - real_t(1);
-                real_t j = real_t(2)*(real_t(y)+random())*dy - real_t(1);
-                
-                Ray r = Ray(scene->camera.get_position(), Ray::get_pixel_dir(i, j));
-                r.x = x;
-                r.y = y;
-                r.color = Color3::Black();
-                r.depth = 2;
-                r.source = procId;
-                
-//                MPI_Request *request = (MPI_Request *)malloc((procs) * sizeof(MPI_Request));
-                MPI_Request req;
-                
-                if (scene->nodeBndBox[procId].intersect(r, EPSILON, TMAX)) {
-                    MPI_Isend(&r, sizeof(Ray), MPI_BYTE, procId, 0, MPI_COMM_WORLD, &req);
-                }
-                else
-                {
-                    for (int node_id = 0; node_id < procs; node_id++) {
-                        if (node_id == procId)  continue;
-                        BndBox nodeBBox = scene->nodeBndBox[node_id];
-                        if (nodeBBox.intersect(r, EPSILON, TMAX)) {
-                            // push ray into node's ray list
-                            r.x = x;
-                            r.y = y;
-                            r.color = Color3::Black();
-                            r.depth = 2;
-                            MPI_Isend(&r, sizeof(Ray), MPI_BYTE, node_id, 0, MPI_COMM_WORLD, &req);
+                    
+                    
+                    for (int bndidx = 0; bndidx < procs; bndidx++) {
+                        if (scene->nodeBndBox[bndidx].intersect(r, EPSILON, TMAX))
+                        {
+                            r.dest = bndidx;
+                            // put in map
+                            auto it = raymap.find(key);
+                            if (it == raymap.end())
+                            {
+                                // not found
+                                vector<Ray> raylist;
+                                raylist.push_back(r);
+                                raymap.insert(pair<int, vector<Ray> >(key, raylist));
+                            }
+                            else {
+                                // found
+                                it->second.push_back(r);
+                            }
                         }
                     }
                 }
             }
+            
+            RayBucket raysToSend(procs);
+            // send eye rays to all nodes
+            for (auto it = raymap.begin(); it != raymap.end(); it++) {
+                size_t count = it->second.size();
+                for (size_t i = 0; i < count; i++) {
+                    Ray rayToSend = it->second[i];
+                    rayToSend.count = count;
+                    raysToSend.push_back(rayToSend.dest, rayToSend);
+                }
+            }
+            
+            raysToSend.mpi_datagen(&cRayList, &cRayDisp, &cRayCount);
         }
+        
+        // for all nodes, scatter from root
+        // but first we need to send how many data each node are going to receive
+        int status = -1;
+        int recvcount;
 
+        status = MPI_Scatter(cRayCount, 1, MPI_INT, &recvcount, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        if (status != 0) {
+            printf("Fail to send and receive ray count info!\n");
+            throw exception();
+        }
+        
+        // Received ray buffer
+        Ray *recvbuf = nullptr;
+        if (procId != 0)
+        {
+            recvbuf = new Ray[recvcount];
+        }
+        // reset counts, offsets for byte sized send/recv
+        size_t raysize = sizeof(Ray);
+        for (int i = 0; i < procs; i++) {
+            cRayCount[i] *= raysize;
+            cRayDisp[i] *= raysize;
+        }
+        recvcount *= raysize;
+        
+        status = MPI_Scatterv(cRayList, cRayCount, cRayDisp, MPI_BYTE, recvbuf, recvcount, MPI_BYTE, 0, MPI_COMM_WORLD);
+        
+        recvcount/=raysize;
+        std::vector<Ray> recvRayList(recvcount);
+        std::copy(recvbuf, recvbuf+recvcount, recvRayList.begin());
+        *outputRayList = recvRayList;
+        
     }
     
-    void Raytracer::mpiProcessEyeRay(int procs, int procId, Ray &ray)
+    void Raytracer::mpiProcessEyeRay(int procs, int procId, vector<Ray> &eyerays)
     {
-        // TODO
-        bool isHit = false;
-        HitRecord record = getClosestHit(ray, EPSILON, INFINITY, &isHit, Layer_All);
-        if (isHit)
+        vector<Ray> raysSendToMaster;
+        // for all slave nodes
+        if (procId != 0)
         {
-            if (record.diffuse != Color3::Black() && record.refractive_index == 0)
-            {
-                int x = ray.x;
-                int y = ray.y;
-                Color3 color = Color3::Red();
+            for (int i = 0; i < eyerays.size(); i++) {
+                Ray ray = eyerays[i];
+                bool isHit = false;
+                HitRecord record = getClosestHit(ray, EPSILON, INFINITY, &isHit, Layer_All);
                 
-//                color.to_array(&buffer.cbuffer[4 * (y * width + x)]);
-//                buffer.zbuffer[y * width + x] = 1;
+                if (isHit)
+                {
+                    // ray hits more than 1 nodes
+                    if (ray.count > 1)
+                    {
+                        ray.maxt = record.t;
+                        raysSendToMaster.push_back(ray);
+                    }
+                    // ray only hits current node
+                    else
+                    {
+                        if (record.diffuse != Color3::Black() && record.refractive_index == 0)
+                        {
+                            int x = ray.x;
+                            int y = ray.y;
+                            Color3 color = Color3::Red();
+                            // TODO: shade
+//                            color.to_array(&buffer.cbuffer[4 * (y * width + x)]);
+//                            buffer.zbuffer[y * width + x] = 1;
+                        }
+
+                    }
+                }
             }
         }
+        
+        // master gather all rays needed to be sent
+        int *cRayCount = nullptr;
+        int *cRayDisps = nullptr;
+        
+        if (procId == 0) {
+            
+            cRayCount = new int[procs];
+            cRayDisps = new int[procs];
+            cRayDisps[0] = 0;
+        }
+        int sendcount = raysSendToMaster.size();
+        // first we need to let master know how many elements to receive
+        MPI_Gather(&sendcount, 1, MPI_INT, cRayCount, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        
+        int total = 0;
+        if (procId == 0) {
+            for (int i = 0; i < procs; i++) {
+                cRayDisps[i] = total;
+                total += cRayCount[i];
+            }
+        }
+        
+        Ray *rayRecvs = nullptr;
+        int raysize = sizeof(Ray);
+        
+        if (procId == 0)
+        {
+            rayRecvs = new Ray[total];
+            for (int i = 0; i < procs; i++) {
+                cRayDisps[i] *= raysize;
+                cRayCount[i] *= raysize;
+            }
+        }
+        
+        Ray *sendbuf = nullptr;
+        if (procId != 0)
+        {
+            sendbuf = new Ray[sendcount];
+            std::copy(raysSendToMaster.begin(), raysSendToMaster.end(), sendbuf);
+        }
+        
+        MPI_Gatherv(sendbuf, total * raysize, MPI_BYTE, rayRecvs, cRayCount, cRayDisps, MPI_BYTE, 0, MPI_COMM_WORLD);
+        
+        unordered_map<int, pair<float, int> > masterRayMap;
+        for (int i = 0; i < total; i++)
+        {
+            Ray aray = rayRecvs[i];
+            int key = aray.y * width + aray.x;
+            auto it = masterRayMap.find(key);
+            if (it == masterRayMap.end())
+            {
+                masterRayMap.insert(pair<int, pair<float, int> >(key, pair<float, int>(aray.maxt, aray.dest)));
+            }
+            else
+            {
+                if (aray.maxt < it->second.first) {
+                    masterRayMap.insert(pair<int, pair<float, int> >(key, pair<float, int>(aray.maxt, aray.dest)));
+                }
+            }
+        }
+        
     }
     void Raytracer::mpiProcessShadowRay(int procs, int procId, Ray &ray)
     {
