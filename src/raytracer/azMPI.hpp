@@ -24,52 +24,52 @@
 #include <iostream>
 
 namespace _462 {
-    
-    class azMPI {
-        
+
+  class azMPI {
+
     public:
-        
-        azMPI() {}
-        azMPI(Scene *aScene, FrameBuffer *buffer) : raytracer(aScene, buffer) {
-            
-            scene = aScene;
-            framebuffer = buffer;
-            
-            procs = scene->node_size;
-            procId = scene->node_rank;
-            
-        }
-        
-        void mpiPathTrace();
-        
-        // generate eye ray
-        
-        // distribute eye ray
-        
-        // send ray, TODO: send count
-        
-        // recv rays, TODO: recv count
-        // if recv eye ray, shade, generate shadow ray, send, generate gi ray, send
-        // if shadow ray, call update framebuffer
-        
-        // check if end
-        bool isFinish();
-        
-        
-        
-        
+
+      azMPI() {}
+      azMPI(Scene *aScene, FrameBuffer *buffer) : raytracer(aScene, buffer) {
+
+        scene = aScene;
+        framebuffer = buffer;
+
+        procs = scene->node_size;
+        procId = scene->node_rank;
+
+      }
+
+      void mpiPathTrace();
+
+      // generate eye ray
+
+      // distribute eye ray
+
+      // send ray, TODO: send count
+
+      // recv rays, TODO: recv count
+      // if recv eye ray, shade, generate shadow ray, send, generate gi ray, send
+      // if shadow ray, call update framebuffer
+
+      // check if end
+      bool isFinish();
+
+
+
+
     private:
-        // the scene to trace
-        Scene* scene;
-        FrameBuffer *framebuffer;
-        
-        azMPIRaytrace raytracer;
-        
-        int procs;
-        int procId;
-        
-    };
-    
+      // the scene to trace
+      Scene* scene;
+      FrameBuffer *framebuffer;
+
+      azMPIRaytrace raytracer;
+
+      int procs;
+      int procId;
+
+  };
+
 }
 
 
