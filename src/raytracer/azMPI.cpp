@@ -5,6 +5,7 @@ namespace _462 {
     void azMPI::mpiPathTrace()
     {
         // TODO
+        
     }
     
 }
