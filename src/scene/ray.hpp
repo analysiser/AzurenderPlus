@@ -16,6 +16,14 @@ namespace _462 {
     
     using namespace std;
     
+    enum ERayType
+    {
+        ERayType_Eye = 0,
+        ERayType_Shadow = 1,
+        ERayType_GI = 2,
+        
+    };
+    
     struct Ray
     {
         
@@ -35,9 +43,9 @@ namespace _462 {
         
         Color3 color;
         float mint, maxt, time;
-        int lightIndex;
         int x, y;
         int depth;
+        ERayType type;
     };
     
     typedef std::vector<std::vector<Ray> > NodeRayVector;
