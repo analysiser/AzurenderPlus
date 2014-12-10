@@ -14,6 +14,7 @@
 #include "scene/sphere.hpp"
 
 #include "utils/Parallel.h"
+#include "Utils.h"
 #include <mpi.h>
 
 #include <SDL_timer.h>
@@ -25,11 +26,17 @@ namespace _462 {
     public:
         
         azMPI() {}
-        azMPI(Scene *aScene) { scene = aScene; }
+        azMPI(Scene *aScene, FrameBuffer *buffer) {
+            scene = aScene;
+            framebuffer = buffer;
+        }
+        
+        void mpiPathTrace();
         
     private:
         // the scene to trace
         Scene* scene;
+        FrameBuffer *framebuffer;
         
     };
 }

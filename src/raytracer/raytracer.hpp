@@ -69,6 +69,9 @@ namespace _462 {
         
         bool mpiTrace(FrameBuffer &buffer, real_t* max_time);
         
+        
+        bool mpiPathTrace(FrameBuffer &buffer);
+        
         // Open MPI stages:
         // synchronize root bounding boxes of all nodes
         void mpiStageNodeBoundingBox(int procs, int procId);

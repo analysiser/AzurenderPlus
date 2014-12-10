@@ -526,6 +526,13 @@ namespace _462 {
 
         return true;
     }
+    
+    bool Raytracer::mpiPathTrace(FrameBuffer &buffer)
+    {
+        azMPI mpiInstance = azMPI(this->scene, &buffer);
+        mpiInstance.mpiPathTrace();
+        return true;
+    }
 
     bool Raytracer::mpiTrace(FrameBuffer &buffer, real_t* /*max_time*/)
     {
