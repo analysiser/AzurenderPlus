@@ -10,6 +10,7 @@
 
 #include "raytracer/azReflection.hpp"
 #include "raytracer/constants.h"
+#include "raytracer/azMPI.hpp"
 
 #include "scene/scene.hpp"
 #include "scene/model.hpp"
@@ -18,6 +19,8 @@
 
 #include "utils/Parallel.h"
 #include <mpi.h>
+
+
 
 #include <SDL_timer.h>
 #include <iostream>
