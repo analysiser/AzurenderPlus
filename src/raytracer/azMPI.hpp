@@ -30,7 +30,7 @@ namespace _462 {
     public:
         
         azMPI() {}
-        azMPI(Scene *aScene, FrameBuffer *buffer) : raytracer(aScene) {
+        azMPI(Scene *aScene, FrameBuffer *buffer) : raytracer(aScene, buffer) {
             
             scene = aScene;
             framebuffer = buffer;
@@ -41,6 +41,19 @@ namespace _462 {
         }
         
         void mpiPathTrace();
+        
+        // generate eye ray
+        
+        // distribute eye ray
+        
+        // send ray, TODO: send count
+        
+        // recv rays, TODO: recv count
+        // if recv eye ray, shade, generate shadow ray, send, generate gi ray, send
+        // if shadow ray, call update framebuffer
+        
+        // check if end
+        bool isFinish();
         
         
         

@@ -26,12 +26,32 @@ namespace _462 {
     {
     public:
         azMPIRaytrace() {}
-        azMPIRaytrace(Scene *aScene) { scene = aScene; }
+        azMPIRaytrace(Scene *aScene, FrameBuffer *fbuffer) {
+            scene = aScene;
+            buffer = fbuffer;
+        }
         
-        // 
+        // generate all ray list
+        void generateEyeRay(vector<Ray> &eyerays);
         
+        // check first boundbing box
+        int checkNextBoundingBox(Ray &ray, int procId);
         
+        // local ray trace
+        int localRaytrace(Ray &ray);
+        
+        // generate shadow ray by given input ray, maxt would be used
+        void generateShadowRay(Ray &ray, Ray &shadowRay);
+        
+        // TODO: generate gi ray
+        void generateGIRay(Ray &ray, Ray &giRay);
+        
+        // TODO: write to framebuffer
+        void updateFrameBuffer(Ray &ray);
+        
+
     private:
         Scene *scene;
+        FrameBuffer *buffer;
     };
 }
