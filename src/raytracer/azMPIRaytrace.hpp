@@ -22,6 +22,8 @@
 
 namespace _462 {
     
+    static const int root = 0;
+    
     class azMPIRaytrace
     {
     public:

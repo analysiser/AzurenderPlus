@@ -25,8 +25,6 @@
 #include <SDL_timer.h>
 #include <iostream>
 
-#include "ray_list.hpp"
-
 #define RAYTRACE_DEPTH          5
 #define PHOTON_TRACE_DEPTH      5
 
@@ -2175,7 +2173,6 @@ namespace _462 {
                         shadowRay.x = ray.x;
                         shadowRay.y = ray.y;
                         shadowRay.maxt = tlight;
-                        shadowRay.lightIndex = li;
                         shadowRay.depth = ray.depth - 1;
                         shadowRay.color = shadingColor;
                         shadowRay.time = z;

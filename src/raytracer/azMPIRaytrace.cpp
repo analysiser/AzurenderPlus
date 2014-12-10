@@ -26,4 +26,12 @@ namespace _462{
         }
     }
     
+    
+    // check first boundbing box
+    int azMPIRaytrace::checkNextBoundingBox(Ray &ray, int procId)
+    {
+        int procs = scene->node_size;
+        if (procId == procs - 1)    return root;
+    }
+    
 }

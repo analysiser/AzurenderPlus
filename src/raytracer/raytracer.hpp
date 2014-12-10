@@ -22,8 +22,6 @@
 #include <stack>
 #include <thread>
 
-#include "ray_list.hpp"
-
 namespace _462 {
 
     struct PhotonScatterData
