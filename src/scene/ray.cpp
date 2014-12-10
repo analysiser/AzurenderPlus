@@ -25,6 +25,7 @@ namespace _462 {
         this->mint = 0.f;
         this->maxt = INFINITY;
         this->time = 0.f;
+        this->color = Color3::Black();
     }
     
     Ray::Ray(Vector3 e, Vector3 d, float start, float end, float time)

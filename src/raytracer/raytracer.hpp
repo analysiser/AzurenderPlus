@@ -66,8 +66,11 @@ namespace _462 {
         
         bool raytrace(unsigned char* buffer, real_t* max_time);
         
-        
+        // stage based mpi trace
         bool mpiTrace(FrameBuffer &buffer, real_t* max_time);
+        
+        // single ray based mpi trace
+        bool mpiPathTrace(FrameBuffer &buffer);
         
         // Open MPI stages:
         // synchronize root bounding boxes of all nodes
@@ -90,6 +93,12 @@ namespace _462 {
         // Helper functions for MPI_Alltoall sending and gathering rays
         void mpiAlltoallRayDistribution(int procs, int procId, RayBucket &inputRayBucket, std::vector<Ray> *outputRayList);
 
+        
+        void mpiGenerateEyeRay(int procs, int procId);
+        void mpiProcessEyeRay(int procs, int procId, Ray &ray);
+        void mpiProcessShadowRay(int procs, int procId, Ray &ray);
+        void mpiProcessDiffuseRay(int procs, int procId, Ray &ray);
+        void mpiProcessLastRay(int procs, int procId, Ray &ray);
         
 
         // indirect and caustics list for photons to trace

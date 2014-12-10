@@ -163,6 +163,7 @@ namespace _462 {
             raytraceColorBuffer[i] = Color3::Black();
         }
 
+        
 
 
 //        cout<<sizeof(Intersection)<<endl;
@@ -170,6 +171,7 @@ namespace _462 {
 
         // test:
         printf("c photon size = %ld, photon size = %ld, Vector3 size = %ld, Color size = %ld, TP size = %ld\n", sizeof(cPhoton),sizeof(Photon), sizeof(Vector3), sizeof(Color3), sizeof(unsigned char));
+        std::cout<<"HitRecord size = "<<sizeof(HitRecord)<<" Ray size = "<<sizeof(Ray)<<std::endl;
         // test end
 
 #if ENABLE_PHOTON_MAPPING
@@ -2165,7 +2167,6 @@ namespace _462 {
                         shadowRay.x = ray.x;
                         shadowRay.y = ray.y;
                         shadowRay.maxt = tlight;
-                        shadowRay.lightIndex = li;
                         shadowRay.depth = ray.depth - 1;
                         shadowRay.color = shadingColor;
                         shadowRay.time = z;
@@ -2208,8 +2209,6 @@ namespace _462 {
                 ray.color.to_array(&buffer.cbuffer[4 * (y * width + x)]);
                 buffer.zbuffer[y * width + x] = ray.time;
             }
-            
-            
         }
         
     }
@@ -2275,6 +2274,150 @@ namespace _462 {
         delete recvbuf;
         delete recvcounts;
         delete recvoffsets;
+    }
+    
+    bool Raytracer::mpiPathTrace(FrameBuffer &buffer)
+    {
+        int procs = scene->node_size;
+        int procId = scene->node_rank;
+        
+        // 1. master node generate all eye rays
+        if (procId == 0) {
+            int wstep = width / scene->node_size;
+            int hstep = height;
+            real_t dx = real_t(1)/width;
+            real_t dy = real_t(1)/height;
+            
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    real_t i = real_t(2)*(real_t(x)+random())*dx - real_t(1);
+                    real_t j = real_t(2)*(real_t(y)+random())*dy - real_t(1);
+                    
+                    Ray r = Ray(scene->camera.get_position(), Ray::get_pixel_dir(i, j));
+                    r.x = x;
+                    r.y = y;
+                    r.color = Color3::Black();
+                    r.depth = 2;
+                    r.source = procId;
+                }
+            }
+            
+        }
+        // 1. slave nodes recv its eye rays
+        else {
+            
+        }
+        std::vector<Ray> eyerays;
+        
+//        mpiGenerateEyeRay(procs, procId);
+//        
+//        MPI_Status status;
+//        while (1) {
+//            
+//            MPI_Request req;
+//            Ray ray;
+//            MPI_Irecv(&ray, sizeof(Ray), MPI_BYTE, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &req);
+//            MPI_Wait(&req, MPI_STATUS_IGNORE);
+//            
+//            if (ray.raytype == eRayType_EyeRay) {
+//                mpiProcessEyeRay(procs, procId, ray);
+//            }
+//            else if (ray.raytype == eRayType_ShadowRay) {
+//                
+//            }
+//            else if (ray.raytype == eRayType_DiffuseRay) {
+//                
+//            }
+//            else if (ray.raytype == eRayType_LastRay) {
+//                break;
+//            }
+//        }
+        
+        
+        return true;
+    }
+    
+    void Raytracer::mpiGenerateEyeRay(int procs, int procId)
+    {
+        int wstep = width / scene->node_size;
+        int hstep = height;
+        real_t dx = real_t(1)/width;
+        real_t dy = real_t(1)/height;
+        
+        // node ray list to send out rays
+//        RayBucket currentNodeRayList(procs);
+        
+        // Generate all eye rays in screen region, bin them
+        for (int y = 0; y < hstep; y++) {
+            for (int x = wstep * procId; x < wstep * (procId + 1); x++) {
+                
+                // pick a point within the pixel boundaries to fire our
+                // ray through.
+                real_t i = real_t(2)*(real_t(x)+random())*dx - real_t(1);
+                real_t j = real_t(2)*(real_t(y)+random())*dy - real_t(1);
+                
+                Ray r = Ray(scene->camera.get_position(), Ray::get_pixel_dir(i, j));
+                r.x = x;
+                r.y = y;
+                r.color = Color3::Black();
+                r.depth = 2;
+                r.source = procId;
+                
+//                MPI_Request *request = (MPI_Request *)malloc((procs) * sizeof(MPI_Request));
+                MPI_Request req;
+                
+                if (scene->nodeBndBox[procId].intersect(r, EPSILON, TMAX)) {
+                    MPI_Isend(&r, sizeof(Ray), MPI_BYTE, procId, 0, MPI_COMM_WORLD, &req);
+                }
+                else
+                {
+                    for (int node_id = 0; node_id < procs; node_id++) {
+                        if (node_id == procId)  continue;
+                        BndBox nodeBBox = scene->nodeBndBox[node_id];
+                        if (nodeBBox.intersect(r, EPSILON, TMAX)) {
+                            // push ray into node's ray list
+                            r.x = x;
+                            r.y = y;
+                            r.color = Color3::Black();
+                            r.depth = 2;
+                            MPI_Isend(&r, sizeof(Ray), MPI_BYTE, node_id, 0, MPI_COMM_WORLD, &req);
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+    
+    void Raytracer::mpiProcessEyeRay(int procs, int procId, Ray &ray)
+    {
+        // TODO
+        bool isHit = false;
+        HitRecord record = getClosestHit(ray, EPSILON, INFINITY, &isHit, Layer_All);
+        if (isHit)
+        {
+            if (record.diffuse != Color3::Black() && record.refractive_index == 0)
+            {
+                int x = ray.x;
+                int y = ray.y;
+                Color3 color = Color3::Red();
+                
+//                color.to_array(&buffer.cbuffer[4 * (y * width + x)]);
+//                buffer.zbuffer[y * width + x] = 1;
+            }
+        }
+    }
+    void Raytracer::mpiProcessShadowRay(int procs, int procId, Ray &ray)
+    {
+        // TODO
+    }
+    void Raytracer::mpiProcessDiffuseRay(int procs, int procId, Ray &ray)
+    {
+        // TODO
+    }
+    void Raytracer::mpiProcessLastRay(int procs, int procId, Ray &ray)
+    {
+        // TODO
     }
 
 
