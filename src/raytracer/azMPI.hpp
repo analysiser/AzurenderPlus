@@ -30,7 +30,7 @@ namespace _462 {
     public:
 
       azMPI() {}
-      azMPI(Scene *aScene, FrameBuffer *buffer) : raytracer(aScene, buffer) {
+      azMPI(Scene *aScene, FrameBuffer *buffer, size_t width, size_t height) : raytracer(aScene, buffer, width, height) {
 
         scene = aScene;
         framebuffer = buffer;

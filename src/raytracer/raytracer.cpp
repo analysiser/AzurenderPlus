@@ -529,7 +529,7 @@ namespace _462 {
     
     bool Raytracer::mpiPathTrace(FrameBuffer &buffer)
     {
-        azMPI mpiInstance = azMPI(this->scene, &buffer);
+        azMPI mpiInstance = azMPI(this->scene, &buffer, this->width, this->height);
         mpiInstance.mpiPathTrace();
         return true;
     }
