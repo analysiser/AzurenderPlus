@@ -26,9 +26,11 @@ namespace _462 {
     {
     public:
         azMPIRaytrace() {}
-        azMPIRaytrace(Scene *aScene, FrameBuffer *fbuffer) {
+        azMPIRaytrace(Scene *aScene, FrameBuffer *fbuffer, size_t width, size_t height) {
             scene = aScene;
             buffer = fbuffer;
+            this->width = width;
+            this->height = height;
         }
         
         // generate all ray list
@@ -53,5 +55,8 @@ namespace _462 {
     private:
         Scene *scene;
         FrameBuffer *buffer;
+        
+        // the dimensions of the image to trace
+        size_t width, height;
     };
 }
