@@ -16,6 +16,19 @@ namespace _462 {
     Ray::Ray(Ray *ray)
     {
         Ray(ray->e, ray->d);
+        
+        this->depth = ray->depth;
+        this->type = ray->type;
+        
+        this->x = ray->x;
+        this->y = ray->y;
+        this->color = ray->color;
+        
+        this->mint = ray->mint;
+        this->maxt = ray->maxt;
+        this->time = ray->time;
+        
+        this->isHit = ray->isHit;
     }
     
     Ray::Ray(Vector3 e, Vector3 d)

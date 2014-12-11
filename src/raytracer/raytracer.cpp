@@ -28,10 +28,6 @@
 #define RAYTRACE_DEPTH          5
 #define PHOTON_TRACE_DEPTH      5
 
-
-#define EPSILON                     1e-12
-#define TMAX                        400
-
 #define PROB_DABSORB                0.5F
 #define INDIRECT_PHOTON_NEEDED      500000      // 200000   // 500000
 #define CAUSTICS_PHOTON_NEEDED      200000      // 50000    // 200000
@@ -975,7 +971,7 @@ namespace _462 {
             // TODO: make independent material and texture class for handling shaders!
             // which involves different BxDF functions and PDF for evaluting
             // and make shading be local
-            res *= INV_PI;
+//            res *= INV_PI;
         }
 
         return res;

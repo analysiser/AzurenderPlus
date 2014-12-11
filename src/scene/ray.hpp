@@ -46,6 +46,7 @@ namespace _462 {
         int x, y;
         int depth;
         ERayType type;
+        bool isHit;
     };
     
     typedef std::vector<std::vector<Ray> > NodeRayVector;

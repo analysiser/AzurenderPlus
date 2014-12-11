@@ -31,7 +31,123 @@ namespace _462{
     int azMPIRaytrace::checkNextBoundingBox(Ray &ray, int procId)
     {
         int procs = scene->node_size;
+        assert(procId < procs);
         if (procId == procs - 1)    return root;
+        
+        for (int p = procId + 1; p < procs; p++) {
+            if (scene->nodeBndBox[p].intersect(ray, EPSILON, TMAX)) {
+                return p;
+            }
+        }
+        return root;
+    }
+    
+    // local ray trace
+    int azMPIRaytrace::localRaytrace(Ray &ray)
+    {
+        int procId = scene->node_rank;
+        int procs = scene->node_size;
+        
+        // if the ray sent here is eye ray
+        if (ray.type == ERayType_Eye) {
+            bool isHit = false;
+            HitRecord record = getClosestHit(ray, EPSILON, INFINITY, &isHit, Layer_All);
+            
+            // if this ray hits anything
+            if (isHit)
+            {
+                // update longest distance
+                ray.maxt = record.t;
+                
+                // shade
+                if (record.diffuse != Color3::Black() && record.refractive_index == 0)
+                {
+                    Color3 color = Color3::Black();
+                    // for each light
+                    
+                    Light *aLight = scene->get_lights()[0];
+                    
+                    // shade the hit point color direclty
+                    Vector3 samplePoint;
+                    float tlight;
+                    color += record.diffuse * aLight->SampleLight(record.position,
+                                                                  record.normal,
+                                                                  EPSILON,
+                                                                  TMAX,
+                                                                  &samplePoint,
+                                                                  &tlight);
+                    ray.color = color;
+                    ray.time = tlight;
+                }
+            }
+            
+            // TODO:
+            // find which of the next node this ray should be sent to
+            return checkNextBoundingBox(ray, procId);
+        }
+        else if (ray.type == ERayType_Shadow)
+        {
+            bool isHit = false;
+            getClosestHit(ray, EPSILON, ray.time, &isHit, Layer_All);
+            
+            if (isHit)
+            {
+                ray.isHit = true;
+                return root;
+            }
+            else
+            {
+                return checkNextBoundingBox(ray, procId);
+            }
+        }
+        else if (ray.type == ERayType_GI)
+        {
+            // TODO: GI RAYS
+        }
+        
+        // TODO: necessary?
+        return checkNextBoundingBox(ray, procId);
+    }
+    
+    
+    
+    HitRecord azMPIRaytrace::getClosestHit(Ray r, real_t t0, real_t t1, bool *isHit, SceneLayer mask)
+    {
+        HitRecord closestHitRecord;
+        HitRecord tmp;
+        real_t t = t1;
+        
+        Geometry* const* geometries = scene->get_geometries();
+        *isHit = false;
+        for (size_t i = 0; i < scene->num_geometries(); i++)
+        {
+            // added layer mask for ignoring layers
+            if (geometries[i]->layer ^ mask) {
+                
+                if (geometries[i]->hit(r, t0, t1, tmp))
+                {
+                    if (!*isHit) {
+                        *isHit = true;
+                        t = tmp.t;
+                        closestHitRecord = tmp;
+                        
+                    }
+                    else {
+                        if (tmp.t < t) {
+                            t = tmp.t;
+                            closestHitRecord = tmp;
+                            
+                        }
+                    }
+                }
+            }
+            
+            
+        }
+        
+        closestHitRecord.t = t;
+        closestHitRecord.isHit = *isHit;
+        return closestHitRecord;
     }
     
 }

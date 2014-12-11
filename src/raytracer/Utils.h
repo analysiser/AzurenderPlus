@@ -13,6 +13,9 @@
 
 #define BUFFER_SIZE(w,h) ( (size_t) ( 4 * (w) * (h) ) )
 
+#define EPSILON                     1e-12
+#define TMAX                        400
+
 struct cPhoton
 {
 	/* data */

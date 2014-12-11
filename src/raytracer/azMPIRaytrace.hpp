@@ -41,7 +41,11 @@ namespace _462 {
         // check first boundbing box
         int checkNextBoundingBox(Ray &ray, int procId);
         
-        // local ray trace
+        /*!
+         @brief Do local ray tracing, 
+         @param ray     ray to trace
+         @return next bounding box to check
+         */
         int localRaytrace(Ray &ray);
         
         // generate shadow ray by given input ray, maxt would be used
@@ -55,6 +59,10 @@ namespace _462 {
         
 
     private:
+        
+        // retrieve the closest hit record
+        HitRecord getClosestHit(Ray r, real_t t0, real_t t1, bool *isHit, SceneLayer mask);
+        
         Scene *scene;
         FrameBuffer *buffer;
         
