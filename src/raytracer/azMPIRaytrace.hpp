@@ -61,7 +61,7 @@ namespace _462 {
     private:
         
         // retrieve the closest hit record
-        HitRecord getClosestHit(Ray r, real_t t0, real_t t1, bool *isHit, SceneLayer mask);
+        HitRecord getClosestHit(Ray &r, real_t t0, real_t t1, bool *isHit, SceneLayer mask);
         
         Scene *scene;
         FrameBuffer *buffer;
