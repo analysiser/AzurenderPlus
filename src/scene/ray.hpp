@@ -18,11 +18,14 @@ namespace _462 {
     
     enum ERayType
     {
-        ERayType_Eye = 0,
-        ERayType_Shadow = 1,
-        ERayType_GI = 2,
+        ERayType_Eye = 1 << 0,
+        ERayType_Shadow = 1 << 1,
+        ERayType_GI = 1 << 2,
         
-        ERayType_Terminate = 3,
+        ERayType_Terminate = 1 << 3,
+        
+        ERayType_All = (ERayType_Eye | ERayType_Shadow | ERayType_GI | ERayType_Terminate)
+        
     };
     
     struct Ray
