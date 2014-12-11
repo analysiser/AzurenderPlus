@@ -50,7 +50,9 @@ namespace _462 {
           break;
         case ERayType_GI:
           break;
+        case ERayType_Terminate:
         default:
+          printf("Master received a wrong ray type\n");
           exit(-1);
       }
 
@@ -63,8 +65,9 @@ namespace _462 {
 
   void azMPI::run_slave()
   {
+    bool finished = false;
     Ray recv_r;
-    while(1)
+    while(!finished)
     {
       MPICommunicate::RecvRay(recv_r);
       switch(recv_r.type)
@@ -81,7 +84,11 @@ namespace _462 {
           break;
         case ERayType_GI:
           break;
+        case ERayType_Terminate:
+          finished = true;
+          break;
         default:
+          printf("Slave received a wrong ray type\n");
           exit(-1);
       }
     }
