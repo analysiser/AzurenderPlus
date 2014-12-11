@@ -199,14 +199,9 @@ int main(int argc, char* argv[])
 //        app.raytracer.mpiTrace( app.buffer, 0 );
         app.raytracer.mpiPathTrace( app.buffer );
 
-//        MPI_Barrier(MPI_COMM_WORLD);
-//
-//        app.gather_mpi_results(world_rank);
-//
-//        MPI_Barrier(MPI_COMM_WORLD);
-
         // output result
-        app.output_image();
+        if(app.scene.node_rank == 0)
+          app.output_image();
         // Test for finalize
         MPI_Finalize();
         return 0;

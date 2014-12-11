@@ -24,326 +24,326 @@
 
 namespace _462 {
 
-    struct PhotonScatterData
-    {
-        std::vector<Photon> worker_photon_indirect;
-        std::vector<Photon> worker_photon_caustics;
-        std::vector<Light*> worker_lights_copy;
-//        PointLight worker_lights_copy;
-        unsigned int indirect_needed;
-        unsigned int caustics_needed;
-    };
+  struct PhotonScatterData
+  {
+    std::vector<Photon> worker_photon_indirect;
+    std::vector<Photon> worker_photon_caustics;
+    std::vector<Light*> worker_lights_copy;
+    //        PointLight worker_lights_copy;
+    unsigned int indirect_needed;
+    unsigned int caustics_needed;
+  };
 
-    struct ispcCPhotonData
-    {
-        int size;
-        float *posx;
-        float *posy;
-        float *posz;
+  struct ispcCPhotonData
+  {
+    int size;
+    float *posx;
+    float *posy;
+    float *posz;
 
-        int8_t *bitmap;
-    };
+    int8_t *bitmap;
+  };
 
 
-    class Scene;
-    struct Ray;
-    struct Intersection;
+  class Scene;
+  struct Ray;
+  struct Intersection;
 
-    class Raytracer
-    {
+  class Raytracer
+  {
     public:
 
-        Raytracer();
+      Raytracer();
 
-        ~Raytracer();
+      ~Raytracer();
 
-        bool initialize(Scene* scene, size_t num_samples,
-                        size_t width, size_t height);
+      bool initialize(Scene* scene, size_t num_samples,
+          size_t width, size_t height);
 
-        bool PacketizedRayTrace(unsigned char* buffer);
-        
-        bool raytrace(unsigned char* buffer, real_t* max_time);
-        
-        
-        bool mpiTrace(FrameBuffer &buffer, real_t* max_time);
-        
-        
-        bool mpiPathTrace(FrameBuffer &buffer);
-        
-        // Open MPI stages:
-        // synchronize root bounding boxes of all nodes
-        void mpiStageNodeBoundingBox(int procs, int procId);
-        
-        // each node generate and distribute eye rays to corresponding nodes
-        void mpiStageDistributeEyeRays(int procs, int procId, std::vector<Ray> *eyerays);
-        
-        // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
-        // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
-        void mpiStageLocalRayTracing(int procs, int procId, std::vector<Ray> &eyerays, std::vector<Ray> *shadowRays);
-        
-        // each node takes in shadow ray, do local ray tracing, maintain shadow ray
-        // hit records, send records to corresponding nodes
-        void mpiStageShadowRayTracing(int procs, int procId, FrameBuffer &buffer, std::vector<Ray> &shadowrays);
-        
-        // take in every nodes' shadow ray hit records, do local pixel shading.
-        void mpiStagePixelShading(int procs, int procId);
-        
-        // Helper functions for MPI_Alltoall sending and gathering rays
-        void mpiAlltoallRayDistribution(int procs, int procId, RayBucket &inputRayBucket, std::vector<Ray> *outputRayList);
+      bool PacketizedRayTrace(unsigned char* buffer);
 
-        
+      bool raytrace(unsigned char* buffer, real_t* max_time);
 
-        // indirect and caustics list for photons to trace
-        std::vector<Photon> photon_indirect_list;
-        std::vector<Photon> photon_caustic_list;
 
-        // balanced kdtree
-        std::vector<Photon> kdtree_photon_indirect_list;
-        std::vector<Photon> kdtree_photon_caustic_list;
+      bool mpiTrace(FrameBuffer &buffer, real_t* max_time);
 
-        // cPhoton source data
-        std::vector<cPhoton> cphoton_indirect_data;
-        std::vector<cPhoton> cphoton_caustics_data;
 
-        // ispc friendly cPhoton data, for parallel computation
-        ispcCPhotonData ispc_cphoton_indirect_data;
-        ispcCPhotonData ispc_cphoton_caustics_data;
+      bool mpiPathTrace(FrameBuffer &buffer);
 
-        // balanced c style photon kdtree
-        std::vector<cPhoton> kdtree_cphoton_indirect;
-        std::vector<cPhoton> kdtree_cphoton_caustics;
+      // Open MPI stages:
+      // synchronize root bounding boxes of all nodes
+      void mpiStageNodeBoundingBox(int procs, int procId);
 
-        KDNode *vvh_indirect_root;
-        KDNode *vvh_caustics_root;
+      // each node generate and distribute eye rays to corresponding nodes
+      void mpiStageDistributeEyeRays(int procs, int procId, std::vector<Ray> *eyerays);
 
-        unsigned int num_iteration;
-        
+      // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
+      // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
+      void mpiStageLocalRayTracing(int procs, int procId, std::vector<Ray> &eyerays, std::vector<Ray> *shadowRays);
+
+      // each node takes in shadow ray, do local ray tracing, maintain shadow ray
+      // hit records, send records to corresponding nodes
+      void mpiStageShadowRayTracing(int procs, int procId, FrameBuffer &buffer, std::vector<Ray> &shadowrays);
+
+      // take in every nodes' shadow ray hit records, do local pixel shading.
+      void mpiStagePixelShading(int procs, int procId);
+
+      // Helper functions for MPI_Alltoall sending and gathering rays
+      void mpiAlltoallRayDistribution(int procs, int procId, RayBucket &inputRayBucket, std::vector<Ray> *outputRayList);
+
+
+
+      // indirect and caustics list for photons to trace
+      std::vector<Photon> photon_indirect_list;
+      std::vector<Photon> photon_caustic_list;
+
+      // balanced kdtree
+      std::vector<Photon> kdtree_photon_indirect_list;
+      std::vector<Photon> kdtree_photon_caustic_list;
+
+      // cPhoton source data
+      std::vector<cPhoton> cphoton_indirect_data;
+      std::vector<cPhoton> cphoton_caustics_data;
+
+      // ispc friendly cPhoton data, for parallel computation
+      ispcCPhotonData ispc_cphoton_indirect_data;
+      ispcCPhotonData ispc_cphoton_caustics_data;
+
+      // balanced c style photon kdtree
+      std::vector<cPhoton> kdtree_cphoton_indirect;
+      std::vector<cPhoton> kdtree_cphoton_caustics;
+
+      KDNode *vvh_indirect_root;
+      KDNode *vvh_caustics_root;
+
+      unsigned int num_iteration;
+
 
 
     private:
 
-        // data used for photon direction encoding
-        float costheta[256];
-        float sintheta[256];
-        float cosphi[256];
-        float sinphi[256];
+      // data used for photon direction encoding
+      float costheta[256];
+      float sintheta[256];
+      float cosphi[256];
+      float sinphi[256];
 
-        // data used for measuring final gathering performance
-        unsigned int master_start;  // Overall start time for raytracing
-        unsigned int pass_start;    // Start time for each pass of raytracing & photon mapping
-        unsigned int pass_end;      // End time for each pass
-        unsigned int master_end;    // Overall end time for raytracing & photon mapping
-        unsigned int acc_cphoton_search_time;
-        unsigned int acc_iphoton_search_time;
+      // data used for measuring final gathering performance
+      unsigned int master_start;  // Overall start time for raytracing
+      unsigned int pass_start;    // Start time for each pass of raytracing & photon mapping
+      unsigned int pass_end;      // End time for each pass
+      unsigned int master_end;    // Overall end time for raytracing & photon mapping
+      unsigned int acc_cphoton_search_time;
+      unsigned int acc_iphoton_search_time;
 
-        // data used for measuring the final gathering radius
-        float radius_clear;
-        float radius_shadow;
-        unsigned int clear_count;
-        unsigned int shadow_count;
-        unsigned int acc_pass_spent;
-        unsigned int acc_kdtree_cons;
-        
-        //RayList nodeRayList;
+      // data used for measuring the final gathering radius
+      float radius_clear;
+      float radius_shadow;
+      unsigned int clear_count;
+      unsigned int shadow_count;
+      unsigned int acc_pass_spent;
+      unsigned int acc_kdtree_cons;
 
-        Color3 *raytraceColorBuffer;
+      //RayList nodeRayList;
 
-        Ray generateEyeRay(const Vector3 cameraPosition, size_t x, size_t y, float dx, float dy);
+      Color3 *raytraceColorBuffer;
 
-        Color3 trace_pixel(const Scene* scene,
-                           size_t x,
-                           size_t y,
-                           size_t width,
-                           size_t height);
+      Ray generateEyeRay(const Vector3 cameraPosition, size_t x, size_t y, float dx, float dy);
 
-        // Photon Scatter
-        void photonScatter(const Scene* scene);
+      Color3 trace_pixel(const Scene* scene,
+          size_t x,
+          size_t y,
+          size_t width,
+          size_t height);
 
-        // Parallel Photon Scatter
-        void parallelPhotonScatter(const Scene* scene);
+      // Photon Scatter
+      void photonScatter(const Scene* scene);
 
-        // worker node for parallel photon scatter
-        void photonScatterWorker(PhotonScatterData *data);
+      // Parallel Photon Scatter
+      void parallelPhotonScatter(const Scene* scene);
 
-        // kdtree construction
-        void kdtreeConstruction();
+      // worker node for parallel photon scatter
+      void photonScatterWorker(PhotonScatterData *data);
 
-        // c style photon kdtree construction
-        void cPhotonKDTreeConstruction();
+      // kdtree construction
+      void kdtreeConstruction();
 
-        /////////// vvh kdtree ///////////
-        // vvh kdtree preprocessing for faster construction
-        void vvhKDTreePreprocess(std::vector<cPhoton>& source,
-                                 std::vector<metaCPhoton>& sortedSource);
+      // c style photon kdtree construction
+      void cPhotonKDTreeConstruction();
 
-
-        // vvh kdtree construction
-        void vvhKDTreeConstruction(std::vector<cPhoton> &list, KDNode *root);
-
-        void vvhProcessLargeNode(std::vector<KDNode *> &activeList,
-                                 std::vector<KDNode *> &smallList,
-                                 std::vector<KDNode *> &nextList,
-                                 std::vector<cPhoton> &list);
-
-        void vvhPreprocessSmallNodes(std::vector<KDNode *> &smallList,
-                                     std::vector<KDNode *> &nodeList,
-                                     std::vector<cPhoton> &list);
-
-        void vvhProcessSmallNode(std::vector<KDNode *> &activelist,
-                                 std::vector<KDNode *> &nextList,
-                                 std::vector<cPhoton> &list);
-
-        void vvhPreorderTraversal(std::vector<KDNode *> &nodeList,
-                                  std::vector<cPhoton> &list);
-
-        void vvhcPhotonLocate(Vector3 position,
-                              KDNode *node,
-                              ispcCPhotonData &ispcCphotonData,
-                              std::vector<cPhoton> &cPhotonList,
-                              std::vector<int> &nearestPhotonsIndices,
-                              float &sqrDist,
-                              size_t maxNum);
-
-        bool vvhComputeVVH(std::vector<cPhoton> &data, float &VVH0, char &axis);
-
-        float vvhComputeVolume(Vector3 a, Vector3 b);
-
-        // Photon Tracing for global illumination and caustics
-        void photonTrace(Ray ray, real_t t0, real_t t1, int depth);
-
-        // Raytracing helper function, to decide if there is a hit on a surface to shade
-        Color3 trace(Ray ray, real_t t0, real_t t1, int depth);
-
-        // Shading function, shades the hit record from a surface
-        Color3 shade(Ray ray, HitRecord record, real_t t0, real_t t1, int depth);
-
-        // Shading of direct illumination
-        Color3 shade_direct_illumination(HitRecord &record, real_t t0, real_t t1);
-
-        // Shading of caustics
-        Color3 shade_caustics(HitRecord &record, real_t radius, size_t num_samples);
-
-        // Test: Shade c photons
-        Color3 shade_cphotons(HitRecord &record, real_t radius, size_t num_samples);
-
-        void PacketizedRayIntersection(azPacket<Ray> &rayPacket, azPacket<HitRecord> &recordPacket, float t0, float t1);
-
-        // retrieve the closest hit record
-        HitRecord getClosestHit(Ray r, real_t t0, real_t t1, bool *isHit, SceneLayer mask);
-
-        // helper function for sampling a point on a given unit sphere
-        Vector3 samplePointOnUnitSphere();
-
-        Vector3 samplePointOnUnitSphereUniform();
-
-        // sample a random direction along the hemisphere defined at the normal
-        Vector3 uniformSampleHemisphere(const Vector3& normal);
-
-        // the scene to trace
-        Scene* scene;
-
-        // the dimensions of the image to trace
-        size_t width, height;
-
-        // the next row to raytrace
-        size_t current_col;
-        size_t current_row;
+      /////////// vvh kdtree ///////////
+      // vvh kdtree preprocessing for faster construction
+      void vvhKDTreePreprocess(std::vector<cPhoton>& source,
+          std::vector<metaCPhoton>& sortedSource);
 
 
-        //
-        unsigned int num_samples;
+      // vvh kdtree construction
+      void vvhKDTreeConstruction(std::vector<cPhoton> &list, KDNode *root);
 
-//        // Current refraction index
-//        real_t current_refractive_index;
+      void vvhProcessLargeNode(std::vector<KDNode *> &activeList,
+          std::vector<KDNode *> &smallList,
+          std::vector<KDNode *> &nextList,
+          std::vector<cPhoton> &list);
 
-        // blance kdtree, kdtree stored in compact complete binary tree format
-        void balance(size_t index, std::vector<Photon> &balancedKDTree, std::vector<Photon> &list);
+      void vvhPreprocessSmallNodes(std::vector<KDNode *> &smallList,
+          std::vector<KDNode *> &nodeList,
+          std::vector<cPhoton> &list);
 
-        // cPhoton balanced kdtree
-        void cPhotonBalance(size_t index, std::vector<cPhoton> &balancedKDTree, std::vector<cPhoton> &list);
+      void vvhProcessSmallNode(std::vector<KDNode *> &activelist,
+          std::vector<KDNode *> &nextList,
+          std::vector<cPhoton> &list);
 
-        // find nearest photons
-        void locatePhotons(size_t p,
-                           Vector3 position,
-                           std::vector<Photon> &balancedKDTree,
-                           std::vector<Photon> &nearestPhotons,
-                           float &sqrDist,
-                           size_t maxNum);
+      void vvhPreorderTraversal(std::vector<KDNode *> &nodeList,
+          std::vector<cPhoton> &list);
 
-        // c style locate photons
-        void cPhotonLocate(size_t p,
-                           Vector3 position,
-                           std::vector<cPhoton> &balancedKDTree,
-                           std::vector<cPhoton> &nearestPhotons,
-                           float &sqrDist,
-                           size_t maxNum);
+      void vvhcPhotonLocate(Vector3 position,
+          KDNode *node,
+          ispcCPhotonData &ispcCphotonData,
+          std::vector<cPhoton> &cPhotonList,
+          std::vector<int> &nearestPhotonsIndices,
+          float &sqrDist,
+          size_t maxNum);
 
-        void applyGammaHDR(Color3 &color);
+      bool vvhComputeVVH(std::vector<cPhoton> &data, float &VVH0, char &axis);
 
-//        static const unsigned char filter[];
+      float vvhComputeVolume(Vector3 a, Vector3 b);
 
-        // set encoded photon direction
-        void setPhotonDirection(Photon &photon, Vector3 dir);
+      // Photon Tracing for global illumination and caustics
+      void photonTrace(Ray ray, real_t t0, real_t t1, int depth);
 
-        // get decoded photon direction
-        Vector3 getPhotonDirection(Photon &photon);
-        
-        void generateEyeRayList(vector<Ray> &eyerays);
+      // Raytracing helper function, to decide if there is a hit on a surface to shade
+      Color3 trace(Ray ray, real_t t0, real_t t1, int depth);
 
-    };
+      // Shading function, shades the hit record from a surface
+      Color3 shade(Ray ray, HitRecord record, real_t t0, real_t t1, int depth);
 
-    inline real_t getGaussianFilterWeight(real_t dist_sqr, real_t radius_sqr);
-    /*!
-     @brief get the gaussian filter weight, jensen P67, this value is the only weight
-     @param dist_x_p    distance between x and photon p
-     @param dist_max    r is the maximum distance
+      // Shading of direct illumination
+      Color3 shade_direct_illumination(HitRecord &record, real_t t0, real_t t1);
+
+      // Shading of caustics
+      Color3 shade_caustics(HitRecord &record, real_t radius, size_t num_samples);
+
+      // Test: Shade c photons
+      Color3 shade_cphotons(HitRecord &record, real_t radius, size_t num_samples);
+
+      void PacketizedRayIntersection(azPacket<Ray> &rayPacket, azPacket<HitRecord> &recordPacket, float t0, float t1);
+
+      // retrieve the closest hit record
+      HitRecord getClosestHit(Ray r, real_t t0, real_t t1, bool *isHit, SceneLayer mask);
+
+      // helper function for sampling a point on a given unit sphere
+      Vector3 samplePointOnUnitSphere();
+
+      Vector3 samplePointOnUnitSphereUniform();
+
+      // sample a random direction along the hemisphere defined at the normal
+      Vector3 uniformSampleHemisphere(const Vector3& normal);
+
+      // the scene to trace
+      Scene* scene;
+
+      // the dimensions of the image to trace
+      size_t width, height;
+
+      // the next row to raytrace
+      size_t current_col;
+      size_t current_row;
+
+
+      //
+      unsigned int num_samples;
+
+      //        // Current refraction index
+      //        real_t current_refractive_index;
+
+      // blance kdtree, kdtree stored in compact complete binary tree format
+      void balance(size_t index, std::vector<Photon> &balancedKDTree, std::vector<Photon> &list);
+
+      // cPhoton balanced kdtree
+      void cPhotonBalance(size_t index, std::vector<cPhoton> &balancedKDTree, std::vector<cPhoton> &list);
+
+      // find nearest photons
+      void locatePhotons(size_t p,
+          Vector3 position,
+          std::vector<Photon> &balancedKDTree,
+          std::vector<Photon> &nearestPhotons,
+          float &sqrDist,
+          size_t maxNum);
+
+      // c style locate photons
+      void cPhotonLocate(size_t p,
+          Vector3 position,
+          std::vector<cPhoton> &balancedKDTree,
+          std::vector<cPhoton> &nearestPhotons,
+          float &sqrDist,
+          size_t maxNum);
+
+      void applyGammaHDR(Color3 &color);
+
+      //        static const unsigned char filter[];
+
+      // set encoded photon direction
+      void setPhotonDirection(Photon &photon, Vector3 dir);
+
+      // get decoded photon direction
+      Vector3 getPhotonDirection(Photon &photon);
+
+      void generateEyeRayList(vector<Ray> &eyerays);
+
+  };
+
+  inline real_t getGaussianFilterWeight(real_t dist_sqr, real_t radius_sqr);
+  /*!
+    @brief get the gaussian filter weight, jensen P67, this value is the only weight
+    @param dist_x_p    distance between x and photon p
+    @param dist_max    r is the maximum distance
     */
-    inline real_t getConeFilterWeight(real_t dist_x_p, real_t dist_max);
+  inline real_t getConeFilterWeight(real_t dist_x_p, real_t dist_max);
 
 
-    // Photon comparator for sort functions
-    inline bool photonComparatorX(const Photon &a, const Photon &b)
-    {
-        return a.position.x < b.position.x;
-    }
+  // Photon comparator for sort functions
+  inline bool photonComparatorX(const Photon &a, const Photon &b)
+  {
+    return a.position.x < b.position.x;
+  }
 
-    inline bool photonComparatorY(const Photon &a, const Photon &b)
-    {
-        return a.position.y < b.position.y;
-    }
+  inline bool photonComparatorY(const Photon &a, const Photon &b)
+  {
+    return a.position.y < b.position.y;
+  }
 
-    inline bool photonComparatorZ(const Photon &a, const Photon &b)
-    {
-        return a.position.z < b.position.z;
-    }
+  inline bool photonComparatorZ(const Photon &a, const Photon &b)
+  {
+    return a.position.z < b.position.z;
+  }
 
-    // comparator for c style photon sorting
-    inline bool cPhotonComparatorX(const cPhoton &a, const cPhoton &b)
-    {
-        return a.position[0] < b.position[0];
-    }
+  // comparator for c style photon sorting
+  inline bool cPhotonComparatorX(const cPhoton &a, const cPhoton &b)
+  {
+    return a.position[0] < b.position[0];
+  }
 
-    inline bool cPhotonComparatorY(const cPhoton &a, const cPhoton &b)
-    {
-        return a.position[1] < b.position[1];
-    }
+  inline bool cPhotonComparatorY(const cPhoton &a, const cPhoton &b)
+  {
+    return a.position[1] < b.position[1];
+  }
 
-    inline bool cPhotonComparatorZ(const cPhoton &a, const cPhoton &b)
-    {
-        return a.position[2] < b.position[2];
-    }
+  inline bool cPhotonComparatorZ(const cPhoton &a, const cPhoton &b)
+  {
+    return a.position[2] < b.position[2];
+  }
 
 
-    // sampling
-    inline Vector3 uniformSampleSphere(float u1, float u2)
-    {
-        float z = 1.f - 2.f * u1;
-        float r = sqrtf(std::max(0.f, 1.f - z * z));
-        float phi = 2.f * M_PI * u2;
-        float x = r * cosf(phi);
-        float y = r * sinf(phi);
-        return Vector3(x, y, z);
-    }
+  // sampling
+  inline Vector3 uniformSampleSphere(float u1, float u2)
+  {
+    float z = 1.f - 2.f * u1;
+    float r = sqrtf(std::max(0.f, 1.f - z * z));
+    float phi = 2.f * M_PI * u2;
+    float x = r * cosf(phi);
+    float y = r * sinf(phi);
+    return Vector3(x, y, z);
+  }
 
 } /* _462 */
 
