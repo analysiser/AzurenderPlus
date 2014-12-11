@@ -14,7 +14,7 @@ namespace _462 {
       {
         int dest = raytracer.checkNextBoundingBox(r, procId);
         MPICommunicate::ISendRay(&r, dest);
-        sendcounts++;
+        send_count++;
       }
 
       run_master();
@@ -42,7 +42,7 @@ namespace _462 {
           raytracer.generateShadowRay(recv_r, *shadowray);
           MPICommunicate::ISendRay(shadowray,
               raytracer.checkNextBoundingBox(*shadowray, procId));
-          sendcounts++;
+          send_count++;
           }
           break;
         case ERayType_Shadow:
@@ -56,7 +56,7 @@ namespace _462 {
           exit(-1);
       }
 
-      if (sendcounts == recv_count)
+      if (send_count == recv_count)
       {
         break;
       }
