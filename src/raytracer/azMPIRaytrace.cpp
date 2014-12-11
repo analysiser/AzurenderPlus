@@ -79,6 +79,7 @@ namespace _462{
                                                                   &tlight);
                     ray.color = color;
                     ray.time = tlight;
+                    ray.isHit = true;
                 }
             }
             
@@ -153,7 +154,7 @@ namespace _462{
     }
     
     
-    HitRecord azMPIRaytrace::getClosestHit(Ray r, real_t t0, real_t t1, bool *isHit, SceneLayer mask)
+    HitRecord azMPIRaytrace::getClosestHit(Ray &r, real_t t0, real_t t1, bool *isHit, SceneLayer mask)
     {
         HitRecord closestHitRecord;
         HitRecord tmp;
