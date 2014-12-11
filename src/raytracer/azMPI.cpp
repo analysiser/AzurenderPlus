@@ -13,6 +13,11 @@ namespace _462 {
       for (Ray &r: ray_list)
       {
         int dest = raytracer.checkNextBoundingBox(r, procId);
+        if (dest == 0)
+        {
+          raytracer.updateFrameBuffer(r);
+          continue;
+        }
         MPICommunicate::ISendRay(&r, dest);
         send_count++;
       }
@@ -52,7 +57,7 @@ namespace _462 {
           break;
         case ERayType_Terminate:
         default:
-          printf("Proc = %d, Master received a wrong ray type = %d\n", procId, recv_r.type);
+          printf("Proc = %d, Master received a wrong ray type = %x\n", procId, recv_r.type);
           exit(-1);
       }
 
