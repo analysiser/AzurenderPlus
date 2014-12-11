@@ -30,34 +30,31 @@ namespace _462 {
     public:
         
         azMPI() {}
+        ~azMPI() {}
         azMPI(
               Scene *aScene,
-              FrameBuffer *buffer,
+              FrameBuffer &buffer,
               size_t width,
               size_t height)
-        : raytracer(aScene,buffer, width, height),
+        : raytracer(aScene, &buffer, width, height),
         send_count(0),
         recv_count(0)
         {
+//            scene = aScene;
             
-            scene = aScene;
-            framebuffer = buffer;
-            
-            procs = scene->node_size;
-            procId = scene->node_rank;
+            procs = aScene->node_size;
+            procId = aScene->node_rank;
             
         }
         
-        void mpiPathTrace();
+        void mpiPathTrace(vector<Ray> &eyerays);
         
         void run_master();
         void run_slave();
         
     private:
         // the scene to trace
-        Scene* scene;
-        FrameBuffer *framebuffer;
-        
+//        Scene* scene;
         azMPIRaytrace raytracer;
         
         int procs;

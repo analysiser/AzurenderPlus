@@ -1,31 +1,50 @@
 #include "azMPIRaytrace.hpp"
 namespace _462{
     
-    void azMPIRaytrace::generateEyeRay(vector<Ray> &eyerays)
-    {
-        real_t dx = real_t(1)/width;
-        real_t dy = real_t(1)/height;
-        
-        // generate all eye rays
-        for (size_t y = 0; y < height; y++)
-        {
-            for (size_t x = 0; x < width; x++)
-            {
-                // pick a point within the pixel boundaries to fire our
-                // ray through.
-                real_t i = real_t(2)*(real_t(x)+random())*dx - real_t(1);
-                real_t j = real_t(2)*(real_t(y)+random())*dy - real_t(1);
-                
-                Ray r = Ray(scene->camera.get_position(), Ray::get_pixel_dir(i, j));
-                r.color = Color3::Black();
-                r.type = ERayType_Eye;
-                r.depth = 2;
-                r.isHit = false;
-                
-                eyerays.push_back(r);
-            }
-        }
-    }
+//    void azMPIRaytrace::generateEyeRay(vector<Ray> &eyerays)
+//    {
+//        printf("generateEyeRay\n");
+//        real_t dx = real_t(1)/width;
+//        real_t dy = real_t(1)/height;
+//        
+//        // generate all eye rays
+//        for (size_t y = 0; y < height; y++)
+//        {
+//            for (size_t x = 0; x < width; x++)
+//            {
+//                // pick a point within the pixel boundaries to fire our
+//                // ray through.
+//                real_t i = real_t(2)*(real_t(x)+random())*dx - real_t(1);
+//                real_t j = real_t(2)*(real_t(y)+random())*dy - real_t(1);
+//                
+//                Ray r = Ray(scene->camera.get_position(), Ray::get_pixel_dir(i, j));
+//                r.color = Color3::Black();
+//                r.type = ERayType_Eye;
+//                r.depth = 2;
+//                r.isHit = false;
+//                
+//                std::cout<<r.e<<" "<<r.d<<std::endl;
+//                
+//                int procs = scene->node_size;
+////                printf("procs = %d\n", procs);
+//                for (int node_id = 0; node_id < procs; node_id++) {
+//                    BndBox nodeBBox = scene->nodeBndBox[node_id];
+//                    if (nodeBBox.intersect(r, EPSILON, TMAX)) {
+//                        // push ray into node's ray list
+//                        r.x = x;
+//                        r.y = y;
+//                        r.color = Color3::Black();
+//                        r.depth = 2;
+//                        printf("HIT!!!!\n");
+////                        currentNodeRayList.push_back(node_id, r);
+//                    }
+//                }
+//                
+//                eyerays.push_back(r);
+//            }
+//        }
+//        printf("~generateEyeRay\n");
+//    }
     
     
     // check first boundbing box
@@ -33,10 +52,16 @@ namespace _462{
     {
         int procs = scene->node_size;
         assert(procId < procs);
+        
         if (procId == procs - 1)    return root;
         
         for (int p = procId + 1; p < procs; p++) {
-            if (scene->nodeBndBox[p].intersect(ray, EPSILON, TMAX)) {
+            //printf("p = %d, procs = %d\n", p, procs);
+//            std::cout<<p<<": "<<scene->nodeBndBox[p].pMin<<" "<<scene->nodeBndBox[p].pMax<<std::endl;
+//            std::cout<<ray.e<<" "<<ray.d<<std::endl;
+            BndBox nodeBBox = scene->nodeBndBox[p];
+            if (nodeBBox.intersect(ray, EPSILON, TMAX)) {
+                std::cout<<p<<": "<<scene->nodeBndBox[p].pMin<<" "<<scene->nodeBndBox[p].pMax<<std::endl;
                 return p;
             }
         }
@@ -107,6 +132,11 @@ namespace _462{
         {
             // TODO: GI RAYS
         }
+        else
+        {
+            printf("Bad Type!\n");
+            exit(-1);
+        }
         
         // TODO: necessary?
         return checkNextBoundingBox(ray, procId);
@@ -146,10 +176,18 @@ namespace _462{
             int y = ray.y;
             ray.color.to_array(&buffer->cbuffer[4 * (y * width + x)]);
         }
-        else if (ray.type == ERayType_Shadow && ray.isHit) {
-            int x = ray.x;
-            int y = ray.y;
-            ray.color.to_array(&buffer->cbuffer[4 * (y * width + x)]);
+        else if (ray.type == ERayType_Shadow) {
+            if (ray.isHit)
+            {
+                int x = ray.x;
+                int y = ray.y;
+                ray.color.to_array(&buffer->cbuffer[4 * (y * width + x)]);
+            }
+        }
+        else
+        {
+            printf("No such case yet");
+            exit(-1);
         }
     }
     

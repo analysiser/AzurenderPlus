@@ -30,8 +30,16 @@ namespace _462 {
     
     struct Ray
     {
-        
     public:
+        static Vector3 dir;
+        static Vector3 up;
+        static real_t AR;
+        
+        static Vector3 cR;
+        static Vector3 cU;
+        static real_t dist;
+        static Vector3 pos;
+        
         Vector3 e;
         Vector3 d;
         Ray();

@@ -29,14 +29,14 @@ namespace _462 {
     public:
         azMPIRaytrace() {}
         azMPIRaytrace(Scene *aScene, FrameBuffer *fbuffer, size_t width, size_t height) {
-            scene = aScene;
-            buffer = fbuffer;
+            this->scene = aScene;
+            this->buffer = fbuffer;
             this->width = width;
             this->height = height;
         }
         
-        // generate all ray list
-        void generateEyeRay(vector<Ray> &eyerays);
+//        // generate all ray list
+//        void generateEyeRay(vector<Ray> &eyerays);
         
         // check first boundbing box
         int checkNextBoundingBox(Ray &ray, int procId);

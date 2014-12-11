@@ -2,14 +2,14 @@
 
 namespace _462 {
     
-    Vector3 dir;
-    Vector3 up;
-    real_t AR;
+    Vector3 Ray::dir;
+    Vector3 Ray::up;
+    real_t Ray::AR;
     
-    Vector3 cR;
-    Vector3 cU;
-    real_t dist;
-    Vector3 pos;
+    Vector3 Ray::cR;
+    Vector3 Ray::cU;
+    real_t Ray::dist;
+    Vector3 Ray::pos;
     
     Ray::Ray(){}
     
@@ -51,13 +51,13 @@ namespace _462 {
     
     void Ray::init(const Camera& camera)
     {
-        dir = camera.get_direction();
-        up = camera.get_up();
-        AR = camera.get_aspect_ratio();
-        cR = cross(dir, up);
-        cU = cross(cR, dir);
-        pos = camera.get_position();
-        dist = tan(camera.get_fov_radians()/2.0);
+        Ray::dir = camera.get_direction();
+        Ray::up = camera.get_up();
+        Ray::AR = camera.get_aspect_ratio();
+        Ray::cR = cross(dir, up);
+        Ray::cU = cross(cR, dir);
+        Ray::pos = camera.get_position();
+        Ray::dist = tan(camera.get_fov_radians()/2.0);
     }
     
     Vector3 Ray::get_pixel_dir(real_t ni, real_t nj)

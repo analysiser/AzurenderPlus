@@ -3,21 +3,24 @@
 
 namespace _462 {
     
-    void azMPI::mpiPathTrace()
+    void azMPI::mpiPathTrace(vector<Ray> &eyerays)
     {
         if (procId == 0)
         {
-            std::vector<Ray> ray_list;
-            raytracer.generateEyeRay(ray_list);
-            
-            for (Ray &r: ray_list)
+//            std::vector<Ray> ray_list;
+//            raytracer.generateEyeRay(ray_list);
+//            
+            for (Ray &r : eyerays)
             {
                 int dest = raytracer.checkNextBoundingBox(r, procId);
                 if (dest == 0)
                 {
+                    
                     raytracer.updateFrameBuffer(r);
+                    
                     continue;
                 }
+                
                 MPICommunicate::ISendRay(&r, dest);
                 send_count++;
             }
@@ -34,6 +37,7 @@ namespace _462 {
     void azMPI::run_master()
     {
         Ray recv_r;
+        
         while(1)
         {
             MPICommunicate::RecvRay(recv_r);
@@ -64,6 +68,7 @@ namespace _462 {
                     exit(-1);
             }
             
+            printf("send_count = %d, recv_count = %d\n", send_count, recv_count);
             if (send_count == recv_count)
             {
                 Ray terminate;

@@ -287,6 +287,8 @@ namespace _462 {
 
         // get decoded photon direction
         Vector3 getPhotonDirection(Photon &photon);
+        
+        void generateEyeRayList(vector<Ray> &eyerays);
 
     };
 
