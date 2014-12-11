@@ -20,6 +20,7 @@ namespace _462{
                 r.color = Color3::Black();
                 r.type = ERayType_Eye;
                 r.depth = 2;
+                r.isHit = false;
                 
                 eyerays.push_back(r);
             }
@@ -92,6 +93,7 @@ namespace _462{
             
             if (isHit)
             {
+                ray.color = Color3::Black(); // TODO: ambient
                 ray.isHit = true;
                 return root;
             }
@@ -138,7 +140,16 @@ namespace _462{
     
     void azMPIRaytrace::updateFrameBuffer(Ray &ray)
     {
-        
+        if (ray.type == ERayType_Eye) {
+            int x = ray.x;
+            int y = ray.y;
+            ray.color.to_array(&buffer->cbuffer[4 * (y * width + x)]);
+        }
+        else if (ray.type == ERayType_Shadow && ray.isHit) {
+            int x = ray.x;
+            int y = ray.y;
+            ray.color.to_array(&buffer->cbuffer[4 * (y * width + x)]);
+        }
     }
     
     
