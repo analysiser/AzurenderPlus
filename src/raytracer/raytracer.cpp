@@ -2218,6 +2218,7 @@ namespace _462 {
     void Raytracer::mpiStagePixelShading(int procs, int procId)
     {
         // TODO
+        // TODO: path tracing
     }
     
     void Raytracer::mpiAlltoallRayDistribution(int procs, int /* procId */, RayBucket &inputRayBucket, std::vector<Ray> *outputRayList)
