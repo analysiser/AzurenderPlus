@@ -37,12 +37,12 @@ namespace _462 {
       {
         case ERayType_Eye:
           {
-          raytracer.updateFrameBuffer(recv_r);
-          Ray *shadowray = new Ray();
-          raytracer.generateShadowRay(recv_r, *shadowray);
-          MPICommunicate::ISendRay(shadowray,
-              raytracer.checkNextBoundingBox(*shadowray, procId));
-          send_count++;
+            raytracer.updateFrameBuffer(recv_r);
+            Ray *shadowray = new Ray();
+            raytracer.generateShadowRay(recv_r, *shadowray);
+            MPICommunicate::ISendRay(shadowray,
+                raytracer.checkNextBoundingBox(*shadowray, procId));
+            send_count++;
           }
           break;
         case ERayType_Shadow:
@@ -77,10 +77,10 @@ namespace _462 {
       {
         case ERayType_Eye:
           {
-          int next_node;
-          next_node = raytracer.localRaytrace(recv_r);
-          Ray *send_ray_buf = new Ray(&recv_r);
-          MPICommunicate::ISendRay(send_ray_buf, next_node);
+            int next_node;
+            next_node = raytracer.localRaytrace(recv_r);
+            Ray *send_ray_buf = new Ray(&recv_r);
+            MPICommunicate::ISendRay(send_ray_buf, next_node);
           }
           break;
         case ERayType_Shadow:
@@ -97,4 +97,4 @@ namespace _462 {
     }
   }
 
-}
+}  //namespace _462

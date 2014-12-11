@@ -4,8 +4,8 @@
 
 namespace _462
 {
-  class MPICommunicate
-  {
+    class MPICommunicate
+    {
     public:
       static void SendRay(Ray &ray, int dest);
       static void ISendRay(Ray *ray, int dest);
