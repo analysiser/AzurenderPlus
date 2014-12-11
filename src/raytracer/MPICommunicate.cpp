@@ -20,7 +20,7 @@ namespace _462
     MPI_Request req;
     MPI_Isend(
         ray,
-        sizeof(ray),
+        sizeof(Ray),
         MPI_BYTE,
         dest,
         0,

@@ -90,14 +90,13 @@ namespace _462 {
             switch(recv_r.type)
             {
                 case ERayType_Eye:
+                case ERayType_Shadow:
                 {
                     int next_node;
                     next_node = raytracer.localRaytrace(recv_r);
                     Ray *send_ray_buf = new Ray(&recv_r);
                     MPICommunicate::ISendRay(send_ray_buf, next_node);
                 }
-                    break;
-                case ERayType_Shadow:
                     break;
                 case ERayType_GI:
                     break;
