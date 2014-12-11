@@ -17,7 +17,7 @@
         <position x="0.0" y="5.0" z="4.0"/>
         <color r="0.7" g="0.7" b="0.7"/>
         <radius v="0.0"/>
-        <intensity v="100.0"/>
+        <intensity v="50.0"/>
     </point_light>
 
     <material name="white">

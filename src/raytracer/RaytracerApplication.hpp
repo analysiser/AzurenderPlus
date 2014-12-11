@@ -76,7 +76,7 @@ namespace _462 {
         // flips raytracing, does any necessary initialization
         void toggle_raytracing( int width, int height );
         // writes the current raytrace buffer to the output file
-        void output_image();
+        void output_image(unsigned char *framebuffer);
 
         Raytracer raytracer;
 

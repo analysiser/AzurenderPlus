@@ -524,10 +524,11 @@ namespace _462 {
         return true;
     }
 
-    bool Raytracer::mpiTrace(FrameBuffer &buffer, real_t* /*max_time*/)
+    bool Raytracer::mpiTrace(FrameBuffer &buffer, unsigned char *dibuffer, unsigned char *gibuffer, real_t* /* max_time */)
     {
         std::vector<Ray> eyerays;
         std::vector<Ray> shadowrays;
+        std::vector<Ray> girays;
         
         double start, end;
         // generate and redistribute eye rays through open mpi to different nodes
@@ -539,7 +540,7 @@ namespace _462 {
 
         // Take in distributed eye rays, do local ray tracing, distribute shadow rays to corresponding nodes
         start = MPI_Wtime();
-        mpiStageLocalRayTracing(scene->node_size, scene->node_rank, eyerays, &shadowrays);
+        mpiStageLocalRayTracing(scene->node_size, scene->node_rank, eyerays, &shadowrays, &girays);
         end = MPI_Wtime();
 
         printf("[thread %d] LocalRayTracing state took %f sec\n", scene->node_rank, end - start);
@@ -549,8 +550,27 @@ namespace _462 {
         end = MPI_Wtime();
 
         printf("[thread %d] Shadow state took %f sec\n", scene->node_rank, end - start);
+        
+        // TODO: merge direct illumination buffer
+        
+//        while (girays.size() > 0)
+//        {
+            eyerays.clear();
+            eyerays = girays;
+            girays.clear();
+            shadowrays.clear();
+            
+            mpiStageLocalRayTracing(scene->node_size, scene->node_rank, eyerays, &shadowrays, &girays);
+            
+            mpiStageShadowRayTracing(scene->node_size, scene->node_rank, buffer, shadowrays);
+            
+            // TODO: merge global illumination buffer
 
-        mpiStagePixelShading(scene->node_size, scene->node_rank);
+//        }
+        
+//        mpiStageGIRayTracing(scene->node_size, scene->node_rank, buffer, girays, &gishadowrays);
+
+//        mpiStagePixelShading(scene->node_size, scene->node_rank);
 
         return true;
     }
@@ -2112,7 +2132,7 @@ namespace _462 {
                         r.x = x;
                         r.y = y;
                         r.color = Color3::Black();
-                        r.depth = 2;
+                        r.depth = 1;
                         currentNodeRayList.push_back(node_id, r);
                     }
                 }
@@ -2126,10 +2146,15 @@ namespace _462 {
     
     // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
     // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
-    void Raytracer::mpiStageLocalRayTracing(int procs, int procId, std::vector<Ray> &eyerays, std::vector<Ray> *shadowRays)
+    void Raytracer::mpiStageLocalRayTracing(int procs,
+                                            int procId,
+                                            std::vector<Ray> &eyerays,
+                                            std::vector<Ray> *shadowRays,
+                                            std::vector<Ray> *giRays)
     {
         // shadow ray list used for shading
         RayBucket nodeShadowRayList(procs);
+        RayBucket nodeGIRayList(procs);
         
         // for each eye ray
         for (size_t i = 0; i < eyerays.size(); i++) {
@@ -2142,7 +2167,7 @@ namespace _462 {
             if (isHit) {
                 if (record.diffuse != Color3::Black() && record.refractive_index == 0)
                 {
-                    Vector3 diff = record.position - scene->camera.position;
+                    Vector3 diff = record.position - ray.e;
                     float z = (float)length(diff);
                     
                     // for each light
@@ -2154,14 +2179,19 @@ namespace _462 {
                         // shade the hit point color direclty
                         Vector3 samplePoint;
                         float tlight;
-                        Color3 shadingColor = record.diffuse * aLight->SampleLight(record.position, record.normal, EPSILON, TMAX, &samplePoint, &tlight);
+                        Color3 shadingColor = record.diffuse * aLight->SampleLight(record.position,
+                                                                                   record.normal,
+                                                                                   EPSILON,
+                                                                                   TMAX,
+                                                                                   &samplePoint,
+                                                                                   &tlight);
                         shadingColor *= INV_PI;
                         
                         // for each light sample
-                        // we sample only one point per light for now
+                        // TODO: we sample only one point per light for now
                         Vector3 d_shadowRay_normolized = aLight->getPointToLightDirection(record.position, samplePoint);
                         
-                        Ray shadowRay = Ray(record.position + EPSILON * d_shadowRay_normolized, d_shadowRay_normolized);
+                        Ray shadowRay = Ray(record.position, d_shadowRay_normolized);
                         shadowRay.x = ray.x;
                         shadowRay.y = ray.y;
                         shadowRay.maxt = tlight;
@@ -2177,17 +2207,35 @@ namespace _462 {
                                 nodeShadowRayList.push_back(bidx, shadowRay);
                             }
                         }
+                        
+                        if (ray.depth > 0) {
+                            // generate second rays
+                            Vector3 dir = uniformSampleHemisphere(record.normal);
+                            Ray secondRay = Ray(record.position, dir);
+                            secondRay.x = ray.x;
+                            secondRay.y = ray.y;
+                            secondRay.depth = ray.depth - 1;
+                            
+                            // for each node bounding box
+                            for (int bidx = 0; bidx < procs; bidx++) {
+                                BndBox nodeBndBox = scene->nodeBndBox[bidx];
+                                if (nodeBndBox.intersect(shadowRay, EPSILON, TMAX)) {
+                                    nodeGIRayList.push_back(bidx, secondRay);
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
         
         mpiAlltoallRayDistribution(procs, procId, nodeShadowRayList, shadowRays);
+        mpiAlltoallRayDistribution(procs, procId, nodeGIRayList, giRays);
     }
 
     // each node takes in shadow ray, do local ray tracing, maintain shadow ray
     // hit records, send records to corresponding nodes
-    void Raytracer::mpiStageShadowRayTracing(int procs, int procId, FrameBuffer &buffer, std::vector<Ray> &shadowrays)
+    void Raytracer::mpiStageShadowRayTracing(int /*procs*/, int /*procId*/, FrameBuffer &buffer, std::vector<Ray> &shadowrays)
     {
         
         for (size_t i = 0; i < shadowrays.size(); i++)
@@ -2195,31 +2243,52 @@ namespace _462 {
             Ray ray = shadowrays[i];
             // TODO: light index might be different?
             bool isHit = false;
-            HitRecord shadowRecord = getClosestHit(ray, EPSILON, ray.maxt, &isHit, (Layer_IgnoreShadowRay));
+            /* HitRecord shadowRecord = */getClosestHit(ray, EPSILON, ray.maxt, &isHit, (Layer_IgnoreShadowRay));
             // TODO: path tracing shading
 //            Color3 color = isHit ? Color3::Black() : ray.color;
             int x = ray.x;
             int y = ray.y;
-//            raytraceColorBuffer[(y * width + x)] += color;
-//            Color3 progressiveColor = raytraceColorBuffer[(y * width + x)] * ((1.0)/(num_iteration));
-//            progressiveColor = clamp(progressiveColor, 0.0, 1.0);
-//            progressiveColor.to_array(&buffer.cbuffer[4 * (y * width + x)]);
+            
             if (ray.time < buffer.zbuffer[y * width + x]) {
                 ray.color.to_array(&buffer.cbuffer[4 * (y * width + x)]);
                 buffer.zbuffer[y * width + x] = ray.time;
             }
-            
-            
         }
+        
+    }
+    
+    void Raytracer::mpiStageGIRayTracing(int procs, int procId, FrameBuffer &gibuffer, std::vector<Ray> &girays, std::vector<Ray> *shadowRays)
+    {
+        // for each eye ray
+        for (size_t i = 0; i < girays.size(); i++) {
+            Ray ray = girays[i];
+            
+            bool isHit = false;
+            HitRecord record = getClosestHit(ray, EPSILON, INFINITY, &isHit, Layer_All);
+            
+            if (isHit) {
+                if (record.diffuse != Color3::Black() && record.refractive_index == 0)
+                {
+                    Vector3 diff = record.position - ray.e;
+                    float z = (float)length(diff);
+
+                    
+                }
+            }
+        }
+    }
+    
+    void Raytracer::mpiMergeFrameBufferToBuffer(unsigned char *rootbuffer)
+    {
         
     }
 
     // take in every nodes' shadow ray hit records, do local pixel shading.
-    void Raytracer::mpiStagePixelShading(int procs, int procId)
-    {
-        // TODO
-        // TODO: path tracing
-    }
+//    void Raytracer::mpiStagePixelShading(int procs, int procId)
+//    {
+//        // TODO
+//        // TODO: path tracing
+//    }
     
     void Raytracer::mpiAlltoallRayDistribution(int procs, int /* procId */, RayBucket &inputRayBucket, std::vector<Ray> *outputRayList)
     {
@@ -2277,6 +2346,8 @@ namespace _462 {
         delete recvcounts;
         delete recvoffsets;
     }
+    
+    
 
 
 } /* _462 */

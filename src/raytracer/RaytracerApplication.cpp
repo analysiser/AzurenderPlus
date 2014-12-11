@@ -169,7 +169,7 @@ namespace _462 {
                     std::cout<<camera_control.camera.orientation<<std::endl;
                     break;
                 case KEY_SCREENSHOT:
-                    output_image();
+                    output_image(buffer.cbuffer);
                     break;
                 default:
                     break;
@@ -223,7 +223,7 @@ namespace _462 {
         raytracing = !raytracing;
     }
     
-    void RaytracerApplication::output_image()
+    void RaytracerApplication::output_image(unsigned char *framebuffer)
     {
         static const size_t MAX_LEN = 256;
         const char* filename;
@@ -250,7 +250,7 @@ namespace _462 {
             filename = tmp.c_str();
         }
         
-        if (imageio_save_image(filename, buffer.cbuffer, buf_width, buf_height))
+        if (imageio_save_image(filename, framebuffer, buf_width, buf_height))
         {
             std::cout << "Saved raytraced image to '" << filename << "'.\n";
         } else {
