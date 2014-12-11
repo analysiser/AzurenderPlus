@@ -52,8 +52,7 @@ namespace _462 {
           break;
         case ERayType_Terminate:
         default:
-          printf("Master received a wrong ray type\n");
-          sleep(5);
+          printf("Proc = %d, Master received a wrong ray type = %d\n", procId, recv_r.type);
           exit(-1);
       }
 
@@ -93,7 +92,7 @@ namespace _462 {
           finished = true;
           break;
         default:
-          printf("Slave received a wrong ray type\n");
+          printf("Proc = %d, Slave received a wrong ray type = %d\n", procId, recv_r.type);
           exit(-1);
       }
     }

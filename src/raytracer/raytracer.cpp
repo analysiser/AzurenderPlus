@@ -140,6 +140,8 @@ namespace _462 {
 
         // send node bounding boxes to all other nodes
         mpiStageNodeBoundingBox(scene->node_size, scene->node_rank);
+        
+        MPI_Barrier(MPI_COMM_WORLD);
 
         // initialize debug variables
         radius_clear = 0;
