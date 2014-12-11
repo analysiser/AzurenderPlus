@@ -2335,12 +2335,12 @@ namespace _462 {
                         zmin = z;
                         zminId = j;
                         shadow = (sbuf[zbufidx] != 0);
-                        color = Color3::Blue();
+//                        color = Color3::Blue();
                     }
                     else if (z == zmin)
                     {
                         shadow = (shadow || (sbuf[zbufidx] != 0));
-                        color = Color3::Red();
+//                        color = Color3::Red();
                     }
                     else
                     {
