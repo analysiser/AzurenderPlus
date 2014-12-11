@@ -109,6 +109,37 @@ namespace _462{
         return checkNextBoundingBox(ray, procId);
     }
     
+    // generate shadow ray by given input ray, maxt would be used
+    void azMPIRaytrace::generateShadowRay(Ray &ray, Ray &shadowRay)
+    {
+        // input ray's closest hit point
+        Vector3 e = ray.e + ray.d * ray.maxt;
+        
+        // TODO: multiple light sources
+        Light *aLight = scene->get_lights()[0];
+        Vector3 lp = aLight->SamplePointOnLight();
+        Vector3 d = normalize(lp - e);
+        
+        shadowRay = Ray(e, d);
+        shadowRay.x = ray.x;
+        shadowRay.y = ray.y;
+        shadowRay.color = ray.color;
+        shadowRay.mint = EPSILON;
+        shadowRay.time = 0;
+        shadowRay.maxt = ray.time;
+        shadowRay.type = ERayType_Shadow;
+        shadowRay.isHit = false;
+    }
+    
+    void azMPIRaytrace::generateGIRay(Ray &ray, Ray &giRay)
+    {
+        
+    }
+    
+    void azMPIRaytrace::updateFrameBuffer(Ray &ray)
+    {
+        
+    }
     
     
     HitRecord azMPIRaytrace::getClosestHit(Ray r, real_t t0, real_t t1, bool *isHit, SceneLayer mask)

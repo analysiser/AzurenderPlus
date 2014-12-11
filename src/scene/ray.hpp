@@ -22,6 +22,7 @@ namespace _462 {
         ERayType_Shadow = 1,
         ERayType_GI = 2,
         
+        ERayType_Terminate = 3,
     };
     
     struct Ray
