@@ -10,5 +10,6 @@ namespace _462
       static void SendRay(Ray &ray, int dest);
       static void ISendRay(Ray *ray, int dest);
       static void RecvRay(Ray &ray);
+      static void BroadCast(Ray &ray);
   };
 }  // namespace _462

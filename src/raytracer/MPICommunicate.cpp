@@ -42,4 +42,17 @@ namespace _462
         NULL);
     return;
   }
+
+
+  void MPICommunicate::BroadCast(Ray &ray)
+  {
+    MPI_Bcast(
+        &ray,
+        sizeof(ray),
+        MPI_BYTE,
+        0,
+        MPI_COMM_WORLD);
+    return;
+  }
+
 }  // namespace _462

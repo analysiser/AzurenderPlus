@@ -58,6 +58,9 @@ namespace _462 {
 
       if (send_count == recv_count)
       {
+        Ray terminate;
+        terminate.type = ERayType_Terminate;
+        MPICommunicate::BroadCast(terminate);
         break;
       }
     }
