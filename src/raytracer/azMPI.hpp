@@ -23,48 +23,52 @@
 #include <SDL_timer.h>
 #include <iostream>
 
+#include <queue>
+
 namespace _462 {
-    
-    class azMPI {
-        
+
+  class azMPI {
+
     public:
-        
-        azMPI() {}
-        ~azMPI() {}
-        azMPI(
-              Scene *aScene,
-              FrameBuffer &buffer,
-              size_t width,
-              size_t height)
+
+      azMPI() {}
+      ~azMPI() {}
+      azMPI(
+          Scene *aScene,
+          FrameBuffer &buffer,
+          size_t width,
+          size_t height)
         : raytracer(aScene, &buffer, width, height),
         send_count(0),
         recv_count(0)
-        {
-//            scene = aScene;
-            
-            procs = aScene->node_size;
-            procId = aScene->node_rank;
-            
-        }
-        
-        void mpiPathTrace(vector<Ray> &eyerays);
-        
-        void run_master();
-        void run_slave();
-        
+    {
+      //            scene = aScene;
+
+      procs = aScene->node_size;
+      procId = aScene->node_rank;
+
+    }
+
+      void mpiPathTrace(vector<Ray> &eyerays);
+
+      void run_master();
+      void run_slave();
+
     private:
-        // the scene to trace
-//        Scene* scene;
-        azMPIRaytrace raytracer;
-        
-        int procs;
-        int procId;
-        
-        int send_count;
-        int recv_count;
-        
-    };
-    
+      // the scene to trace
+      //        Scene* scene;
+      azMPIRaytrace raytracer;
+
+      int procs;
+      int procId;
+
+      int send_count;
+      int recv_count;
+
+      std::queue<Ray> wait_queue;
+
+  };
+
 }
 
 
