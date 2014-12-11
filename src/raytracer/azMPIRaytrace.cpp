@@ -73,13 +73,14 @@ namespace _462{
         // if the ray sent here is eye ray
         if (ray.type == ERayType_Eye) {
             bool isHit = false;
-            HitRecord record = getClosestHit(ray, EPSILON, INFINITY, &isHit, Layer_All);
+            HitRecord record = getClosestHit(ray, EPSILON, ray.maxt, &isHit, Layer_All);
             
             // if this ray hits anything
             if (isHit)
             {
                 // update longest distance
                 ray.maxt = record.t;
+                ray.hit = record.position;
                 
                 // shade
                 if (record.diffuse != Color3::Black() && record.refractive_index == 0)
@@ -111,12 +112,20 @@ namespace _462{
         else if (ray.type == ERayType_Shadow)
         {
             bool isHit = false;
-            getClosestHit(ray, EPSILON, ray.time, &isHit, Layer_All);
+            HitRecord shadowRecord = getClosestHit(ray, EPSILON, ray.maxt, &isHit, Layer_All);
             
             if (isHit)
             {
                 ray.color = Color3::Black(); // TODO: ambient
                 ray.isHit = true;
+//                if (procId == ray.source) {
+//                    
+//                    ray.color = Color3::Blue();
+//                }
+//                else {
+//                    ray.color = Color3::Black();
+//                }
+                
                 return root;
             }
             else
@@ -138,11 +147,30 @@ namespace _462{
         return checkNextBoundingBox(ray, procId);
     }
     
+    void azMPIRaytrace::generateShadowRay(_462::Ray &ray, _462::Vector3 &hitPoint, _462::Ray &shadowRay)
+    {
+        Vector3 e = hitPoint;
+        // TODO: multiple light sources
+        Light *aLight = scene->get_lights()[0];
+        Vector3 lp = aLight->SamplePointOnLight();
+        Vector3 d = normalize(lp - e);
+        
+        shadowRay = Ray(e, d);
+        shadowRay.x = ray.x;
+        shadowRay.y = ray.y;
+        shadowRay.color = ray.color;
+        shadowRay.mint = EPSILON;
+        shadowRay.time = 0;
+        shadowRay.maxt = ray.time;
+        shadowRay.type = ERayType_Shadow;
+        shadowRay.isHit = false;
+    }
+    
     // generate shadow ray by given input ray, maxt would be used
     void azMPIRaytrace::generateShadowRay(Ray &ray, Ray &shadowRay)
     {
         // input ray's closest hit point
-        Vector3 e = ray.e + ray.d * ray.maxt;
+        Vector3 e = ray.hit;
         
         // TODO: multiple light sources
         Light *aLight = scene->get_lights()[0];
@@ -170,15 +198,17 @@ namespace _462{
         if (ray.type == ERayType_Eye) {
             int x = ray.x;
             int y = ray.y;
-            ray.color.to_array(&buffer->cbuffer[4 * (y * width + x)]);
+            Color3 color = ray.color;
+            color.to_array(&buffer->cbuffer[4 * (y * width + x)]);
         }
         else if (ray.type == ERayType_Shadow) {
-            if (ray.isHit)
-            {
+//            if (ray.isHit)
+//            {
+                Color3 color = ray.color;
                 int x = ray.x;
                 int y = ray.y;
-                ray.color.to_array(&buffer->cbuffer[4 * (y * width + x)]);
-            }
+                color.to_array(&buffer->cbuffer[4 * (y * width + x)]);
+//            }
         }
         else
         {
