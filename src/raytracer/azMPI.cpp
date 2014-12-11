@@ -53,6 +53,7 @@ namespace _462 {
         case ERayType_Terminate:
         default:
           printf("Master received a wrong ray type\n");
+          sleep(5);
           exit(-1);
       }
 
@@ -73,6 +74,7 @@ namespace _462 {
     while(!finished)
     {
       MPICommunicate::RecvRay(recv_r);
+      printf("received something \n");
       switch(recv_r.type)
       {
         case ERayType_Eye:
@@ -97,4 +99,4 @@ namespace _462 {
     }
   }
 
-}  //namespace _462
+}  //namespace _46
