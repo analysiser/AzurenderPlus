@@ -2307,6 +2307,8 @@ namespace _462 {
                 r.type = ERayType_Eye;
                 r.depth = 2;
                 r.isHit = false;
+                r.x = x;
+                r.y = y;
                 
                 eyerays.push_back(r);
             }

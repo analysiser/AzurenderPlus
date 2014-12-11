@@ -56,12 +56,8 @@ namespace _462{
         if (procId == procs - 1)    return root;
         
         for (int p = procId + 1; p < procs; p++) {
-            //printf("p = %d, procs = %d\n", p, procs);
-//            std::cout<<p<<": "<<scene->nodeBndBox[p].pMin<<" "<<scene->nodeBndBox[p].pMax<<std::endl;
-//            std::cout<<ray.e<<" "<<ray.d<<std::endl;
             BndBox nodeBBox = scene->nodeBndBox[p];
             if (nodeBBox.intersect(ray, EPSILON, TMAX)) {
-                std::cout<<p<<": "<<scene->nodeBndBox[p].pMin<<" "<<scene->nodeBndBox[p].pMax<<std::endl;
                 return p;
             }
         }
