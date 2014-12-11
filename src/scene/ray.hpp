@@ -38,6 +38,7 @@ namespace _462 {
         int lightIndex;
         int x, y;
         int depth;
+        int source;
     };
     
     typedef std::vector<std::vector<Ray> > NodeRayVector;

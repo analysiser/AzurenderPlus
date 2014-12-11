@@ -12,6 +12,7 @@
 #include "application/scene_loader.hpp"
 #include "application/opengl.hpp"
 #include "scene/scene.hpp"
+#include "constants.h"
 #include "raytracer/raytracer.hpp"
 
 #ifdef __APPLE__
@@ -131,7 +132,7 @@ void mergebuffers(unsigned char *dibuffer, unsigned char *gibuffer, int width, i
             int index = 4 * (y * width + x);
             Color3 diColor = Color3(&dibuffer[index]);
             Color3 giColor = Color3(&gibuffer[index]);
-            Color3 res = diColor + diColor * giColor;
+            Color3 res = diColor + 0.8f * INV_PI * giColor;
             res.to_array(&dibuffer[index]);
         }
     }

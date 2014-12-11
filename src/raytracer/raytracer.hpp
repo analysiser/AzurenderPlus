@@ -94,9 +94,7 @@ namespace _462 {
         // hit records, send records to corresponding nodes
         void mpiStageShadowRayTracing(int procs, int procId, FrameBuffer &buffer, std::vector<Ray> &shadowrays);
         
-        
-        void mpiStageGIRayTracing(int procs, int procId, FrameBuffer &gibuffer, std::vector<Ray> &girays, std::vector<Ray> *shadowRays);
-        
+//        void mpiStageGIRayTracing(int procs, int procId, FrameBuffer &gibuffer, std::vector<Ray> &girays, std::vector<Ray> *shadowRays);
         
         // take in every nodes' shadow ray hit records, do local pixel shading.
 //        void mpiStagePixelShading(int procs, int procId);
@@ -106,7 +104,7 @@ namespace _462 {
 
         
         // merge buffer to designated buffer
-        void mpiMergeFrameBufferToBuffer(unsigned char *rootbuffer);
+        void mpiMergeFrameBufferToBuffer(int procs, int procId, FrameBuffer &buffer, unsigned char *rootbuffer);
 
         // indirect and caustics list for photons to trace
         std::vector<Photon> photon_indirect_list;

@@ -14,11 +14,18 @@
     <ambient_light r="0.1" g="0.1" b="0.1"/>
 
     <point_light>
-        <position x="0.0" y="5.0" z="4.0"/>
+        <position x="0.0" y="3.0" z="4.0"/>
         <color r="0.7" g="0.7" b="0.7"/>
         <radius v="0.0"/>
         <intensity v="50.0"/>
     </point_light>
+
+    <!-- <distant_light>
+        <position x="0.0" y="0.0" z="0.0"/>
+        <direction x="1.4" y="-0.2" z="-1.5"/>
+        <color r="0.9" g="0.84" b="0.0"/>
+        <intensity v="1.5"/>
+    </distant_light> -->
 
     <material name="white">
         <ambient r="0.8" g="0.8" b="0.8"/>
@@ -26,10 +33,35 @@
         <specular r="0.1" g="0.1" b="0.1"/>
     </material>
 
+    <material name="red">
+        <ambient r="0.8" g="0.8" b="0.8"/>
+        <diffuse r="0.8" g="0.2" b="0.2"/>
+        <specular r="0.1" g="0.1" b="0.1"/>
+    </material>
+
+    <material name="green">
+        <ambient r="0.8" g="0.8" b="0.8"/>
+        <diffuse r="0.2" g="0.8" b="0.2"/>
+        <specular r="0.1" g="0.1" b="0.1"/>
+    </material>
+
+    <material name="blue">
+        <ambient r="0.8" g="0.8" b="0.8"/>
+        <diffuse r="0.2" g="0.2" b="0.8"/>
+        <specular r="0.1" g="0.1" b="0.1"/>
+    </material>
+
+    <mesh name="floor" rank="4" filename="models/floor.obj"/>
     <mesh name="dragon0" rank="0" filename="models/dragon.obj"/>
     <mesh name="dragon1" rank="1" filename="models/dragon.obj"/>
     <mesh name="dragon2" rank="2" filename="models/dragon.obj"/>
     <mesh name="dragon3" rank="3" filename="models/dragon.obj"/>
+
+    <model material="white" rank="4" mesh="floor">
+        <position x="0.0" y="-2.5" z="0.0"/>
+        <scale x="10.0" y="10.0" z="10.0"/>
+        <!-- <orientation a="1.0" x="0.0" y="0.0" z="0.0"/> -->
+    </model> 
 
     <model material="white" rank="0" mesh="dragon0">
         <position x="-3.0" y="0" z="0.0"/>
