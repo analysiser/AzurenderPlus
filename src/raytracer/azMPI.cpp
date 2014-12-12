@@ -50,28 +50,18 @@ namespace _462 {
             switch(recv_r.type)
             {
                 case ERayType_Eye:
-                {
-                    //-->
                     raytracer.updateFrameBuffer(recv_r);
-                    //<--
-//                    if (recv_r.isHit)
-//                    {
-//                        Ray shadowray;
-//                        raytracer.generateShadowRay(recv_r, shadowray);
-//                        int dest = raytracer.checkNextBoundingBox(shadowray, procId);
-//                        shadowray.source = dest;
-//                        result_list.push_back(dest, shadowray);
-//                    }
-//                    else
-//                    {
-//                        
-//                    }
-                }
                     break;
                 case ERayType_Shadow:
                     raytracer.updateFrameBuffer(recv_r);
                     break;
+                case ERayType_GIShadow:
+                    raytracer.updateFrameBuffer(recv_r);
+                    break;
                 case ERayType_GI:
+                    // You didnt hit anything
+//                    printf("Shouldn't receive ERayType_GI\n");
+//                    exit(10);
                     break;
                 default:
                     exit(-1);
@@ -90,7 +80,6 @@ namespace _462 {
                 case ERayType_Eye:
                 {
                     int next_node;
-                    HitRecord aRecord;
                     next_node = raytracer.localRaytrace(recv_r);
                     if (next_node == root && recv_r.isHit)
                     {
@@ -99,7 +88,6 @@ namespace _462 {
                         // if self add wait queue
                         // else push result list
                         Ray shadowRay;
-//                        raytracer.generateShadowRay(recv_r, aRecord, shadowRay);
                         raytracer.generateShadowRay(recv_r, shadowRay);
                         
                         int next_node = raytracer.checkNextBoundingBox(shadowRay, root);
@@ -111,7 +99,24 @@ namespace _462 {
 //                            shadowRay.source = next_node;
                             result_list.push_back(next_node, shadowRay);
                         }
-
+                        
+                        if (recv_r.depth > 0)
+                        {
+                            for (int i = 0; i < 10; i++) {
+                                Ray giRay;
+                                raytracer.generateGIRay(recv_r, giRay);
+                                giRay.color *= 0.1f;
+                                
+                                next_node = raytracer.checkNextBoundingBox(giRay, root);
+                                if (next_node == procId) {
+                                    wait_queue.push(giRay);
+                                }
+                                else {
+                                    result_list.push_back(next_node, giRay);
+                                }
+                            }
+                        }
+                        
                     }
                     else {
                         result_list.push_back(next_node, recv_r);
@@ -119,6 +124,7 @@ namespace _462 {
                 }
                     break;
                 case ERayType_Shadow:
+                case ERayType_GIShadow:
                 {
                     int next_node;
                     next_node = raytracer.localRaytrace(recv_r);
@@ -126,6 +132,46 @@ namespace _462 {
                 }
                     break;
                 case ERayType_GI:
+                {
+                    int next_node;
+                    next_node = raytracer.localRaytrace(recv_r);
+                    // finished getting GI ray hit
+                    if (next_node == root && recv_r.isHit)
+                    {
+                        // generate shadow ray
+                        // check bounding box
+                        // if self add wait queue
+                        // else push result list
+                        Ray shadowRay;
+                        raytracer.generateShadowRay(recv_r, shadowRay);
+                        
+                        int next_node = raytracer.checkNextBoundingBox(shadowRay, root);
+                        if (next_node == procId) {
+                            wait_queue.push(shadowRay);
+                        }
+                        else {
+                            result_list.push_back(next_node, shadowRay);
+                        }
+                        
+//                        if (recv_r.depth > 0)
+//                        {
+//                            Ray giRay;
+//                            raytracer.generateGIRay(recv_r, giRay);
+//                            
+//                            next_node = raytracer.checkNextBoundingBox(giRay, root);
+//                            if (next_node == procId) {
+//                                wait_queue.push(giRay);
+//                            }
+//                            else {
+//                                result_list.push_back(next_node, giRay);
+//                            }
+//                        }
+                        
+                    }
+                    else {
+                        result_list.push_back(next_node, recv_r);
+                    }
+                }
                     break;
                 case ERayType_Terminate:
                     break;

@@ -1177,18 +1177,6 @@ namespace _462 {
     return normalize(ran);
   }
 
-  Vector3 Raytracer::uniformSampleHemisphere(const Vector3& normal)
-  {
-    //        Vector3 newDir = samplePointOnUnitSphereUniform();
-    //        Vector3 newDir = samplePointOnUnitSphere();
-    Vector3 newDir = uniformSampleSphere(random_uniform(), random_uniform());
-    if (dot(newDir, normal) < 0.0) {
-      newDir = -newDir;
-    }
-    return normalize(newDir);
-    return newDir;
-  }
-
   inline real_t getGaussianFilterWeight(real_t dist_sqr, real_t radius_sqr)
   {
     real_t power = -(BETA * 0.5F * (dist_sqr/radius_sqr));

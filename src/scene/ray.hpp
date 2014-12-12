@@ -20,8 +20,9 @@ namespace _462 {
         ERayType_Eye = (1 << 0),
         ERayType_Shadow = (1 << 1),
         ERayType_GI = (1 << 2),
+        ERayType_GIShadow = (1 << 3),
         
-        ERayType_Terminate = (1 << 3),
+        ERayType_Terminate = (1 << 9),
         
         ERayType_All = (ERayType_Eye | ERayType_Shadow | ERayType_GI | ERayType_Terminate)
         
@@ -63,6 +64,7 @@ namespace _462 {
 //        int source;
         
         Vector3 hit;
+        Vector3 hitNormal;
     };
     
     typedef std::vector<std::vector<Ray> > NodeRayVector;

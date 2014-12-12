@@ -81,6 +81,7 @@ namespace _462{
                 // update longest distance
                 ray.maxt = record.t;
                 ray.hit = record.position;
+                ray.hitNormal = record.normal;
                 
                 // shade
                 if (record.diffuse != Color3::Black() && record.refractive_index == 0)
@@ -109,7 +110,7 @@ namespace _462{
             // find which of the next node this ray should be sent to
             return checkNextBoundingBox(ray, procId);
         }
-        else if (ray.type == ERayType_Shadow)
+        else if (ray.type == ERayType_Shadow || ray.type == ERayType_GIShadow)
         {
             bool isHit = false;
             HitRecord shadowRecord = getClosestHit(ray, EPSILON, ray.maxt, &isHit, Layer_All);
@@ -118,14 +119,6 @@ namespace _462{
             {
                 ray.color = Color3::Black(); // TODO: ambient
                 ray.isHit = true;
-//                if (procId == ray.source) {
-//                    
-//                    ray.color = Color3::Blue();
-//                }
-//                else {
-//                    ray.color = Color3::Black();
-//                }
-                
                 return root;
             }
             else
@@ -136,6 +129,40 @@ namespace _462{
         else if (ray.type == ERayType_GI)
         {
             // TODO: GI RAYS
+            bool isHit = false;
+            HitRecord record = getClosestHit(ray, EPSILON, ray.maxt, &isHit, Layer_All);
+            
+            if (isHit)
+            {
+                // update longest distance
+                ray.maxt = record.t;
+                ray.hit = record.position;
+                ray.hitNormal = record.normal;
+                
+                // shade gi hit point
+                if (record.diffuse != Color3::Black() && record.refractive_index == 0)
+                {
+                    Color3 color = Color3::Black();
+                    // for each light
+                    
+                    Light *aLight = scene->get_lights()[0];
+                    
+                    // shade the hit point color direclty
+                    Vector3 samplePoint;
+                    float tlight;
+                    color += record.diffuse * aLight->SampleLight(record.position,
+                                                                  record.normal,
+                                                                  EPSILON,
+                                                                  TMAX,
+                                                                  &samplePoint,
+                                                                  &tlight);
+                    ray.color = color;
+                    ray.time = tlight;
+                    ray.isHit = true;
+                }
+            }
+            
+            return checkNextBoundingBox(ray, procId);
         }
         else
         {
@@ -145,25 +172,6 @@ namespace _462{
         
         // TODO: necessary?
         return checkNextBoundingBox(ray, procId);
-    }
-    
-    void azMPIRaytrace::generateShadowRay(_462::Ray &ray, _462::Vector3 &hitPoint, _462::Ray &shadowRay)
-    {
-        Vector3 e = hitPoint;
-        // TODO: multiple light sources
-        Light *aLight = scene->get_lights()[0];
-        Vector3 lp = aLight->SamplePointOnLight();
-        Vector3 d = normalize(lp - e);
-        
-        shadowRay = Ray(e, d);
-        shadowRay.x = ray.x;
-        shadowRay.y = ray.y;
-        shadowRay.color = ray.color;
-        shadowRay.mint = EPSILON;
-        shadowRay.time = 0;
-        shadowRay.maxt = ray.time;
-        shadowRay.type = ERayType_Shadow;
-        shadowRay.isHit = false;
     }
     
     // generate shadow ray by given input ray, maxt would be used
@@ -184,12 +192,32 @@ namespace _462{
         shadowRay.mint = EPSILON;
         shadowRay.time = 0;
         shadowRay.maxt = ray.time;
-        shadowRay.type = ERayType_Shadow;
+        if (ray.type == ERayType_Eye)
+            shadowRay.type = ERayType_Shadow;
+        else if (ray.type == ERayType_GI)
+            shadowRay.type = ERayType_GIShadow;
+        else {
+            printf("No such shadow ray type for type: %d\n", ray.type);
+        }
         shadowRay.isHit = false;
     }
     
     void azMPIRaytrace::generateGIRay(Ray &ray, Ray &giRay)
     {
+        if (ray.depth > 0) {
+            Vector3 dir = uniformSampleHemisphere(ray.hitNormal);
+            giRay = Ray(ray.hit + dir * EPSILON, dir);
+            giRay.color = ray.color * INV_PI;
+            giRay.x = ray.x;
+            giRay.y = ray.y;
+            giRay.mint = EPSILON;
+            giRay.maxt = TMAX;
+            giRay.time = 0;
+            giRay.type = ERayType_GI;
+            giRay.isHit = false;
+            giRay.depth = ray.depth - 1;
+        }
+        
         
     }
     
@@ -202,16 +230,26 @@ namespace _462{
             color.to_array(&buffer->cbuffer[4 * (y * width + x)]);
         }
         else if (ray.type == ERayType_Shadow) {
-//            if (ray.isHit)
-//            {
-                Color3 color = ray.color;
-                int x = ray.x;
-                int y = ray.y;
-                color.to_array(&buffer->cbuffer[4 * (y * width + x)]);
-//            }
+            Color3 color = ray.color;
+            int x = ray.x;
+            int y = ray.y;
+            color.to_array(&buffer->cbuffer[4 * (y * width + x)]);
         }
-        else
-        {
+        else if (ray.type == ERayType_GIShadow) {
+            int x = ray.x;
+            int y = ray.y;
+            Color3 color = Color3(&buffer->cbuffer[4 * (y * width + x)]);
+//            if (color != Color3::Black()) {
+//                 color = color + color * ray.color * INV_PI;
+//            }
+//            else
+//            {
+                color = color + ray.color * INV_PI;
+//            }
+           
+            color.to_array(&buffer->cbuffer[4 * (y * width + x)]);
+        }
+        else {
             printf("No such case yet");
             exit(-1);
         }
