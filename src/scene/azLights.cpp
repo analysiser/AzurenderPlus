@@ -136,7 +136,7 @@ namespace _462 {
     Color3 DistantLight::SampleLight(const Vector3 & /*p*/, const Vector3 &normal, float t0, float t1, Vector3 *sample, float *tl) const
     {
         // TODO: distant light t
-        float tlight = 200;
+        float tlight = 20;
         if (tl) {
             *tl = tlight;
         }
@@ -170,6 +170,7 @@ namespace _462 {
     // sample a point on light surface
     Vector3 DistantLight::SamplePointOnLight() const
     {
+        printf("Wrong Call!\n");
         return Vector3::Zero();
     }
     

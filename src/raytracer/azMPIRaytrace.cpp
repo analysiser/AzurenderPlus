@@ -100,7 +100,7 @@ namespace _462{
                                                                   TMAX,
                                                                   &samplePoint,
                                                                   &tlight);
-                    ray.color = color;
+                    ray.color = color * INV_PI;
                     ray.time = tlight;
                     ray.isHit = true;
                 }
@@ -182,8 +182,9 @@ namespace _462{
         
         // TODO: multiple light sources
         Light *aLight = scene->get_lights()[0];
-        Vector3 lp = aLight->SamplePointOnLight();
-        Vector3 d = normalize(lp - e);
+//        Vector3 lp = aLight->SamplePointOnLight();
+//        Vector3 d = normalize(lp - e);
+        Vector3 d = normalize(aLight->getPointToLightDirection(e, aLight->position));
         
         shadowRay = Ray(e, d);
         shadowRay.x = ray.x;
@@ -218,7 +219,6 @@ namespace _462{
             giRay.depth = ray.depth - 1;
         }
         
-        
     }
     
     void azMPIRaytrace::updateFrameBuffer(Ray &ray)
@@ -239,13 +239,13 @@ namespace _462{
             int x = ray.x;
             int y = ray.y;
             Color3 color = Color3(&buffer->cbuffer[4 * (y * width + x)]);
-//            if (color != Color3::Black()) {
-//                 color = color + color * ray.color * INV_PI;
-//            }
-//            else
-//            {
-                color = color + ray.color * INV_PI;
-//            }
+            if (color != Color3::Black()) {
+                 color = color + color * ray.color * INV_PI;
+            }
+            else
+            {
+                color = 0.5F * color + 0.5f * ray.color * INV_PI;
+            }
            
             color.to_array(&buffer->cbuffer[4 * (y * width + x)]);
         }

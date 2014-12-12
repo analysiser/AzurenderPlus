@@ -197,7 +197,12 @@ int main(int argc, char* argv[])
         // raytrace until done
 //        app.raytracer.raytrace( app.buffer, 0);
 //        app.raytracer.mpiTrace( app.buffer, 0 );
+        
+        double start, end;
+        start = MPI_Wtime();
         app.raytracer.mpiPathTrace( app.buffer );
+        end = MPI_Wtime();
+        printf("Process rank = %d, done tracing took %f ms\n", app.scene.node_rank, (end - start) * 1000);
 
         // output result
         if(app.scene.node_rank == 0)

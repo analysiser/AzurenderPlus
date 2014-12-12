@@ -102,11 +102,11 @@ namespace _462 {
                         
                         if (recv_r.depth > 0)
                         {
-                            for (int i = 0; i < 10; i++) {
+                            for (int i = 0; i < 5; i++) {
                                 Ray giRay;
                                 raytracer.generateGIRay(recv_r, giRay);
-                                giRay.color *= 0.1f;
-                                
+                                giRay.color *= 0.2f;
+                            
                                 next_node = raytracer.checkNextBoundingBox(giRay, root);
                                 if (next_node == procId) {
                                     wait_queue.push(giRay);
