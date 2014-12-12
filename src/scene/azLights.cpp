@@ -170,7 +170,7 @@ namespace _462 {
     // sample a point on light surface
     Vector3 DistantLight::SamplePointOnLight() const
     {
-        printf("Wrong Call!\n");
+//        printf("Wrong Call!\n");
         return Vector3::Zero();
     }
     
