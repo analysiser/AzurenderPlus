@@ -65,3 +65,11 @@ Finished MPI stage for eye ray redistribution, shadow ray distribution and local
 Finished node framebuffer merging, refactored original single framebuffer to framebuffer with zbuffer integrated. Now we have a basic rendered result of piled stanford dragon:
 
 ![alt tag](https://raw.githubusercontent.com/analysiser/AzurenderPlus/926acf2de96a1af6fbb6e76fcf38233932d6094d/resources/images/2014120800.png)
+
+
+<strong>12/11/2014</strong>
+
+There are two different solutions in using MPI, one of them is currently having result like the following. The solution adopts a master-slave model, where all framebuffer updating is done by master. A basic path tracing result is as following:
+
+![alt tag](https://raw.githubusercontent.com/analysiser/AzurenderPlus/master/resources/images/201412112038.png)
+[Solution for this is in branch Azurender+++]
