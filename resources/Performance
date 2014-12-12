@@ -1,0 +1,73 @@
+Performance
+
+Lucy bytes:
+BVHTree size = 384974496
+Vertex total size = 64162560
+Triangle total size = 24060912
+one lucy in memory is about 451 mb
+
+Path tracing, 18.8s, 5 second rays per hit
+Process rank = 6, done tracing took 18878.020048 ms
+Process rank = 3, done tracing took 18871.796131 ms
+Process rank = 1, done tracing took 18872.562885 ms
+Process rank = 2, done tracing took 18828.038216 ms
+Process rank = 0, done tracing took 18885.861158 ms
+Process rank = 4, done tracing took 18889.590979 ms
+Process rank = 5, done tracing took 18896.771193 ms
+Saved raytraced image to '0shot141211230736.png'.
+
+
+Path tracing, 24.8s, 5 secondrays per hit, 10 nodes, single machine
+Process rank = 5, done tracing took 24819.651127 ms
+Process rank = 6, done tracing took 24790.407181 ms
+Process rank = 8, done tracing took 24820.683002 ms
+Process rank = 1, done tracing took 24811.613798 ms
+Process rank = 7, done tracing took 24797.962904 ms
+Process rank = 4, done tracing took 24806.448936 ms
+Process rank = 9, done tracing took 24818.126917 ms
+Process rank = 3, done tracing took 24804.240942 ms
+Process rank = 2, done tracing took 24784.034967 ms
+Process rank = 0, done tracing took 24808.917999 ms
+
+
+Direct Illum only, 10.6s
+Process rank = 2, done tracing took 10641.571045 ms
+Process rank = 6, done tracing took 10638.317108 ms
+Process rank = 9, done tracing took 10642.424107 ms
+Process rank = 7, done tracing took 10640.505075 ms
+Process rank = 8, done tracing took 10641.993999 ms
+Process rank = 1, done tracing took 10642.067909 ms
+Process rank = 3, done tracing took 10635.365963 ms
+Process rank = 4, done tracing took 10639.156818 ms
+Process rank = 5, done tracing took 10648.889065 ms
+Process rank = 0, done tracing took 10645.376205 ms
+
+
+
+GHC 2 machine, 4 nodes, 2 ranks, 9 lucy, 24.7s
+Process rank = 2, done tracing took 24743.838072 ms
+Process rank = 3, done tracing took 24735.131979 ms
+Process rank = 0, done tracing took 24762.557030 ms
+Process rank = 1, done tracing took 24750.626087 ms
+
+GHC 2 machine, 4 node, 2 ranks, 18 lucy, 31.4s
+Process rank = 1, done tracing took 31420.478821 ms
+Process rank = 3, done tracing took 31418.910980 ms
+Process rank = 4, done tracing took 31459.969997 ms
+Process rank = 0, done tracing took 31460.108995 ms
+Process rank = 2, done tracing took 31464.858055 ms
+
+GHC 2 machine, 4 node, 2 ranks, 18 lucy, over each other, 45.7s
+Process rank = 3, done tracing took 45766.553879 ms
+Process rank = 4, done tracing took 45766.081095 ms
+Process rank = 2, done tracing took 45771.732092 ms
+Process rank = 0, done tracing took 45777.179003 ms
+Process rank = 1, done tracing took 45785.346985 ms
+
+
+GHC 2 machine, 2 node, 1 lucy, 10s
+Process rank = 1, done tracing took 10070.299864 ms
+Process rank = 0, done tracing took 10089.203119 ms
+
+
+
