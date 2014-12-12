@@ -29,6 +29,9 @@ namespace _462 {
         this->time = ray->time;
         
         this->isHit = ray->isHit;
+        
+        this->hit = ray->hit;
+        this->hitNormal = ray->hitNormal;
     }
     
     Ray::Ray(Vector3 e, Vector3 d)
@@ -38,6 +41,9 @@ namespace _462 {
         this->mint = 0.f;
         this->maxt = INFINITY;
         this->time = 0.f;
+        
+        this->hit = Vector3::Zero();
+        this->hitNormal = Vector3::Zero();
     }
     
     Ray::Ray(Vector3 e, Vector3 d, float start, float end, float time)

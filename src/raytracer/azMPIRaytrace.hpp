@@ -6,6 +6,7 @@
 
 #include "raytracer/azReflection.hpp"
 #include "raytracer/constants.h"
+#include "raytracer/raytracer.hpp"
 
 #include "scene/scene.hpp"
 #include "scene/ray.hpp"
@@ -47,7 +48,7 @@ namespace _462 {
          @return next bounding box to check
          */
         int localRaytrace(Ray &ray);
-        
+                
         // generate shadow ray by given input ray, maxt would be used
         void generateShadowRay(Ray &ray, Ray &shadowRay);
         

@@ -14,10 +14,17 @@
     <ambient_light r="0.1" g="0.1" b="0.1"/>
 
     <point_light>
+<<<<<<< HEAD
         <position x="0.0" y="5.0" z="4.0"/>
         <color r="0.7" g="0.7" b="0.7"/>
         <radius v="0.0"/>
         <intensity v="50.0"/>
+=======
+        <position x="0.0" y="5.0" z="0.0"/>
+        <color r="0.7" g="0.7" b="0.7"/>
+        <radius v="0.0"/>
+        <intensity v="30.0"/>
+>>>>>>> 0e9aae86d95bf3d743464ad77688bf88d32eb357
     </point_light>
 
     <material name="white">
@@ -44,16 +51,27 @@
         <specular r="0.1" g="0.1" b="0.1"/>
     </material>
 
+<<<<<<< HEAD
     <!-- <mesh name="floor" rank="1" filename="models/floor.obj"/> -->
+=======
+    <mesh name="floor" rank="2" filename="models/floor.obj"/>
+>>>>>>> 0e9aae86d95bf3d743464ad77688bf88d32eb357
     <mesh name="dragon0" rank="1" filename="models/dragon.obj"/>
     <mesh name="dragon1" rank="2" filename="models/dragon.obj"/>
     <!-- <mesh name="dragon2" rank="2" filename="models/dragon.obj"/>
     <mesh name="dragon3" rank="3" filename="models/dragon.obj"/> -->
 
+<<<<<<< HEAD
     <!-- <model material="white" rank="1" mesh="floor">
         <position x="0.0" y="-2.5" z="0.0"/>
         <scale x="10.0" y="10.0" z="10.0"/>
     </model>  -->
+=======
+    <model material="white" rank="2" mesh="floor">
+        <position x="0.0" y="-2.2" z="0.0"/>
+        <scale x="10.0" y="10.0" z="10.0"/>
+    </model> 
+>>>>>>> 0e9aae86d95bf3d743464ad77688bf88d32eb357
 
     <model material="white" rank="1" mesh="dragon0">
         <position x="0.0" y="0" z="0.0"/>
