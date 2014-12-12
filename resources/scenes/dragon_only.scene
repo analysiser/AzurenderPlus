@@ -52,10 +52,10 @@
     </material>
 
     <mesh name="floor" rank="1" filename="models/floor.obj"/>
-    <mesh name="dragon0" rank="1" filename="models/dragon.obj"/>
-    <mesh name="dragon1" rank="2" filename="models/dragon.obj"/>
-    <mesh name="dragon2" rank="3" filename="models/dragon.obj"/>
-    <mesh name="dragon3" rank="4" filename="models/dragon.obj"/>
+    <mesh name="dragon1" rank="1" filename="models/dragon.obj"/>
+    <mesh name="dragon2" rank="2" filename="models/dragon.obj"/>
+    <!-- <mesh name="dragon2" rank="3" filename="models/dragon.obj"/> -->
+    <!-- <mesh name="dragon3" rank="4" filename="models/dragon.obj"/> -->
 
     <model material="white" rank="1" mesh="floor">
         <position x="0.0" y="-2.5" z="0.0"/>
@@ -63,19 +63,19 @@
         <!-- <orientation a="1.0" x="0.0" y="0.0" z="0.0"/> -->
     </model> 
 
-    <model material="white" rank="1" mesh="dragon0">
+    <model material="white" rank="1" mesh="dragon1">
         <position x="-3.0" y="0" z="0.0"/>
         <scale x="3.0" y="3.0" z="3.0"/>
         <orientation a="1.4" x="-1.0" y="0.0" z="0.0"/>
     </model> 
 
-    <model material="white" rank="1" mesh="dragon1">
+    <model material="white" rank="2" mesh="dragon2">
         <position x="3.0" y="0" z="0.0"/>
         <scale x="3.0" y="3.0" z="3.0"/>
         <orientation a="1.4" x="-1.0" y="0.0" z="0.0"/>
     </model>
 
-    <model material="white" rank="2" mesh="dragon2">
+    <!-- <model material="white" rank="2" mesh="dragon2">
         <position x="-3.0" y="5" z="0.0"/>
         <scale x="3.0" y="3.0" z="3.0"/>
         <orientation a="1.4" x="-1.0" y="0.0" z="0.0"/>
@@ -85,7 +85,7 @@
         <position x="3.0" y="5" z="0.0"/>
         <scale x="3.0" y="3.0" z="3.0"/>
         <orientation a="1.4" x="-1.0" y="0.0" z="0.0"/>
-    </model>
+    </model> -->
 
 
 

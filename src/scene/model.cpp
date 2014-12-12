@@ -60,6 +60,12 @@ namespace _462 {
             bbox_local = BndBox(bvhTree->root()->pMin, bvhTree->root()->pMax);
             bbox_world = BndBox::transform_bbox(matLocalToWorld, bbox_local);
         }
+        
+//        std::cout<<"BVHTree size = "<<(bvhTree->getLeafSize() + bvhTree->getBranchSize())*sizeof(azBVHTree::azBVNode)<<std::endl;
+//        std::cout<<"Vertex total size = "<<mesh->num_vertices() * sizeof(MeshVertex)<<std::endl;
+//        std::cout<<"Triangle total size = "<<mesh->num_triangles() * sizeof(MeshTriangle)<<std::endl;
+        
+        
     }
 
     void Model::packetHit(azPacket<Ray> &rays, azPacket<HitRecord> &hitInfo, float t0, float t1) const
