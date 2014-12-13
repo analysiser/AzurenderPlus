@@ -236,6 +236,9 @@ int main(int argc, char* argv[])
             // output result
             app.output_image(dibuffer);
         }
+        
+        // debug
+//        app.output_image(app.buffer.cbuffer);
 
         
         // Test for finalize

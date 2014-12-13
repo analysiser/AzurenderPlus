@@ -552,24 +552,24 @@ namespace _462 {
         // TODO: merge direct illumination buffer
         mpiMergeFrameBufferToBuffer(scene->node_size, scene->node_rank, buffer, dibuffer);
         
-        buffer.cleanbuffer(width, height);
+//        buffer.cleanbuffer(width, height);
         
-        while (girays.size() > 0)
-        {
-            eyerays.clear();
-            eyerays = girays;
-            girays.clear();
-            shadowrays.clear();
-            
-            mpiStageLocalRayTracing(scene->node_size, scene->node_rank, eyerays, &shadowrays, &girays);
-            
-            mpiStageShadowRayTracing(scene->node_size, scene->node_rank, buffer, shadowrays);
-            
-            // TODO: merge global illumination buffer
-            mpiMergeFrameBufferToBuffer(scene->node_size, scene->node_rank, buffer, gibuffer);
-        
-            buffer.cleanbuffer(width, height);
-        }
+//        while (girays.size() > 0)
+//        {
+//            eyerays.clear();
+//            eyerays = girays;
+//            girays.clear();
+//            shadowrays.clear();
+//            
+//            mpiStageLocalRayTracing(scene->node_size, scene->node_rank, eyerays, &shadowrays, &girays);
+//            
+//            mpiStageShadowRayTracing(scene->node_size, scene->node_rank, buffer, shadowrays);
+//            
+//            // TODO: merge global illumination buffer
+//            mpiMergeFrameBufferToBuffer(scene->node_size, scene->node_rank, buffer, gibuffer);
+//        
+//            buffer.cleanbuffer(width, height);
+//        }
         
 
         return true;
@@ -2161,21 +2161,19 @@ namespace _462 {
         for (size_t i = 0; i < eyerays.size(); i++) {
             Ray ray = eyerays[i];
             bool isHit = false;
-            HitRecord record = getClosestHit(ray, EPSILON, INFINITY, &isHit, Layer_All);
+            HitRecord record = getClosestHit(ray, EPSILON, TMAX, &isHit, Layer_All);
+            
             // calculate zbuffer value
-            
-            
             if (isHit) {
                 if (record.diffuse != Color3::Black() && record.refractive_index == 0)
                 {
-                    Vector3 diff = record.position - ray.e;
-                    float z = (float)length(diff);
+//                    Vector3 diff = record.position - scene->camera.position;
+//                    real_t z = length(diff);
 //                    ray.maxt = record.t;
                     
                     // for each light
                     for (size_t li = 0; li < scene->num_lights(); li++) {
                         
-//                        size_t sample_num_per_light = NUM_SAMPLE_PER_LIGHT;
                         Light *aLight = scene->get_lights()[li];
                         // TODO: optimize
                         // shade the hit point color direclty
@@ -2191,7 +2189,7 @@ namespace _462 {
                         
                         // for each light sample
                         // TODO: we sample only one point per light for now
-                        Vector3 d_shadowRay_normolized = aLight->getPointToLightDirection(record.position, samplePoint);
+                        Vector3 d_shadowRay_normolized = normalize(aLight->getPointToLightDirection(record.position, samplePoint));
                         
                         Ray shadowRay = Ray(record.position, d_shadowRay_normolized);
                         shadowRay.x = ray.x;
@@ -2200,7 +2198,7 @@ namespace _462 {
                         shadowRay.lightIndex = li;
                         shadowRay.depth = ray.depth;
                         shadowRay.color = shadingColor;
-                        shadowRay.time = z;
+                        shadowRay.time = record.t;
                         shadowRay.source = procId;
                         
                         // for each node bounding box
@@ -2250,18 +2248,21 @@ namespace _462 {
             int x = ray.x;
             int y = ray.y;
 
+            int bufferIndex = y * width + x;
             if (isHit)
             {
-                if (ray.time < buffer.zbuffer[y * width + x]) {
-                    buffer.shadowMap[y * width + x] = 1;
-                    buffer.zbuffer[y * width + x] = ray.time;
+                if (ray.time < buffer.zbuffer[bufferIndex]) {
+                    buffer.shadowMap[bufferIndex] = 255;
+                    ray.color.to_array(&buffer.cbuffer[4 * bufferIndex]);
+                    buffer.zbuffer[bufferIndex] = ray.time;
                 }
             }
             else
             {
-                if (ray.time < buffer.zbuffer[y * width + x]) {
-                    ray.color.to_array(&buffer.cbuffer[4 * (y * width + x)]);
-                    buffer.zbuffer[y * width + x] = ray.time;
+                if (ray.time < buffer.zbuffer[bufferIndex]) {
+                    buffer.shadowMap[bufferIndex] = 0;
+                    ray.color.to_array(&buffer.cbuffer[4 * bufferIndex]);
+                    buffer.zbuffer[bufferIndex] = ray.time;
                 }
             }
         }
@@ -2294,7 +2295,7 @@ namespace _462 {
         assert(rootbuffer);
         
         unsigned char *rbuf;    // color buffer
-        float *zbuf;            // depth buffer
+        real_t *zbuf;            // depth buffer
         char *sbuf;             // shadow map buffer
         if (procId == 0) {
             
@@ -2303,15 +2304,17 @@ namespace _462 {
             size_t buffersize = BUFFER_SIZE(width, height);
             
             rbuf = (unsigned char *)malloc(buffersize * (procs));
-            zbuf = (float *)malloc(screensize * (procs) * sizeof(float));
+            zbuf = (real_t *)malloc(screensize * (procs) * sizeof(real_t));
             sbuf = (char *)malloc(screensize *(procs) * sizeof(char));
             
             for (int i = 1; i < procs; i++)
             {
                 MPI_Recv(rbuf + (i) * buffersize, buffersize, MPI_UNSIGNED_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                MPI_Recv(zbuf + (i) * screensize, screensize, MPI_FLOAT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(zbuf + (i) * screensize, screensize, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 MPI_Recv(sbuf + (i) * screensize, screensize, MPI_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
+            
+            MPI_Barrier(MPI_COMM_WORLD);
             
             std::copy_n(buffer.cbuffer, buffersize, rbuf);
             std::copy_n(buffer.zbuffer, screensize, zbuf);
@@ -2323,44 +2326,57 @@ namespace _462 {
             for (size_t i = 0; i < width * height; i++) {
                 
                 // pre process shadow map
-                float zmin = FLT_MAX;
-                int zminId = 0;
-                bool shadow = false;
+                real_t zmin = DBL_MAX;
+                int zminId = -1;
+//                bool shadow = false;
                 Color3 color = Color3::Black();
                 
                 for (int j = 0; j < procs; j++) {
-                    int zbufidx = j * width * height + i;
-                    float z = zbuf[zbufidx];
-                    if (z < zmin) {
-                        zmin = z;
-                        zminId = j;
-                        shadow = (sbuf[zbufidx] != 0);
-//                        color = Color3::Blue();
+                    int index = j * screensize + i;
+                    if (zbuf[index] < zmin) {
+                        zmin = zbuf[index];
+                        zminId = index;
                     }
-                    else if (z == zmin)
-                    {
-                        shadow = (shadow || (sbuf[zbufidx] != 0));
-//                        color = Color3::Red();
-                    }
-                    else
-                    {
-                        // do nothing
+                    else if ( fabs(zbuf[index] - zmin) <= EPSILON) {
+                        if (sbuf[zminId] == 0) {
+                            zmin = zbuf[index];
+                            zminId = index;
+                        }
                     }
                 }
                 
-                if (!shadow) {
-                    int copyFromIndex = zminId * buffersize + i * 4;
-                    color = Color3(&rbuf[copyFromIndex]);
+                if (zminId == -1)
+                {
+                    color = scene->background_color;
+                    
+                    // DEBUG
+//                    color = Color3::White();
                 }
-                                
+                else
+                {
+                    if (sbuf[zminId] != 0) {
+                        color = Color3::Blue();
+                    }
+                    else {
+                        color = Color3(&rbuf[zminId * 4]);
+                    }
+                    
+                    // DEBUG, depth buffer
+//                    float value = zbuf[zminId]/19.42f;
+//                    value = clamp(value, 0.0f, 1.0f);
+//                    color = Color3(value, value, value);
+                }
+                
                 color.to_array(&rootbuffer[i*4]);
             }
         }
         else {
             
             MPI_Send((unsigned char *)buffer.cbuffer, BUFFER_SIZE(width, height), MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
-            MPI_Send((float *)buffer.zbuffer, width * height, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+            MPI_Send((real_t *)buffer.zbuffer, width * height, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
             MPI_Send((char *)buffer.shadowMap, width * height, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
+            
+            MPI_Barrier(MPI_COMM_WORLD);
         }
     }
 

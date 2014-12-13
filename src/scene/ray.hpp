@@ -34,7 +34,8 @@ namespace _462 {
         static void init(const Camera& camera);
         
         Color3 color;
-        float mint, maxt, time;
+        float mint, maxt;
+        real_t time;
         int lightIndex;
         int x, y;
         int depth;

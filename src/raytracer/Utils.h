@@ -48,7 +48,7 @@ struct KDNode
 struct FrameBuffer
 {
     unsigned char *cbuffer; // Color buffer rgba
-    float *zbuffer;         // Depth buffer
+    real_t *zbuffer;         // Depth buffer
     char *shadowMap;        // Shadow map
     
     void init()
@@ -62,7 +62,7 @@ struct FrameBuffer
     {
         assert(width > 0 && height > 0);
         cbuffer = (unsigned char *)malloc(BUFFER_SIZE(width, height));
-        zbuffer = new float[width * height];
+        zbuffer = new real_t[width * height];
         shadowMap = new char[width * height];
     }
     
@@ -90,7 +90,7 @@ struct FrameBuffer
     void cleanbuffer(int width, int height)
     {
         std::fill_n((unsigned char *)cbuffer, BUFFER_SIZE(width, height), 0);
-        std::fill_n((float *)zbuffer, width * height, 400);
+        std::fill_n((real_t *)zbuffer, width * height, DBL_MAX);
         std::fill_n((char *)shadowMap, width * height, 0);
     }
 };
