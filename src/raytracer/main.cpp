@@ -237,10 +237,6 @@ int main(int argc, char* argv[])
             app.output_image(dibuffer);
         }
         
-        // debug
-//        app.output_image(app.buffer.cbuffer);
-
-        
         // Test for finalize
         MPI_Finalize();
         return 0;

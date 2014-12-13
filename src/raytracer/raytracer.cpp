@@ -2207,6 +2207,9 @@ namespace _462 {
                             if (nodeBndBox.intersect(shadowRay, EPSILON, shadowRay.maxt)) {
                                 nodeShadowRayList.push_back(bidx, shadowRay);
                             }
+                            else {
+                                nodeShadowRayList.push_back(procId, shadowRay);
+                            }
                         }
                         
 //                        if (ray.depth > 0) {
@@ -2236,14 +2239,14 @@ namespace _462 {
 
     // each node takes in shadow ray, do local ray tracing, maintain shadow ray
     // hit records, send records to corresponding nodes
-    void Raytracer::mpiStageShadowRayTracing(int /*procs*/, int procId, FrameBuffer &buffer, std::vector<Ray> &shadowrays)
+    void Raytracer::mpiStageShadowRayTracing(int /*procs*/, int /*procId*/, FrameBuffer &buffer, std::vector<Ray> &shadowrays)
     {
         for (size_t i = 0; i < shadowrays.size(); i++)
         {
             Ray ray = shadowrays[i];
             // TODO: light index might be different?
             bool isHit = false;
-            HitRecord shadowRecord = getClosestHit(ray, EPSILON, ray.maxt, &isHit, (Layer_IgnoreShadowRay));
+            /*HitRecord shadowRecord =*/ getClosestHit(ray, EPSILON, ray.maxt, &isHit, (Layer_IgnoreShadowRay));
             
             int x = ray.x;
             int y = ray.y;
@@ -2268,27 +2271,6 @@ namespace _462 {
         }
         
     }
-    
-//    void Raytracer::mpiStageGIRayTracing(int procs, int procId, FrameBuffer &gibuffer, std::vector<Ray> &girays, std::vector<Ray> *shadowRays)
-//    {
-//        // for each eye ray
-//        for (size_t i = 0; i < girays.size(); i++) {
-//            Ray ray = girays[i];
-//            
-//            bool isHit = false;
-//            HitRecord record = getClosestHit(ray, EPSILON, INFINITY, &isHit, Layer_All);
-//            
-//            if (isHit) {
-//                if (record.diffuse != Color3::Black() && record.refractive_index == 0)
-//                {
-//                    Vector3 diff = record.position - ray.e;
-//                    float z = (float)length(diff);
-//
-//                    
-//                }
-//            }
-//        }
-//    }
     
     void Raytracer::mpiMergeFrameBufferToBuffer(int procs, int procId, FrameBuffer &buffer, unsigned char *rootbuffer)
     {
@@ -2358,7 +2340,9 @@ namespace _462 {
                         color = Color3::Blue();
                     }
                     else {
+
                         color = Color3(&rbuf[zminId * 4]);
+                     
                     }
                     
                     // DEBUG, depth buffer

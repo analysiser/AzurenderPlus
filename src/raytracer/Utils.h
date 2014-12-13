@@ -64,6 +64,8 @@ struct FrameBuffer
         cbuffer = (unsigned char *)malloc(BUFFER_SIZE(width, height));
         zbuffer = new real_t[width * height];
         shadowMap = new char[width * height];
+        
+        cleanbuffer(width, height);
     }
     
     void dealloc()

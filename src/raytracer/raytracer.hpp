@@ -94,15 +94,12 @@ namespace _462 {
         // hit records, send records to corresponding nodes
         void mpiStageShadowRayTracing(int procs, int procId, FrameBuffer &buffer, std::vector<Ray> &shadowrays);
         
-//        void mpiStageGIRayTracing(int procs, int procId, FrameBuffer &gibuffer, std::vector<Ray> &girays, std::vector<Ray> *shadowRays);
-        
         // take in every nodes' shadow ray hit records, do local pixel shading.
 //        void mpiStagePixelShading(int procs, int procId);
         
         // Helper functions for MPI_Alltoall sending and gathering rays
         void mpiAlltoallRayDistribution(int procs, int procId, RayBucket &inputRayBucket, std::vector<Ray> *outputRayList);
 
-        
         // merge buffer to designated buffer
         void mpiMergeFrameBufferToBuffer(int procs, int procId, FrameBuffer &buffer, unsigned char *rootbuffer);
 
