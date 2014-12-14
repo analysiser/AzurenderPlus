@@ -2302,175 +2302,175 @@ namespace _462 {
         assert(rootbuffer);
         
         // gather buffer from all other nodes to rbuf, zbuf
-//        size_t screensize = width * height;
-//        size_t buffersize = BUFFER_SIZE(width, height);
-//        
-//        unsigned char *rbuf = (unsigned char *)malloc(buffersize * (procs)); // color buffer
-//        real_t *zbuf = (real_t *)malloc(screensize * (procs) * sizeof(real_t));           // depth buffer
-//        char *sbuf = (char *)malloc(screensize *(procs) * sizeof(char));              // shadow map buffer
-//        
-//        MPI_Gather(buffer.cbuffer, buffersize, MPI_BYTE, rbuf, buffersize, MPI_BYTE, 0, MPI_COMM_WORLD);
-//        MPI_Gather(buffer.zbuffer, screensize, MPI_DOUBLE, zbuf, screensize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-//        MPI_Gather(buffer.shadowMap, screensize, MPI_UNSIGNED_CHAR, sbuf, screensize, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
-//        
-//        printf("**************\n");
-//        // merge buffers from all nodes
-//        // TODO: make it clearer
-//        for (size_t i = 0; i < width * height; i++) {
-//            
-//            // pre process shadow map
-//            real_t zmin = std::numeric_limits<real_t>::max();
-//            int zminId = -1;
-//            Color3 color = Color3::Black();
-//            
-//            for (int j = 0; j < procs; j++) {
-//                int index = j * screensize + i;
-////                if (procId == 0)
-////                    printf("id = %d\n", index);
-//                if (zbuf[index] < zmin) {
-//                    
-//                    zmin = zbuf[index];
-//                    zminId = index;
-//                }
-//                else if ( fabs(zbuf[index] - zmin) <= EPSILON) {
-//                    // if same but on is in shadow
-//                    if (sbuf[zminId] == 0)
-//                    {
-//                        zmin = zbuf[index];
-//                        zminId = index;
-//                    }
-//                }
-//            }
-//            
-//            
-//            
-//            if (zminId == -1)
-//            {
-//                color = scene->background_color;
-//                // DEBUG
-//                //                    color = Color3::White();
-//            }
-//            else
-//            {
-//                
-//                if (sbuf[zminId] != 0) {
-//                    color = Color3::Black(); // TODO: ambient
-//                }
-//                else {
-//                    color = Color3(&rbuf[zminId * 4]);
-//                    
-//                }
-//                
-//                // DEBUG, depth buffer
-//                //                    float value = zbuf[zminId]/19.42f;
-//                //                    value = clamp(value, 0.0f, 1.0f);
-//                //                    color = Color3(value, value, value);
-//            }
-//            
-//            color.to_array(&rootbuffer[i*4]);
-//        }
-//        printf("~~~~~~~~~~~~~~~~\n");
-//        
-//        free(rbuf);
-//        free(zbuf);
-//        free(sbuf);
+        size_t screensize = width * height;
+        size_t buffersize = BUFFER_SIZE(width, height);
         
-        assert(rootbuffer);
+        unsigned char *rbuf = (unsigned char *)malloc(buffersize * (procs)); // color buffer
+        real_t *zbuf = (real_t *)malloc(screensize * (procs) * sizeof(real_t));           // depth buffer
+        char *sbuf = (char *)malloc(screensize *(procs) * sizeof(char));              // shadow map buffer
         
-        if (procId == 0) {
+        MPI_Gather(buffer.cbuffer, buffersize, MPI_BYTE, rbuf, buffersize, MPI_BYTE, 0, MPI_COMM_WORLD);
+        MPI_Gather(buffer.zbuffer, screensize, MPI_DOUBLE, zbuf, screensize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gather(buffer.shadowMap, screensize, MPI_UNSIGNED_CHAR, sbuf, screensize, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+        
+        printf("**************\n");
+        // merge buffers from all nodes
+        // TODO: make it clearer
+        for (size_t i = 0; i < width * height; i++) {
             
-            // gather buffer from all other nodes to rbuf, zbuf
-            size_t screensize = width * height;
-            size_t buffersize = BUFFER_SIZE(width, height);
+            // pre process shadow map
+            real_t zmin = std::numeric_limits<real_t>::max();
+            int zminId = -1;
+            Color3 color = Color3::Black();
             
-            unsigned char *rbuf = (unsigned char *)malloc(buffersize * (procs)); // color buffer
-            real_t *zbuf = (real_t *)malloc(screensize * (procs) * sizeof(real_t));           // depth buffer
-            char *sbuf = (char *)malloc(screensize *(procs) * sizeof(char));              // shadow map buffer
-            
-            assert(rbuf && zbuf && sbuf);
-            
-            for (int i = 1; i < procs; i++)
-            {
-                MPI_Recv(rbuf + (i) * buffersize, buffersize, MPI_UNSIGNED_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                MPI_Recv(zbuf + (i) * screensize, screensize, MPI_REAL, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                MPI_Recv(sbuf + (i) * screensize, screensize, MPI_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            }
-            
-            MPI_Barrier(MPI_COMM_WORLD);
-            
-            std::copy_n(buffer.cbuffer, buffersize, rbuf);
-            std::copy_n(buffer.zbuffer, screensize, zbuf);
-            std::copy_n(buffer.shadowMap, screensize, sbuf);
-            
-            printf("**************\n");
-            // merge buffers from all nodes
-            // TODO: make it clearer
-            for (size_t i = 0; i < width * height; i++) {
-                
-                // pre process shadow map
-                real_t zmin = std::numeric_limits<real_t>::max();
-                int zminId = -1;
-                Color3 color = Color3::Black();
-                
-                
-                printf("id = %d\n", i);
-                for (int j = 0; j < procs; j++) {
-                    int index = j * screensize + i;
-                    if (zbuf[index] < zmin) {
+            for (int j = 0; j < procs; j++) {
+                int index = j * screensize + i;
+//                if (procId == 0)
+//                    printf("id = %d\n", index);
+                if (zbuf[index] < zmin) {
+                    
+                    zmin = zbuf[index];
+                    zminId = index;
+                }
+                else if ( fabs(zbuf[index] - zmin) <= EPSILON) {
+                    // if same but on is in shadow
+                    if (sbuf[zminId] == 0)
+                    {
                         zmin = zbuf[index];
                         zminId = index;
                     }
-                    else if ( fabs(zbuf[index] - zmin) <= EPSILON) {
-                        // if same but on is in shadow
-                        if (sbuf[zminId] == 0)
-                        {
-                            zmin = zbuf[index];
-                            zminId = index;
-                        }
-                    }
                 }
-                
-                
-
-                if (zminId == -1)
-                {
-                    color = scene->background_color;
-                    // DEBUG
-//                    color = Color3::White();
-                }
-                else
-                {
-                    
-                    if (sbuf[zminId] != 0) {
-                        color = Color3::Black(); // TODO: ambient
-                    }
-                    else {
-                        color = Color3(&rbuf[zminId * 4]);
-
-                    }
-                    
-                    // DEBUG, depth buffer
-//                    float value = zbuf[zminId]/19.42f;
-//                    value = clamp(value, 0.0f, 1.0f);
-//                    color = Color3(value, value, value);
-                }
-                
-                color.to_array(&rootbuffer[i*4]);
             }
-            printf("~~~~~~~~~~~~~~~~\n");
             
-            free(rbuf);
-            free(zbuf);
-            free(sbuf);
             
+            
+            if (zminId == -1)
+            {
+                color = scene->background_color;
+                // DEBUG
+                //                    color = Color3::White();
+            }
+            else
+            {
+                
+                if (sbuf[zminId] != 0) {
+                    color = Color3::Black(); // TODO: ambient
+                }
+                else {
+                    color = Color3(&rbuf[zminId * 4]);
+                    
+                }
+                
+                // DEBUG, depth buffer
+                //                    float value = zbuf[zminId]/19.42f;
+                //                    value = clamp(value, 0.0f, 1.0f);
+                //                    color = Color3(value, value, value);
+            }
+            
+            color.to_array(&rootbuffer[i*4]);
         }
-        else {
-            MPI_Send((unsigned char *)buffer.cbuffer, BUFFER_SIZE(width, height), MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
-            MPI_Send((real_t *)buffer.zbuffer, width * height, MPI_REAL, 0, 0, MPI_COMM_WORLD);
-            MPI_Send((char *)buffer.shadowMap, width * height, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
-            
-            MPI_Barrier(MPI_COMM_WORLD);
-        }
+        printf("~~~~~~~~~~~~~~~~\n");
+        
+        free(rbuf);
+        free(zbuf);
+        free(sbuf);
+        
+//        assert(rootbuffer);
+//        
+//        if (procId == 0) {
+//            
+//            // gather buffer from all other nodes to rbuf, zbuf
+//            size_t screensize = width * height;
+//            size_t buffersize = BUFFER_SIZE(width, height);
+//            
+//            unsigned char *rbuf = (unsigned char *)malloc(buffersize * (procs)); // color buffer
+//            real_t *zbuf = (real_t *)malloc(screensize * (procs) * sizeof(real_t));           // depth buffer
+//            char *sbuf = (char *)malloc(screensize *(procs) * sizeof(char));              // shadow map buffer
+//            
+//            assert(rbuf && zbuf && sbuf);
+//            
+//            for (int i = 1; i < procs; i++)
+//            {
+//                MPI_Recv(rbuf + (i) * buffersize, buffersize, MPI_UNSIGNED_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//                MPI_Recv(zbuf + (i) * screensize, screensize, MPI_REAL, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//                MPI_Recv(sbuf + (i) * screensize, screensize, MPI_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//            }
+//            
+//            MPI_Barrier(MPI_COMM_WORLD);
+//            
+//            std::copy_n(buffer.cbuffer, buffersize, rbuf);
+//            std::copy_n(buffer.zbuffer, screensize, zbuf);
+//            std::copy_n(buffer.shadowMap, screensize, sbuf);
+//            
+//            printf("**************\n");
+//            // merge buffers from all nodes
+//            // TODO: make it clearer
+//            for (size_t i = 0; i < width * height; i++) {
+//                
+//                // pre process shadow map
+//                real_t zmin = std::numeric_limits<real_t>::max();
+//                int zminId = -1;
+//                Color3 color = Color3::Black();
+//                
+//                
+//                printf("id = %d\n", i);
+//                for (int j = 0; j < procs; j++) {
+//                    int index = j * screensize + i;
+//                    if (zbuf[index] < zmin) {
+//                        zmin = zbuf[index];
+//                        zminId = index;
+//                    }
+//                    else if ( fabs(zbuf[index] - zmin) <= EPSILON) {
+//                        // if same but on is in shadow
+//                        if (sbuf[zminId] == 0)
+//                        {
+//                            zmin = zbuf[index];
+//                            zminId = index;
+//                        }
+//                    }
+//                }
+//                
+//                
+//
+//                if (zminId == -1)
+//                {
+//                    color = scene->background_color;
+//                    // DEBUG
+////                    color = Color3::White();
+//                }
+//                else
+//                {
+//                    
+//                    if (sbuf[zminId] != 0) {
+//                        color = Color3::Black(); // TODO: ambient
+//                    }
+//                    else {
+//                        color = Color3(&rbuf[zminId * 4]);
+//
+//                    }
+//                    
+//                    // DEBUG, depth buffer
+////                    float value = zbuf[zminId]/19.42f;
+////                    value = clamp(value, 0.0f, 1.0f);
+////                    color = Color3(value, value, value);
+//                }
+//                
+//                color.to_array(&rootbuffer[i*4]);
+//            }
+//            printf("~~~~~~~~~~~~~~~~\n");
+//            
+//            free(rbuf);
+//            free(zbuf);
+//            free(sbuf);
+//            
+//        }
+//        else {
+//            MPI_Send((unsigned char *)buffer.cbuffer, BUFFER_SIZE(width, height), MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
+//            MPI_Send((real_t *)buffer.zbuffer, width * height, MPI_REAL, 0, 0, MPI_COMM_WORLD);
+//            MPI_Send((char *)buffer.shadowMap, width * height, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
+//            
+//            MPI_Barrier(MPI_COMM_WORLD);
+//        }
     }
     
     void Raytracer::mpiAlltoallRayDistribution(int procs, int /* procId */, RayBucket &inputRayBucket, std::vector<Ray> *outputRayList)
