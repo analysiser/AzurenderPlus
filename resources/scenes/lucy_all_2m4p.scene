@@ -43,13 +43,13 @@
     <mesh name="lucy4" rank="2" filename="models/lucy.obj"/>
     <mesh name="lucy5" rank="2" filename="models/lucy.obj"/>
     <mesh name="lucy6" rank="2" filename="models/lucy.obj"/>
-    <mesh name="lucy7" rank="3" filename="models/lucy.obj"/>
-    <mesh name="lucy8" rank="3" filename="models/lucy.obj"/>
-    <mesh name="lucy9" rank="3" filename="models/lucy.obj"/>
+    <mesh name="lucy7" rank="0" filename="models/lucy.obj"/>
+    <mesh name="lucy8" rank="0" filename="models/lucy.obj"/>
+    <mesh name="lucy9" rank="0" filename="models/lucy.obj"/>
     <!-- <mesh name="lucy3" rank="4" filename="models/lucy.obj"/> -->
     <!-- <mesh name="lucy1" rank="1" filename="models/lucy.obj"/>
     <mesh name="lucy2" rank="2" filename="models/lucy.obj"/>
-    <mesh name="lucy3" rank="3" filename="models/lucy.obj"/> -->
+    <mesh name="lucy3" rank="0" filename="models/lucy.obj"/> -->
 
     <model material="white" rank="1" mesh="floor">
         <position x="0.0" y="-5.0" z="0.0"/>
@@ -89,17 +89,17 @@
     </model>
 
     <!--Back-->
-    <model material="white" rank="3" mesh="lucy7">
+    <model material="white" rank="0" mesh="lucy7">
         <position x="0.0" y="-5" z="-10.0"/>
         <scale x="30.0" y="30.0" z="30.0"/>
     </model>
 
-    <model material="white" rank="3" mesh="lucy8">
+    <model material="white" rank="0" mesh="lucy8">
         <position x="-5.0" y="-5" z="-10.0"/>
         <scale x="30.0" y="30.0" z="30.0"/>
     </model>
 
-    <model material="white" rank="3" mesh="lucy9">
+    <model material="white" rank="0" mesh="lucy9">
         <position x="5.0" y="-5" z="-10.0"/>
         <scale x="30.0" y="30.0" z="30.0"/>
     </model>
