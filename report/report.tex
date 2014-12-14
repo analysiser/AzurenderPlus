@@ -3,7 +3,6 @@
 \usepackage{amsfonts} % if you want blackboard bold symbols e.g. for real numbers
 \usepackage{graphicx} % if you want to include jpeg or pdf pictures
 \usepackage{listings} % entering code.
-\graphicspath{ {images/} }
 
 \title{{\bf 15-418 Final Project Report \\
  \large Solving Out of Core Ray Tracing Problem by a Distributed Path Tracing System}} % change this
@@ -39,20 +38,7 @@ Parallel Breadth-First Search, from the past to present.\\
 \paragraph{} We designed a system to perform out-of-core rendering, based on Azurender, a ray tracing based renderer. We designed and implemented two algorithms. Different from the design of Hyperion or Pantaray, which are more focused on smarter sorting, loading and unloading of rays, ray packets or BVHs to hide the latency caused by hard disk accessing, our design load the scenes into DRAMs in a distributed system and focus on the scheduling and optimization for inter-machine communications. 
 
 \section{System Design}
-\subsection{System Overview}
-\subsubsection{Ray Tracing System}
-\paragraph{} Our system involves a basic ray tracing logic, as shown in the $Figure 1$. Like any other ray tracing system, if we do not generate second rays at all, it would have direct illumination only. For simplicity, we assumed all second rays intersection would be a lambertian diffusive surface hit.
-\\
-\includegraphics[width=\textwidth] {img1}
-
-
 \subsection{Approach 1 - Staged}
-\subsubsection{Overview}
-\paragraph{}The first approach is a stage by stage algorithm. The idea behind it is to take the advantage of distributed machines across the network. Each of the ray tracing stage is separated. Each of the nodes (machines) in the system performs the exact same operations at the same stage. After each stage, there would be a synchronized blocking communication in between machines for exchanging the required data for next stage. The data would be duplicated across machines. For example, if one eye ray hits multiple root level bounding boxes of different nodes, the eye ray would be duplicated and sent to multiple machines. 
-After the stage of tracing and when comes to the stage of shading, each machine / node would update their own local frame buffer, depth buffer and shadow map. Then a gather operations is performed on root node, and framebuffer information from different nodes would be merged.
-The system is shown in [Figure No.].
-\paragraph{}The assumption behind it is that local ray tracing and shading is fast and cheap and inter-nodes communication is expensive, meanwhile, Open MPI is optimized for large chunk of data exchange. The design assumes that the overhead of increased replicated work is lower than the overhead of increased communication.
-\subsubsection{Work Flow}
 \subsection{Approach 2 - Asynchronous}
 \subsubsection{Overview}
 \subsubsection{Work Flow}
@@ -79,24 +65,91 @@ void azMPI::run()
  
 \end{lstlisting}
 
-\subsubsection{Data Communicated}
-\paragraph{} 
-\subsubsection{Processing Rays}
+\subsubsection{The Ray Request}
+\paragraph{} Before explaining how master and slaves processing each rays, we want to explain the data in the ray struct.  For simplicity, we used the ray struct that was already defined in the single thread ray tracer as requests in the system.  The struct contains the ray information such as its starting point, direction and etc. with extra header information needed by the system.  Below is the definition of the ray struct.
+\lstset{language=C++} 
+\begin{lstlisting}[frame=single] 
+struct Ray
+    {
+    // Ray Info:
+        Vector3 e;  // Ray starting point
+        Vector3 d;  // Ray direction
+ 
+        Color3 color; // Result color
+        
+        float mint, maxt, time;  // t values
+        int x, y;  // location
+        int depth;  // Ray depth
+        
+    // Extra Header information needed for the system:
+        ERayType type;  // Ray type
+        bool isHit;  // Did the ray hit a surface
+        Vector3 hit;  // Hit point if hit
+        Vector3 hitNormal;  // Hit point's normal
+    }; 
+\end{lstlisting}
+\paragraph{} The first info we need in the header is the ray type, which we use to distinguish rays arrived from other node. There are four different kinds of rays in the system.
+\begin{enumerate}
+\item Eye Ray (ERayType$\_$Eye)
+\item Shadow Ray (ERayType$\_$Shadow)
+\item Global Illumination Ray (ERayType$\_$GI)
+\item Global Illumination Shadow Ray (ERayType$\_$GIShadow)
+\end{enumerate}
+\paragraph{} The other info we need in the header are if the ray hit a surface or not and if hit the hit point and hit point normal associated.\\ 
+\subsubsection{Slave Processing Rays}
+\paragraph{} For an easier explanation, we will start with slaves' operations to process rays.  Below is the pseudo specifying the slaves' operations.
+\begin{lstlisting}[frame=single] 
+case ERayType_Eye:
+case ERayType_GI:
+{
+  int next_node;
+  next_node = localRaytrace(ray);
+  if (next_node == root && ray.isHit)
+  {
+    // generate shadow ray
+    // check bounding box
+    // push result list
+    generateShadowRay(ray, shadowRay);
+    next_node = checkNextBoundingBox(shadowRay, root);
+    result_list.push_back(next_node, shadowRay);
+
+    if (ray.depth > 0)
+    {
+      generateGIRay(ray, giRay);
+      next_node = checkNextBoundingBox(giRay, root);
+      result_list.push_back(next_node, giRay);
+    }
+  }
+  else {
+    result_list.push_back(next_node, ray);
+  }
+}
+break;
+case ERayType_Shadow:
+case ERayType_GIShadow:
+{
+  int next_node = localRaytrace(ray);
+  result_list.push_back(next_node, ray);
+}
+break;
+\end{lstlisting}
+
+\paragraph{} If the slave received eye ray or a global illumination ray, the slave would first locally trace the the ray on the models on this slave node. After the trace, it would check the ray against all the node bounding boxes to determine the who is responsible for processing this node next. Later, we will discuss the algorithm used to determine the next node in details.  If the node hit the model on the slave and there are no more slave node that intersects with this ray, the slave will generate a shadow ray and a global illumination ray if the ray has not reached the depth yet. Otherwise, the slave would sent the eye ray or the global illumination ray to the next node responsible for processing.
+
+\paragraph{} If the slave received a shadow ray from eye ray or global illumination ray, the slave simply trace the ray with local BVHs and sent it to the next node.
+
+\subsubsection{Master Processing Rays}
 \paragraph{} The main job for the master is to update the frame buffer as rays are finished processing by the slaves. Below is the pseudo specifying the master's operations.
  \begin{lstlisting}[frame=single] 
     void azMPI::master_process_ray()
     {
-        while(!wait_queue.empty())
+        while(!work_queue.empty())
         {
-            Ray &recv_r = wait_queue.front();
+            Ray r = work_queue.front();
             switch(ray_type)
             {
                 case ERayType_Eye:
-                    updateFrameBuffer();
-                    break;
                 case ERayType_Shadow:
-                    updateFrameBuffer();
-                    break;
                 case ERayType_GIShadow:
                     updateFrameBuffer();
                     break;
@@ -105,11 +158,11 @@ void azMPI::run()
                 default:
                     exit(-1);
             }
-            wait_queue.pop();
+            work_queue.pop();
         }
     }
- 
 \end{lstlisting}
+\paragraph{} Master will receive rays from the slaves after they done process them.
 \subsubsection{Hopping Algorithm}
 \paragraph{} One drawbacks of the first approach is the duplicated processing of rays across machine resulting in duplicated works when rays hit multiple bounding boxes. To be specific, in the current design of the system, since model are distributed on each nodes, a ray can potentially hit multiple bounding boxes if the models are close together but on different nodes.  In the first approach, when a ray hits multiple bounding boxes, the ray is sent to multiple node for tracing ans shading independently. This solution not only resulted in extra work in the tracing and shading, it also caused several other issues.
 \paragraph{} The first is that the system would need extra state information to decide how to combine the shading results from multiple nodes together into the frame buffer. As mentioned in the above, a depth buffer and a shadow map is required to correctly combine the shading results from multiple machines. 
