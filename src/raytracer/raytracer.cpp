@@ -2148,7 +2148,7 @@ namespace _462 {
                         r.x = x;
                         r.y = y;
                         r.color = Color3::Black();
-                        r.depth = 2;
+                        r.depth = 0;
                         currentNodeRayList.push_back(node_id, r);
                     }
                 }

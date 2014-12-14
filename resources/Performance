@@ -70,4 +70,8 @@ Process rank = 1, done tracing took 10070.299864 ms
 Process rank = 0, done tracing took 10089.203119 ms
 
 
+master results, Direct only
+GHC 2 machine, 2 node, 1 lucy, 1.159091s
+
+
 
