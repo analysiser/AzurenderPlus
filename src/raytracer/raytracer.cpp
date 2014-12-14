@@ -2561,13 +2561,11 @@ namespace _462 {
             throw exception();
         }
         
-        bool ret = true;
         for (int i = 0; i < procs; i++) {
-            printf("my id = %d, received from id = %d, recv = %d\n", procId, i, recvsize[i]);
             if (recvsize[i] > 0)
-                ret = false;
+                return false;
         }
-        return ret;
+        return true;
     }
     
 
