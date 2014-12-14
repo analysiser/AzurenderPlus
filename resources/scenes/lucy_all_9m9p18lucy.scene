@@ -36,7 +36,7 @@
     </material>
 
     <mesh name="floor" rank="0" filename="models/floor.obj"/>
-    <model material="white" rank="1" mesh="floor">
+    <model material="white" rank="0" mesh="floor">
         <position x="0.0" y="-5.0" z="0.0"/>
         <scale x="40.0" y="10.0" z="40.0"/>
     </model> 
