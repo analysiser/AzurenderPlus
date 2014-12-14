@@ -77,31 +77,42 @@ namespace _462 {
         void mpiStageDistributeEyeRays(int procs, int procId, std::vector<Ray> *eyerays);
         
         /*!
-         @brief each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
-                test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
+         @brief each node do local eye raytracing, generate shadow rays, do shadowray-node boundingbox
+                test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes,
+                generate second rays caused by eye ray, pass out as giRays
          @param procs, procId       total ranks of nodes, rank of node
          @param in  eyerays         input of eye rays from camera
          @param out shadowRays      shadow rays used to track light sources
          @param out giRays          global illumination rays used for path tracing
          */
-        void mpiStageLocalRayTracing(int procs,
-                                     int procId,
-                                     std::vector<Ray> &eyerays,
-                                     std::vector<Ray> *shadowRays,
-                                     std::vector<Ray> *giRays);
+        void mpiStageLocalRayTrace(int procs,
+                                   int procId,
+                                   std::vector<Ray> &eyerays,
+                                   std::vector<Ray> *shadowRays,
+                                   std::vector<Ray> *giRays,
+                                   bool iseyeray);
+        
+        
+//        void mpiStageSecondRayTrace(int procs,
+//                                    int procId,
+//                                    std::vector<Ray> &giRays,
+//                                    std::vector<Ray> *shadowRays,
+//                                    std::vector<Ray> *secondRays);
         
         // each node takes in shadow ray, do local ray tracing, maintain shadow ray
         // hit records, send records to corresponding nodes
         void mpiStageShadowRayTracing(int procs, int procId, FrameBuffer &buffer, std::vector<Ray> &shadowrays);
         
-        // take in every nodes' shadow ray hit records, do local pixel shading.
-//        void mpiStagePixelShading(int procs, int procId);
         
         // Helper functions for MPI_Alltoall sending and gathering rays
         void mpiAlltoallRayDistribution(int procs, int procId, RayBucket &inputRayBucket, std::vector<Ray> *outputRayList);
 
         // merge buffer to designated buffer
         void mpiMergeFrameBufferToBuffer(int procs, int procId, FrameBuffer &buffer, unsigned char *rootbuffer);
+        
+        void mergebuffers(unsigned char *dibuffer, unsigned char *gibuffer, int width, int height);
+        
+        bool mpiShouldStop(int procs, int procId, int shadowRaySize, int giRaySize);
 
         // indirect and caustics list for photons to trace
         std::vector<Photon> photon_indirect_list;

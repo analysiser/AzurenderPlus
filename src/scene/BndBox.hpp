@@ -82,14 +82,6 @@ namespace _462 {
         BndBox expand(const BndBox &b, const Vector3 &p);
         BndBox expand(const BndBox &b, const BndBox &b2);
 
-        size_t serialize(void **bytes)
-        {
-            size_t size = sizeof(BndBox);
-            *bytes = (char *)malloc(sizeof(size));
-            memcpy(*bytes, (char *)this, size);
-            return size;
-        }
-
         // Test if a given ray hits a bounding box
         /**
          * out tt: output the nearest hit value of t

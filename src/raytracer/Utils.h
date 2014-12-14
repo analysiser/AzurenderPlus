@@ -72,7 +72,7 @@ struct FrameBuffer
     {
         if (cbuffer)
         {
-            delete cbuffer;
+            free(cbuffer);
         }
         if (zbuffer)
         {
@@ -92,7 +92,7 @@ struct FrameBuffer
     void cleanbuffer(int width, int height)
     {
         std::fill_n((unsigned char *)cbuffer, BUFFER_SIZE(width, height), 0);
-        std::fill_n((real_t *)zbuffer, width * height, DBL_MAX);
+        std::fill_n((real_t *)zbuffer, width * height, std::numeric_limits<real_t>::max());
         std::fill_n((char *)shadowMap, width * height, 0);
     }
 };

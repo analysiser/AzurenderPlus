@@ -265,9 +265,6 @@ namespace _462 {
         int num_node;
         MPI_Comm_size(MPI_COMM_WORLD, &num_node);
         
-//        MPI_Request *requestList = (MPI_Request *)malloc(num_node * sizeof(MPI_Request));
-//        MPI_Status *status = (MPI_Status *)malloc(num_node * sizeof(MPI_Status));
-        
         unsigned char *rbuf;
         float *zbuf;
         // root
@@ -328,6 +325,9 @@ namespace _462 {
                 color.to_array(&buffer.cbuffer[i*4]);
 //                std::copy_n(&rbuf[copyFromIndex], 4, buffer.cbuffer + i * 4);
             }
+            
+            free(rbuf);
+            free(zbuf);
         }
         // other
         else

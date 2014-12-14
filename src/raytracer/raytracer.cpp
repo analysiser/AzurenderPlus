@@ -538,7 +538,7 @@ namespace _462 {
 
         // Take in distributed eye rays, do local ray tracing, distribute shadow rays to corresponding nodes
         start = MPI_Wtime();
-        mpiStageLocalRayTracing(scene->node_size, scene->node_rank, eyerays, &shadowrays, &girays);
+        mpiStageLocalRayTrace(scene->node_size, scene->node_rank, eyerays, &shadowrays, &girays, true);
         end = MPI_Wtime();
 
         printf("[thread %d] LocalRayTracing state took %f sec\n", scene->node_rank, end - start);
@@ -549,27 +549,42 @@ namespace _462 {
 
         printf("[thread %d] Shadow state took %f sec\n", scene->node_rank, end - start);
         
-        // TODO: merge direct illumination buffer
+        // merge direct illumination buffer
+        start = MPI_Wtime();
         mpiMergeFrameBufferToBuffer(scene->node_size, scene->node_rank, buffer, dibuffer);
+        end = MPI_Wtime();
+        printf("[thread %d] Merge Framebuffer took %f sec\n", scene->node_rank, end - start);
         
-//        buffer.cleanbuffer(width, height);
+        buffer.cleanbuffer(width, height);
+
         
-//        while (girays.size() > 0)
-//        {
+        while (!mpiShouldStop(scene->node_size, scene->node_rank, shadowrays.size(), girays.size()))
+        {
+            
 //            eyerays.clear();
 //            eyerays = girays;
 //            girays.clear();
 //            shadowrays.clear();
-//            
-//            mpiStageLocalRayTracing(scene->node_size, scene->node_rank, eyerays, &shadowrays, &girays);
-//            
-//            mpiStageShadowRayTracing(scene->node_size, scene->node_rank, buffer, shadowrays);
-//            
-//            // TODO: merge global illumination buffer
-//            mpiMergeFrameBufferToBuffer(scene->node_size, scene->node_rank, buffer, gibuffer);
-//        
-//            buffer.cleanbuffer(width, height);
-//        }
+            eyerays = girays;
+            
+            mpiStageLocalRayTrace(scene->node_size, scene->node_rank, eyerays, &shadowrays, &girays, false);
+            
+            
+            mpiStageShadowRayTracing(scene->node_size, scene->node_rank, buffer, shadowrays);
+            
+            
+            // TODO: merge global illumination buffer
+            if (scene->node_rank == 0)
+                printf("=======%d=======\n", scene->node_rank);
+            mpiMergeFrameBufferToBuffer(scene->node_size, scene->node_rank, buffer, gibuffer);
+            if (scene->node_rank == 0)
+                printf("-------%d-------\n", scene->node_rank);
+            
+            buffer.cleanbuffer(width, height);
+            
+            mergebuffers(dibuffer, gibuffer, width, height);
+            
+        }
         
 
         return true;
@@ -2133,7 +2148,7 @@ namespace _462 {
                         r.x = x;
                         r.y = y;
                         r.color = Color3::Black();
-                        r.depth = 1;
+                        r.depth = 2;
                         currentNodeRayList.push_back(node_id, r);
                     }
                 }
@@ -2147,11 +2162,12 @@ namespace _462 {
     
     // each node do local raytracing, generate shadow rays, do shadowray-node boundingbox
     // test, distribute shadow rays, maintain local lookup table, send shadow rays to other nodes
-    void Raytracer::mpiStageLocalRayTracing(int procs,
-                                            int procId,
-                                            std::vector<Ray> &eyerays,
-                                            std::vector<Ray> *shadowRays,
-                                            std::vector<Ray> *giRays)
+    void Raytracer::mpiStageLocalRayTrace(int procs,
+                                          int procId,
+                                          std::vector<Ray> &eyerays,
+                                          std::vector<Ray> *shadowRays,
+                                          std::vector<Ray> *giRays,
+                                          bool iseyeray)
     {
         // shadow ray list used for shading
         RayBucket nodeShadowRayList(procs);
@@ -2165,12 +2181,16 @@ namespace _462 {
             
             // calculate zbuffer value
             if (isHit) {
+                
+                // since time is the data used for depth buffer test,
+                // only eye ray should update this value
+                if (iseyeray)
+                {
+                    ray.time = record.t;
+                }
+                
                 if (record.diffuse != Color3::Black() && record.refractive_index == 0)
                 {
-//                    Vector3 diff = record.position - scene->camera.position;
-//                    real_t z = length(diff);
-//                    ray.maxt = record.t;
-                    
                     // for each light
                     for (size_t li = 0; li < scene->num_lights(); li++) {
                         
@@ -2196,38 +2216,43 @@ namespace _462 {
                         shadowRay.y = ray.y;
                         shadowRay.maxt = tlight;
                         shadowRay.lightIndex = li;
-                        shadowRay.depth = ray.depth;
+                        shadowRay.depth = ray.depth - 1;
                         shadowRay.color = shadingColor;
-                        shadowRay.time = record.t;
+                        shadowRay.time = ray.time;
                         shadowRay.source = procId;
                         
                         // for each node bounding box
                         for (int bidx = 0; bidx < procs; bidx++) {
                             BndBox nodeBndBox = scene->nodeBndBox[bidx];
+                            // if shadow ray hits any bounding boxes, send to other nodes for shading
                             if (nodeBndBox.intersect(shadowRay, EPSILON, shadowRay.maxt)) {
                                 nodeShadowRayList.push_back(bidx, shadowRay);
                             }
+                            // if shadow not hit any bounding boxes,
+                            // send to self for shading, or the data will lose
                             else {
                                 nodeShadowRayList.push_back(procId, shadowRay);
                             }
                         }
                         
-//                        if (ray.depth > 0) {
-//                            // generate second rays
-//                            Vector3 dir = uniformSampleHemisphere(record.normal);
-//                            Ray secondRay = Ray(record.position, dir);
-//                            secondRay.x = ray.x;
-//                            secondRay.y = ray.y;
-//                            secondRay.depth = ray.depth - 1;
-//                            
-//                            // for each node bounding box
-//                            for (int bidx = 0; bidx < procs; bidx++) {
-//                                BndBox nodeBndBox = scene->nodeBndBox[bidx];
-//                                if (nodeBndBox.intersect(secondRay, EPSILON, TMAX)) {
-//                                    nodeGIRayList.push_back(bidx, secondRay);
-//                                }
-//                            }
-//                        }
+                        if (ray.depth > 0) {
+                            // generate second rays
+                            Vector3 dir = uniformSampleHemisphere(record.normal);
+                            Ray secondRay = Ray(record.position, dir);
+                            secondRay.x = ray.x;
+                            secondRay.y = ray.y;
+                            secondRay.depth = ray.depth - 1;
+                            secondRay.color = shadingColor;
+                            secondRay.time = ray.time;
+                            
+                            // for each node bounding box
+                            for (int bidx = 0; bidx < procs; bidx++) {
+                                BndBox nodeBndBox = scene->nodeBndBox[bidx];
+                                if (nodeBndBox.intersect(secondRay, EPSILON, TMAX)) {
+                                    nodeGIRayList.push_back(bidx, secondRay);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -2276,100 +2301,180 @@ namespace _462 {
     {
         assert(rootbuffer);
         
-        unsigned char *rbuf;    // color buffer
-        real_t *zbuf;            // depth buffer
-        char *sbuf;             // shadow map buffer
-        if (procId == 0) {
+        // gather buffer from all other nodes to rbuf, zbuf
+        size_t screensize = width * height;
+        size_t buffersize = BUFFER_SIZE(width, height);
+        
+        unsigned char *rbuf = (unsigned char *)malloc(buffersize * (procs)); // color buffer
+        real_t *zbuf = (real_t *)malloc(screensize * (procs) * sizeof(real_t));           // depth buffer
+        char *sbuf = (char *)malloc(screensize *(procs) * sizeof(char));              // shadow map buffer
+        
+        MPI_Gather(buffer.cbuffer, buffersize, MPI_BYTE, rbuf, buffersize, MPI_BYTE, 0, MPI_COMM_WORLD);
+        MPI_Gather(buffer.zbuffer, screensize, MPI_DOUBLE, zbuf, screensize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gather(buffer.shadowMap, screensize, MPI_UNSIGNED_CHAR, sbuf, screensize, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+        
+        printf("**************\n");
+        // merge buffers from all nodes
+        // TODO: make it clearer
+        for (size_t i = 0; i < width * height; i++) {
             
-            // gather buffer from all other nodes to rbuf, zbuf
-            size_t screensize = width * height;
-            size_t buffersize = BUFFER_SIZE(width, height);
-            
-            rbuf = (unsigned char *)malloc(buffersize * (procs));
-            zbuf = (real_t *)malloc(screensize * (procs) * sizeof(real_t));
-            sbuf = (char *)malloc(screensize *(procs) * sizeof(char));
-            
-            for (int i = 1; i < procs; i++)
-            {
-                MPI_Recv(rbuf + (i) * buffersize, buffersize, MPI_UNSIGNED_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                MPI_Recv(zbuf + (i) * screensize, screensize, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                MPI_Recv(sbuf + (i) * screensize, screensize, MPI_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            }
-            
-            MPI_Barrier(MPI_COMM_WORLD);
-            
-            std::copy_n(buffer.cbuffer, buffersize, rbuf);
-            std::copy_n(buffer.zbuffer, screensize, zbuf);
-            std::copy_n(buffer.shadowMap, screensize, sbuf);
+            // pre process shadow map
+            real_t zmin = std::numeric_limits<real_t>::max();
+            int zminId = -1;
+            Color3 color = Color3::Black();
             
             
-            // merge buffers from all nodes
-            // TODO: make it clearer
-            for (size_t i = 0; i < width * height; i++) {
-                
-                // pre process shadow map
-                real_t zmin = DBL_MAX;
-                int zminId = -1;
-//                bool shadow = false;
-                Color3 color = Color3::Black();
-                
-                for (int j = 0; j < procs; j++) {
-                    int index = j * screensize + i;
-                    if (zbuf[index] < zmin) {
+            
+            
+            for (int j = 0; j < procs; j++) {
+                int index = j * screensize + i;
+//                if (procId == 0)
+//                    printf("id = %d\n", index);
+                if (zbuf[index] < zmin) {
+                    
+                    zmin = zbuf[index];
+                    zminId = index;
+                }
+                else if ( fabs(zbuf[index] - zmin) <= EPSILON) {
+                    // if same but on is in shadow
+                    if (sbuf[zminId] == 0)
+                    {
                         zmin = zbuf[index];
                         zminId = index;
                     }
-                    else if ( fabs(zbuf[index] - zmin) <= EPSILON) {
-                        if (sbuf[zminId] == 0) {
-                            zmin = zbuf[index];
-                            zminId = index;
-                        }
-                    }
                 }
-                
-                if (zminId == -1)
-                {
-                    color = scene->background_color;
-                    
-                    // DEBUG
-//                    color = Color3::White();
-                }
-                else
-                {
-                    if (sbuf[zminId] != 0) {
-                        color = Color3::Blue();
-                    }
-                    else {
-
-                        color = Color3(&rbuf[zminId * 4]);
-                     
-                    }
-                    
-                    // DEBUG, depth buffer
-//                    float value = zbuf[zminId]/19.42f;
-//                    value = clamp(value, 0.0f, 1.0f);
-//                    color = Color3(value, value, value);
-                }
-                
-                color.to_array(&rootbuffer[i*4]);
             }
-        }
-        else {
             
-            MPI_Send((unsigned char *)buffer.cbuffer, BUFFER_SIZE(width, height), MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
-            MPI_Send((real_t *)buffer.zbuffer, width * height, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
-            MPI_Send((char *)buffer.shadowMap, width * height, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
             
-            MPI_Barrier(MPI_COMM_WORLD);
+            
+            if (zminId == -1)
+            {
+                color = scene->background_color;
+                // DEBUG
+                //                    color = Color3::White();
+            }
+            else
+            {
+                
+                if (sbuf[zminId] != 0) {
+                    color = Color3::Black(); // TODO: ambient
+                }
+                else {
+                    color = Color3(&rbuf[zminId * 4]);
+                    
+                }
+                
+                // DEBUG, depth buffer
+                //                    float value = zbuf[zminId]/19.42f;
+                //                    value = clamp(value, 0.0f, 1.0f);
+                //                    color = Color3(value, value, value);
+            }
+            
+            color.to_array(&rootbuffer[i*4]);
         }
+        printf("~~~~~~~~~~~~~~~~\n");
+        
+        free(rbuf);
+        free(zbuf);
+        free(sbuf);
+        
+//        assert(rootbuffer);
+//        
+//        if (procId == 0) {
+//            
+//            // gather buffer from all other nodes to rbuf, zbuf
+//            size_t screensize = width * height;
+//            size_t buffersize = BUFFER_SIZE(width, height);
+//            
+//            unsigned char *rbuf = (unsigned char *)malloc(buffersize * (procs)); // color buffer
+//            real_t *zbuf = (real_t *)malloc(screensize * (procs) * sizeof(real_t));           // depth buffer
+//            char *sbuf = (char *)malloc(screensize *(procs) * sizeof(char));              // shadow map buffer
+//            
+//            assert(rbuf && zbuf && sbuf);
+//            
+//            for (int i = 1; i < procs; i++)
+//            {
+//                MPI_Recv(rbuf + (i) * buffersize, buffersize, MPI_UNSIGNED_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//                MPI_Recv(zbuf + (i) * screensize, screensize, MPI_REAL, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//                MPI_Recv(sbuf + (i) * screensize, screensize, MPI_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//            }
+//            
+//            MPI_Barrier(MPI_COMM_WORLD);
+//            
+//            std::copy_n(buffer.cbuffer, buffersize, rbuf);
+//            std::copy_n(buffer.zbuffer, screensize, zbuf);
+//            std::copy_n(buffer.shadowMap, screensize, sbuf);
+//            
+//            printf("**************\n");
+//            // merge buffers from all nodes
+//            // TODO: make it clearer
+//            for (size_t i = 0; i < width * height; i++) {
+//                
+//                // pre process shadow map
+//                real_t zmin = std::numeric_limits<real_t>::max();
+//                int zminId = -1;
+//                Color3 color = Color3::Black();
+//                
+//                
+//                printf("id = %d\n", i);
+//                for (int j = 0; j < procs; j++) {
+//                    int index = j * screensize + i;
+//                    if (zbuf[index] < zmin) {
+//                        zmin = zbuf[index];
+//                        zminId = index;
+//                    }
+//                    else if ( fabs(zbuf[index] - zmin) <= EPSILON) {
+//                        // if same but on is in shadow
+//                        if (sbuf[zminId] == 0)
+//                        {
+//                            zmin = zbuf[index];
+//                            zminId = index;
+//                        }
+//                    }
+//                }
+//                
+//                
+//
+//                if (zminId == -1)
+//                {
+//                    color = scene->background_color;
+//                    // DEBUG
+////                    color = Color3::White();
+//                }
+//                else
+//                {
+//                    
+//                    if (sbuf[zminId] != 0) {
+//                        color = Color3::Black(); // TODO: ambient
+//                    }
+//                    else {
+//                        color = Color3(&rbuf[zminId * 4]);
+//
+//                    }
+//                    
+//                    // DEBUG, depth buffer
+////                    float value = zbuf[zminId]/19.42f;
+////                    value = clamp(value, 0.0f, 1.0f);
+////                    color = Color3(value, value, value);
+//                }
+//                
+//                color.to_array(&rootbuffer[i*4]);
+//            }
+//            printf("~~~~~~~~~~~~~~~~\n");
+//            
+//            free(rbuf);
+//            free(zbuf);
+//            free(sbuf);
+//            
+//        }
+//        else {
+//            MPI_Send((unsigned char *)buffer.cbuffer, BUFFER_SIZE(width, height), MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
+//            MPI_Send((real_t *)buffer.zbuffer, width * height, MPI_REAL, 0, 0, MPI_COMM_WORLD);
+//            MPI_Send((char *)buffer.shadowMap, width * height, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
+//            
+//            MPI_Barrier(MPI_COMM_WORLD);
+//        }
     }
-
-    // take in every nodes' shadow ray hit records, do local pixel shading.
-//    void Raytracer::mpiStagePixelShading(int procs, int procId)
-//    {
-//        // TODO
-//        // TODO: path tracing
-//    }
     
     void Raytracer::mpiAlltoallRayDistribution(int procs, int /* procId */, RayBucket &inputRayBucket, std::vector<Ray> *outputRayList)
     {
@@ -2428,6 +2533,45 @@ namespace _462 {
         delete recvoffsets;
     }
     
+    
+    void Raytracer::mergebuffers(unsigned char *dibuffer, unsigned char *gibuffer, int width, int height)
+    {
+        assert(width > 0 && height > 0);
+        assert(dibuffer);
+        if (!gibuffer) {
+            return;
+        }
+        
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int index = 4 * (y * width + x);
+                Color3 diColor = Color3(&dibuffer[index]);
+                Color3 giColor = Color3(&gibuffer[index]);
+                Color3 res = diColor + INV_PI * giColor;
+                res.to_array(&dibuffer[index]);
+            }
+        }
+    }
+    
+    bool Raytracer::mpiShouldStop(int procs, int procId, int shadowRaySize, int giRaySize)
+    {
+        int size = shadowRaySize + giRaySize;
+        int *recvsize = new int[procs];
+        
+        int status = MPI_Allgather(&size, 1, MPI_INT, recvsize, 1, MPI_INT, MPI_COMM_WORLD);
+        if (status != 0) {
+            printf("Fail to send and receive next ray size info!\n");
+            throw exception();
+        }
+        
+        bool ret = true;
+        for (int i = 0; i < procs; i++) {
+            printf("my id = %d, received from id = %d, recv = %d\n", procId, i, recvsize[i]);
+            if (recvsize[i] > 0)
+                ret = false;
+        }
+        return ret;
+    }
     
 
 

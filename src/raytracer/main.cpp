@@ -119,25 +119,6 @@ static bool parse_args( Options* opt, int argc, char* argv[] )
     return true;
 }
 
-void mergebuffers(unsigned char *dibuffer, unsigned char *gibuffer, int width, int height)
-{
-    assert(width > 0 && height > 0);
-    assert(dibuffer);
-    if (!gibuffer) {
-        return;
-    }
-    
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            int index = 4 * (y * width + x);
-            Color3 diColor = Color3(&dibuffer[index]);
-            Color3 giColor = Color3(&gibuffer[index]);
-            Color3 res = diColor + 0.8f * INV_PI * giColor;
-            res.to_array(&dibuffer[index]);
-        }
-    }
-}
-
 int main(int argc, char* argv[])
 {
     Options opt;
@@ -220,22 +201,22 @@ int main(int argc, char* argv[])
         
         // raytrace until done
 //        app.raytracer.raytrace( app.buffer, 0);
+        double start = MPI_Wtime();
         app.raytracer.mpiTrace( app.buffer, dibuffer, gibuffer, 0 );
-
-//        MPI_Barrier(MPI_COMM_WORLD);
-//
-//        app.gather_mpi_results(world_rank);
-//
-//        MPI_Barrier(MPI_COMM_WORLD);
+        double end = MPI_Wtime();
+        printf("Total Time = %f seconds\n", end - start);
         
         if (app.scene.node_rank == 0)
         {
             // merge two buffers
-            mergebuffers(dibuffer, gibuffer, opt.width, opt.height);
+//            mergebuffers(dibuffer, gibuffer, opt.width, opt.height);
             
             // output result
             app.output_image(dibuffer);
         }
+        
+        free(dibuffer);
+        free(gibuffer);
         
         // Test for finalize
         MPI_Finalize();

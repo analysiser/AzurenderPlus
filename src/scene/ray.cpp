@@ -24,7 +24,8 @@ namespace _462 {
         this->d = d;
         this->mint = 0.f;
         this->maxt = INFINITY;
-        this->time = 0.f;
+        this->time = std::numeric_limits<real_t>::max();
+        this->color = Color3::Black();
     }
     
     Ray::Ray(Vector3 e, Vector3 d, float start, float end, float time)
