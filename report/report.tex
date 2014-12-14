@@ -63,7 +63,60 @@ The system is shown in [Figure No.].
 \subsection{Approach 2 - Asynchronous}
 \subsubsection{Overview}
 \subsubsection{Work Flow}
+\paragraph{} Below is the code that drives the main infinite loop of both the master and the slaves. Each node, master and slaves, maintains a work queue and a result list. The work queue contains the rays that have not yet to be processed by the node. The result list contains the already processed rays which are to be distributed to other nodes for processing. The master and slaves would start by draining the rays inside the work queue and process them respectively as master and slaves. Master and slaves have different logic in processing the ray, which we will discuss in details later.  Each node, after finished processing the rays in their work queue and stored into the result list, would send the rays in the result lists to the correct nodes in batch. This is done through $exchange\_ray()$ function. After receiving new rays from other nodes, these rays are put into the work queue for next iteration. Then, each node would ask all nodes in the system for the number of work in their work queue. If all nodes has no work, then each node can safely terminate.
+ \lstset{language=C++} 
+ \begin{lstlisting}[frame=single] 
+void azMPI::run()
+ {
+    bool finish = false;
+    while(!finish)
+    {
+        if (procId == 0)
+        {
+            master_process_ray();
+        }
+        else
+        {
+            slave_process_ray();
+        }
+        exchange_ray();
+        finish = exchange_workload();
+    }
+ }
+ 
+\end{lstlisting}
+
 \subsubsection{Data Communicated}
+\paragraph{} 
+\subsubsection{Processing Rays}
+\paragraph{} The main job for the master is to update the frame buffer as rays are finished processing by the slaves. Below is the pseudo specifying the master's operations.
+ \begin{lstlisting}[frame=single] 
+    void azMPI::master_process_ray()
+    {
+        while(!wait_queue.empty())
+        {
+            Ray &recv_r = wait_queue.front();
+            switch(ray_type)
+            {
+                case ERayType_Eye:
+                    updateFrameBuffer();
+                    break;
+                case ERayType_Shadow:
+                    updateFrameBuffer();
+                    break;
+                case ERayType_GIShadow:
+                    updateFrameBuffer();
+                    break;
+                case ERayType_GI:
+                    break;
+                default:
+                    exit(-1);
+            }
+            wait_queue.pop();
+        }
+    }
+ 
+\end{lstlisting}
 \subsubsection{Hopping Algorithm}
 \paragraph{} One drawbacks of the first approach is the duplicated processing of rays across machine resulting in duplicated works when rays hit multiple bounding boxes. To be specific, in the current design of the system, since model are distributed on each nodes, a ray can potentially hit multiple bounding boxes if the models are close together but on different nodes.  In the first approach, when a ray hits multiple bounding boxes, the ray is sent to multiple node for tracing ans shading independently. This solution not only resulted in extra work in the tracing and shading, it also caused several other issues.
 \paragraph{} The first is that the system would need extra state information to decide how to combine the shading results from multiple nodes together into the frame buffer. As mentioned in the above, a depth buffer and a shadow map is required to correctly combine the shading results from multiple machines. 
