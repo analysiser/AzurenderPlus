@@ -71,7 +71,10 @@ Process rank = 0, done tracing took 10089.203119 ms
 
 
 master results, Direct only
-GHC 2 machine, 2 node, 1 lucy, 1.159091s
-
+ghc51, ghc52
+GHC 2 machine, 2 node, 1 lucy, 1.16s
+GHC 2 machine, 4 node, 9 lucy, 5.34s
+GHC 2 machine, 4 node, 18 lucy, 7.92s
+GHC 2 machine, 4 node, 18 lucy over, 7.65s
 
 
