@@ -1,0 +1,109 @@
+<scene>
+    <camera>
+        <fov v="1.0471975511"/>
+        <near_clip v=".01"/>
+        <far_clip v="100.0"/>
+        <position x="1.46072" y="0.00143689" z="9.09619"/>
+        <!-- <orientation a="0.998302" x="-0.0298582" y="0.0499567" z="0.00249372"/> -->
+        <!-- <position x="0.0" y="0.0" z="9.2"/> -->
+        <orientation a="0.0" x="0.0" y="1.0" z="0.0"/>
+    </camera>
+
+    <background_color r="0.0" g="0.0" b="0.0"/>
+
+    <refractive_index v="1.0"/>
+
+    <ambient_light r="0.1" g="0.1" b="0.1"/>
+
+    <!-- <point_light>
+        <position x="-5.0" y="5.0" z="5.0"/>
+        <color r="0.7" g="0.7" b="0.7"/>
+        <radius v="0.0"/>
+        <intensity v="100.0"/>
+    </point_light> -->
+
+    <distant_light>
+        <position x="0.0" y="0.0" z="0.0"/>
+        <direction x="1.4" y="-1.5" z="-1.5"/>
+        <color r="0.9" g="0.84" b="0.0"/>
+        <intensity v="1.5"/>
+    </distant_light>
+
+    <material name="white">
+        <ambient r="0.8" g="0.8" b="0.8"/>
+        <diffuse r="1.0" g="1.0" b="1.0"/>
+        <specular r="0.1" g="0.1" b="0.1"/>
+    </material>
+
+    <mesh name="floor" rank="0" filename="models/floor.obj"/>
+
+    <mesh name="lucy1" rank="0" filename="models/lucy.obj"/>
+    <mesh name="lucy2" rank="1" filename="models/lucy.obj"/>
+    <mesh name="lucy3" rank="2" filename="models/lucy.obj"/>
+    <mesh name="lucy4" rank="3" filename="models/lucy.obj"/>
+    <mesh name="lucy5" rank="4" filename="models/lucy.obj"/>
+    <mesh name="lucy6" rank="5" filename="models/lucy.obj"/>
+    <mesh name="lucy7" rank="6" filename="models/lucy.obj"/>
+    <mesh name="lucy8" rank="7" filename="models/lucy.obj"/>
+    <mesh name="lucy9" rank="8" filename="models/lucy.obj"/>
+    <!-- <mesh name="lucy3" rank="4" filename="models/lucy.obj"/> -->
+    <!-- <mesh name="lucy1" rank="1" filename="models/lucy.obj"/>
+    <mesh name="lucy2" rank="2" filename="models/lucy.obj"/>
+    <mesh name="lucy3" rank="0" filename="models/lucy.obj"/> -->
+
+    <model material="white" rank="0" mesh="floor">
+        <position x="0.0" y="-5.0" z="0.0"/>
+        <scale x="20.0" y="10.0" z="20.0"/>
+    </model> 
+
+    <!--Front-->
+    <model material="white" rank="0" mesh="lucy1">
+        <position x="0.0" y="-5" z="0.0"/>
+        <scale x="30.0" y="30.0" z="30.0"/>
+    </model>
+
+    <model material="white" rank="1" mesh="lucy2">
+        <position x="-5.0" y="-5" z="0.0"/>
+        <scale x="30.0" y="30.0" z="30.0"/>
+    </model>
+
+    <model material="white" rank="2" mesh="lucy3">
+        <position x="5.0" y="-5" z="0.0"/>
+        <scale x="30.0" y="30.0" z="30.0"/>
+    </model>
+
+    <!--Middle-->
+    <model material="white" rank="3" mesh="lucy4">
+        <position x="0.0" y="-5" z="-5.0"/>
+        <scale x="30.0" y="30.0" z="30.0"/>
+    </model>
+
+    <model material="white" rank="4" mesh="lucy5">
+        <position x="-5.0" y="-5" z="-5.0"/>
+        <scale x="30.0" y="30.0" z="30.0"/>
+    </model>
+
+    <model material="white" rank="5" mesh="lucy6">
+        <position x="5.0" y="-5" z="-5.0"/>
+        <scale x="30.0" y="30.0" z="30.0"/>
+    </model>
+
+    <!--Back-->
+    <model material="white" rank="6" mesh="lucy7">
+        <position x="0.0" y="-5" z="-10.0"/>
+        <scale x="30.0" y="30.0" z="30.0"/>
+    </model>
+
+    <model material="white" rank="7" mesh="lucy8">
+        <position x="-5.0" y="-5" z="-10.0"/>
+        <scale x="30.0" y="30.0" z="30.0"/>
+    </model>
+
+    <model material="white" rank="8" mesh="lucy9">
+        <position x="5.0" y="-5" z="-10.0"/>
+        <scale x="30.0" y="30.0" z="30.0"/>
+    </model>
+
+
+
+</scene>
