@@ -57,66 +57,53 @@ $Figure. 2\ System\ distribution\ policy$
 \subsubsection{Overview}
 \paragraph{}The first approach is a stage by stage algorithm. The idea behind it is to take the advantage of distributed machines across the network. Each of the ray tracing stage is separated. Each of the nodes (machines) in the system performs the exact same operations at the same stage. After each stage, there would be a synchronized blocking communication in between machines for exchanging the required data for next stage. The data would be duplicated across machines. For example, if one eye ray hits multiple root level bounding boxes of different nodes, the eye ray would be duplicated and sent to multiple machines. 
 After the stage of tracing and when comes to the stage of shading, each machine / node would update their own local frame buffer, depth buffer and shadow map. Then a gather operations is performed on root node, and framebuffer information from different nodes would be merged.
-The system is shown in [Figure No.].
+The system is shown in $Figure 3$.
+\begin{figure}[h]
+\includegraphics[width=\textwidth]{algo1}
+$Figure. 3\ Algorithm 1.\ Workflow\ of\ staged\ system$
+\end{figure}
 \paragraph{}The assumption behind it is that local ray tracing and shading is fast and cheap and inter-nodes communication is expensive, meanwhile, Open MPI is optimized for large chunk of data exchange. The design assumes that the overhead of increased replicated work is lower than the overhead of increased communication.
 \subsubsection{Work Flow}
+\paragraph{}The pseudocode is as following, at the end of each function, there would a data exchange with synchronized blocking message passing:
+\lstset{language=c++}
+\begin{lstlisting}[frame=single]
+    void mpiTrace()
+    {
+        mpiStageDistributeEyeRays();
+        mpiAllToAllExchange(eyerays);
+        
+        mpiStageLocalRayTracing(eyerays);
+        mpiAllToAllExchange(shadowrays);
+        mpiAllToAllExchange(secondrays);
+        
+        mpiStageShadowRayTracing(shadowrays);
+        mpiGather(framebuffer, root);
+       	mpiMergeFrameBuffer();
+        
+        while (second rays are not done) {
+            mpiStageLocalRayTracing(second rays);
+            mpiAllToAllExchange(shadowrays);
+            mpiAllToAllExchange(secondrays);
+            
+            mpiStageShadowRayTracing(shadowrays);
+            mpiGather(framebuffer, root);
+            
+            mpiMergeFrameBuffer();
+        }
+    }
+\end{lstlisting}
+$Algorithm. 1\ Synchronized\ staged\ based\ path\ tracing$
+\subsubsection{Algorithm Discussion}
+\paragraph{} The core idea behind the algorithm is to minimize node-to-node communication. Note that the goal is to diminish communication frequency, instead of diminish the communication size. The algorithm would send all rays to all nodes that potentially have an intersection with the rays in the ray list. The sending and receiving of ray data always happen at the same time for all nodes. Once every node gets the ray data needed for ray tracing, it would immediately do local ray tracing, and generate more rays needed for the next stage. 
+\paragraph{} Apparently, a major drawback is the duplication of work. Imaging a ray hits the bounding boxes of all nodes, the concept ray would be duplicated and sent to all nodes, each node would do a local tracing and shading, whereas at the final merging stage, there should be only one shading result needed. Therefore for each ray that is sent to $N$ nodes, $N-1$ works are wasted. The ratio of wasted work depends on how many nodes each ray might potentially hit. However, the worst case scenario is all nodes' geometries occupy the whole screen space, and each ray must hits all nodes. This would cause the system to be running as nodes numbers $(N)$ of independent ray tracer, each one has $1/N$ total geometries, plus inter communication overhead. Given the fact that our ray tracer runs reasonably fast on local ray tracing, the performance would not be so bad at first glance.
+\paragraph{}However, the second rays could cause further problems since second rays might explode if duplicated works are not reduced. Assuming each first ray hit would generate $m$ more second rays, and each ray would on average hits $n$ geometries, and recursion depth is $k$. For a regular ray tracer, a ray hit would in total cause $m^k$ ray testing, our first algorithm would cause $(n*m)^k$ rays. The increase of workload would be proportional to $n^k$. This would become a disaster if $n$ increases, therefore we expect a relatively bad scalability to this system.
+\subsubsection{Future Optimization}
+\paragraph{}The problem mentioned in last section however is not completely unsolvable. An optimization might be perform a 
+
 \subsection{Approach 2 - Asynchronous}
 \subsubsection{Overview}
 \subsubsection{Work Flow}
-\paragraph{} Below is the code that drives the main infinite loop of both the master and the slaves. Each node, master and slaves, maintains a work queue and a result list. The work queue contains the rays that have not yet to be processed by the node. The result list contains the already processed rays which are to be distributed to other nodes for processing. The master and slaves would start by draining the rays inside the work queue and process them respectively as master and slaves. Master and slaves have different logic in processing the ray, which we will discuss in details later.  Each node, after finished processing the rays in their work queue and stored into the result list, would send the rays in the result lists to the correct nodes in batch. This is done through $exchange\_ray()$ function. After receiving new rays from other nodes, these rays are put into the work queue for next iteration. Then, each node would ask all nodes in the system for the number of work in their work queue. If all nodes has no work, then each node can safely terminate.
- \lstset{language=C++} 
- \begin{lstlisting}[frame=single] 
-void azMPI::run()
- {
-    bool finish = false;
-    while(!finish)
-    {
-        if (procId == 0)
-        {
-            master_process_ray();
-        }
-        else
-        {
-            slave_process_ray();
-        }
-        exchange_ray();
-        finish = exchange_workload();
-    }
- }
- 
-\end{lstlisting}
-
 \subsubsection{Data Communicated}
-\paragraph{} 
-\subsubsection{Processing Rays}
-\paragraph{} The main job for the master is to update the frame buffer as rays are finished processing by the slaves. Below is the pseudo specifying the master's operations.
- \begin{lstlisting}[frame=single] 
-    void azMPI::master_process_ray()
-    {
-        while(!wait_queue.empty())
-        {
-            Ray &recv_r = wait_queue.front();
-            switch(ray_type)
-            {
-                case ERayType_Eye:
-                    updateFrameBuffer();
-                    break;
-                case ERayType_Shadow:
-                    updateFrameBuffer();
-                    break;
-                case ERayType_GIShadow:
-                    updateFrameBuffer();
-                    break;
-                case ERayType_GI:
-                    break;
-                default:
-                    exit(-1);
-            }
-            wait_queue.pop();
-        }
-    }
- 
-\end{lstlisting}
 \subsubsection{Hopping Algorithm}
 \paragraph{} One drawbacks of the first approach is the duplicated processing of rays across machine resulting in duplicated works when rays hit multiple bounding boxes. To be specific, in the current design of the system, since model are distributed on each nodes, a ray can potentially hit multiple bounding boxes if the models are close together but on different nodes.  In the first approach, when a ray hits multiple bounding boxes, the ray is sent to multiple node for tracing ans shading independently. This solution not only resulted in extra work in the tracing and shading, it also caused several other issues.
 \paragraph{} The first is that the system would need extra state information to decide how to combine the shading results from multiple nodes together into the frame buffer. As mentioned in the above, a depth buffer and a shadow map is required to correctly combine the shading results from multiple machines. 
