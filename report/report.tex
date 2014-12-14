@@ -42,9 +42,16 @@ Parallel Breadth-First Search, from the past to present.\\
 \subsection{System Overview}
 \subsubsection{Ray Tracing System}
 \paragraph{} Our system involves a basic ray tracing logic, as shown in the $Figure 1$. Like any other ray tracing system, if we do not generate second rays at all, it would have direct illumination only. For simplicity, we assumed all second rays intersection would be a lambertian diffusive surface hit.
-\\
+\begin{figure}[h]
 \includegraphics[width=\textwidth] {img1}
-
+$Figure. 1\ Ray\ tracing\ system\ overview$
+\end{figure}
+\subsubsection{Distribution Policy}
+\paragraph{}The distribution of scene is shown in figure $Figure. 2$. We tested the system on CMU’s gates center computer clusters that use AFS file system. Our scene file, a xml description file indicates the distribution policy of geometries in the scene. At this stage, we manually distribute the geometries, but there is the potential of automatic and smart distribution of geometries. We used Open MPI message passing interface for data flow control.
+\begin{figure}[h]
+\includegraphics[width=\textwidth] {img2}
+$Figure. 2\ System\ distribution\ policy$
+\end{figure}
 
 \subsection{Approach 1 - Staged}
 \subsubsection{Overview}
