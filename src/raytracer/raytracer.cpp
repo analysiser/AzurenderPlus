@@ -558,33 +558,33 @@ namespace _462 {
         buffer.cleanbuffer(width, height);
 
         
-        while (!mpiShouldStop(scene->node_size, scene->node_rank, shadowrays.size(), girays.size()))
-        {
-            
-//            eyerays.clear();
+//        while (!mpiShouldStop(scene->node_size, scene->node_rank, shadowrays.size(), girays.size()))
+//        {
+//            
+////            eyerays.clear();
+////            eyerays = girays;
+////            girays.clear();
+////            shadowrays.clear();
 //            eyerays = girays;
-//            girays.clear();
-//            shadowrays.clear();
-            eyerays = girays;
-            
-            mpiStageLocalRayTrace(scene->node_size, scene->node_rank, eyerays, &shadowrays, &girays, false);
-            
-            
-            mpiStageShadowRayTracing(scene->node_size, scene->node_rank, buffer, shadowrays);
-            
-            
-            // TODO: merge global illumination buffer
-            if (scene->node_rank == 0)
-                printf("=======%d=======\n", scene->node_rank);
-            mpiMergeFrameBufferToBuffer(scene->node_size, scene->node_rank, buffer, gibuffer);
-            if (scene->node_rank == 0)
-                printf("-------%d-------\n", scene->node_rank);
-            
-            buffer.cleanbuffer(width, height);
-            
-            mergebuffers(dibuffer, gibuffer, width, height);
-            
-        }
+//            
+//            mpiStageLocalRayTrace(scene->node_size, scene->node_rank, eyerays, &shadowrays, &girays, false);
+//            
+//            
+//            mpiStageShadowRayTracing(scene->node_size, scene->node_rank, buffer, shadowrays);
+//            
+//            
+//            // TODO: merge global illumination buffer
+//            if (scene->node_rank == 0)
+//                printf("=======%d=======\n", scene->node_rank);
+//            mpiMergeFrameBufferToBuffer(scene->node_size, scene->node_rank, buffer, gibuffer);
+//            if (scene->node_rank == 0)
+//                printf("-------%d-------\n", scene->node_rank);
+//            
+//            buffer.cleanbuffer(width, height);
+//            
+//            mergebuffers(dibuffer, gibuffer, width, height);
+//            
+//        }
         
 
         return true;
