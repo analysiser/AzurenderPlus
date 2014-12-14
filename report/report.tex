@@ -3,6 +3,7 @@
 \usepackage{amsfonts} % if you want blackboard bold symbols e.g. for real numbers
 \usepackage{graphicx} % if you want to include jpeg or pdf pictures
 \usepackage{listings} % entering code.
+\graphicspath{ {images/} }
 
 \title{{\bf 15-418 Final Project Report \\
  \large Solving Out of Core Ray Tracing Problem by a Distributed Path Tracing System}} % change this
@@ -38,7 +39,20 @@ Parallel Breadth-First Search, from the past to present.\\
 \paragraph{} We designed a system to perform out-of-core rendering, based on Azurender, a ray tracing based renderer. We designed and implemented two algorithms. Different from the design of Hyperion or Pantaray, which are more focused on smarter sorting, loading and unloading of rays, ray packets or BVHs to hide the latency caused by hard disk accessing, our design load the scenes into DRAMs in a distributed system and focus on the scheduling and optimization for inter-machine communications. 
 
 \section{System Design}
+\subsection{System Overview}
+\subsubsection{Ray Tracing System}
+\paragraph{} Our system involves a basic ray tracing logic, as shown in the $Figure 1$. Like any other ray tracing system, if we do not generate second rays at all, it would have direct illumination only. For simplicity, we assumed all second rays intersection would be a lambertian diffusive surface hit.
+\\
+\includegraphics[width=\textwidth] {img1}
+
+
 \subsection{Approach 1 - Staged}
+\subsubsection{Overview}
+\paragraph{}The first approach is a stage by stage algorithm. The idea behind it is to take the advantage of distributed machines across the network. Each of the ray tracing stage is separated. Each of the nodes (machines) in the system performs the exact same operations at the same stage. After each stage, there would be a synchronized blocking communication in between machines for exchanging the required data for next stage. The data would be duplicated across machines. For example, if one eye ray hits multiple root level bounding boxes of different nodes, the eye ray would be duplicated and sent to multiple machines. 
+After the stage of tracing and when comes to the stage of shading, each machine / node would update their own local frame buffer, depth buffer and shadow map. Then a gather operations is performed on root node, and framebuffer information from different nodes would be merged.
+The system is shown in [Figure No.].
+\paragraph{}The assumption behind it is that local ray tracing and shading is fast and cheap and inter-nodes communication is expensive, meanwhile, Open MPI is optimized for large chunk of data exchange. The design assumes that the overhead of increased replicated work is lower than the overhead of increased communication.
+\subsubsection{Work Flow}
 \subsection{Approach 2 - Asynchronous}
 \subsubsection{Overview}
 \subsubsection{Work Flow}

@@ -2323,9 +2323,6 @@ namespace _462 {
             int zminId = -1;
             Color3 color = Color3::Black();
             
-            
-            
-            
             for (int j = 0; j < procs; j++) {
                 int index = j * screensize + i;
 //                if (procId == 0)
