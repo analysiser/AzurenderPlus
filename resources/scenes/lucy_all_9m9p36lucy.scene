@@ -35,8 +35,8 @@
         <specular r="0.1" g="0.1" b="0.1"/>
     </material>
 
-    <mesh name="floor" rank="0" filename="models/floor.obj"/>
-    <model material="white" rank="0" mesh="floor">
+    <mesh name="floor" rank="1" filename="models/floor.obj"/>
+    <model material="white" rank="1" mesh="floor">
         <position x="0.0" y="-5.0" z="0.0"/>
         <scale x="40.0" y="10.0" z="40.0"/>
     </model> 
@@ -44,7 +44,7 @@
     <!-------------------1----------------->
     <!-------------------1----------------->
 
-    <mesh name="lucy1" rank="0" filename="models/lucy.obj"/>
+    <mesh name="lucy1" rank="9" filename="models/lucy.obj"/>
     <mesh name="lucy1" rank="1" filename="models/lucy.obj"/>
     <mesh name="lucy1" rank="2" filename="models/lucy.obj"/>
     <mesh name="lucy1" rank="3" filename="models/lucy.obj"/>
@@ -55,7 +55,7 @@
     <mesh name="lucy1" rank="8" filename="models/lucy.obj"/>
 
     <!--Front-->
-    <model material="white" rank="0" mesh="lucy1">
+    <model material="white" rank="9" mesh="lucy1">
         <position x="0.0" y="-5" z="0.0"/>
         <scale x="30.0" y="30.0" z="30.0"/>
     </model>
@@ -106,7 +106,7 @@
     <!-------------------2----------------->
     <!-------------------2----------------->
 
-    <mesh name="lucy2" rank="0" filename="models/lucy.obj"/>
+    <mesh name="lucy2" rank="9" filename="models/lucy.obj"/>
     <mesh name="lucy2" rank="1" filename="models/lucy.obj"/>
     <mesh name="lucy2" rank="2" filename="models/lucy.obj"/>
     <mesh name="lucy2" rank="3" filename="models/lucy.obj"/>
@@ -117,7 +117,7 @@
     <mesh name="lucy2" rank="8" filename="models/lucy.obj"/>
 
     <!--Front-->
-    <model material="white" rank="0" mesh="lucy2">
+    <model material="white" rank="9" mesh="lucy2">
         <position x="0.0" y="-5" z="-15.0"/>
         <scale x="30.0" y="30.0" z="30.0"/>
     </model>
@@ -167,7 +167,7 @@
     <!-------------------3----------------->
     <!-------------------3----------------->
 
-    <mesh name="lucy3" rank="0" filename="models/lucy.obj"/>
+    <mesh name="lucy3" rank="9" filename="models/lucy.obj"/>
     <mesh name="lucy3" rank="1" filename="models/lucy.obj"/>
     <mesh name="lucy3" rank="2" filename="models/lucy.obj"/>
     <mesh name="lucy3" rank="3" filename="models/lucy.obj"/>
@@ -178,7 +178,7 @@
     <mesh name="lucy3" rank="8" filename="models/lucy.obj"/>
 
     <!--Front-->
-    <model material="white" rank="0" mesh="lucy3">
+    <model material="white" rank="9" mesh="lucy3">
         <position x="15.0" y="-5" z="0.0"/>
         <scale x="30.0" y="30.0" z="30.0"/>
     </model>
@@ -229,7 +229,7 @@
     <!-------------------4----------------->
     <!-------------------4----------------->
 
-    <mesh name="lucy4" rank="0" filename="models/lucy.obj"/>
+    <mesh name="lucy4" rank="9" filename="models/lucy.obj"/>
     <mesh name="lucy4" rank="1" filename="models/lucy.obj"/>
     <mesh name="lucy4" rank="2" filename="models/lucy.obj"/>
     <mesh name="lucy4" rank="3" filename="models/lucy.obj"/>
@@ -240,7 +240,7 @@
     <mesh name="lucy4" rank="8" filename="models/lucy.obj"/>
 
     <!--Front-->
-    <model material="white" rank="0" mesh="lucy4">
+    <model material="white" rank="9" mesh="lucy4">
         <position x="15.0" y="-5" z="-15.0"/>
         <scale x="30.0" y="30.0" z="30.0"/>
     </model>
