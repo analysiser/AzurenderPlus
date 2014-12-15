@@ -85,6 +85,7 @@ GHC 6 machines, 9 node, 9 lucy, 6.43s
 GHC 9 machines, 9 node, 9 lucy, 7.64s
 GHC 9 machines, 9 node, 18 lucy, 8.8s
 GHC 9 machines, 9 node, 36 lucy, 12.56s
+GHC 9 machines, 9 node, 54 lucy, 14.37s
 
 
 
