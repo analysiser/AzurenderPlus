@@ -3,6 +3,8 @@
 \usepackage{amsfonts} % if you want blackboard bold symbols e.g. for real numbers
 \usepackage{graphicx} % if you want to include jpeg or pdf pictures
 \usepackage{listings} % entering code.
+\usepackage{caption}
+\usepackage{subcaption}
 
 \graphicspath{{images/}}
 
@@ -17,21 +19,14 @@
 
 %%%%%%%%%% PRELIMINARY MATERIAL %%%%%%%%%%
 \maketitle
-\thispagestyle{empty}
 \newpage
-\begin{center}
-\vspace*{\fill}
-\section*{Abstract}
-Parallel Breadth-First Search, from the past to present.\\
-\vspace*{\fill}
-\newpage
-\end{center}
-
 \tableofcontents
 \newpage
 
 %%%%%%%%%% MAIN TEXT STARTS HERE %%%%%%%%%%
-\section{Introduction}
+
+\section{Summary}
+Our project aimed to solve the out-of-core ray tracing problem, where models are too large to fit in the DRAM of a single machine. We designed and implemented two distributed path tracing systems with different algorithms and compared their performances. Although our prototypes did not achieve real time performance, we did manage to solve the problem. We believe that with further optimization our design has the potential to reach the realm of real time performance.\\
 \section{Background}
 \paragraph{} In general, the renderers used in animation, film or FX industries could be categorized as on-core and out-of-core renderers.  In the context of ray tracer, on core ray tracer ensures the whole scene to render fits in the DRAM of a machine. This allows the ray tracer to generate random numbers of rays when intersection happens, and trace them without worrying about scheduling the loading and unloading scenes. 
 
@@ -45,27 +40,26 @@ Parallel Breadth-First Search, from the past to present.\\
 \paragraph{} Our system involves a basic ray tracing logic, as shown in the $Figure 1$. Like any other ray tracing system, if we do not generate second rays at all, it would have direct illumination only. For simplicity, we assumed all second rays intersection would be a lambertian diffusive surface hit.
 \begin{figure}[h]
 \includegraphics[width=\textwidth] {img1}
-$Figure. 1\ Ray\ tracing\ system\ overview$
+\caption{Ray tracing system overview}\
 \end{figure}
 \subsubsection{Distribution Policy}
 \paragraph{}The distribution of scene is shown in figure $Figure. 2$. We tested the system on CMU’s gates center computer clusters that use AFS file system. Our scene file, a xml description file indicates the distribution policy of geometries in the scene. At this stage, we manually distribute the geometries, but there is the potential of automatic and smart distribution of geometries. We used Open MPI message passing interface for data flow control.
 \begin{figure}[h]
-\includegraphics[width=\textwidth] {img2}
-$Figure. 2\ System\ distribution\ policy$
+\includegraphics[width=0.8\textwidth] {img2}
+\caption{System distribution policy}\
 \end{figure}
-
 \subsection{Approach 1 - Staged}
 \subsubsection{Overview}
 \paragraph{}The first approach is a stage by stage algorithm. The idea behind it is to take the advantage of distributed machines across the network. Each of the ray tracing stage is separated. Each of the nodes (machines) in the system performs the exact same operations at the same stage. After each stage, there would be a synchronized blocking communication in between machines for exchanging the required data for next stage. The data would be duplicated across machines. For example, if one eye ray hits multiple root level bounding boxes of different nodes, the eye ray would be duplicated and sent to multiple machines. 
 After the stage of tracing and when comes to the stage of shading, each machine / node would update their own local frame buffer, depth buffer and shadow map. Then a gather operations is performed on root node, and framebuffer information from different nodes would be merged.
 The system is shown in $Figure 3$.
 \begin{figure}[h]
-\includegraphics[width=\textwidth]{algo1}
-$Figure. 3\ Algorithm 1.\ Workflow\ of\ staged\ system$
+\includegraphics[width=0.8\textwidth]{algo1}
+\caption{Algorithm 1. Workflow of staged system}\
 \end{figure}
 \paragraph{}The assumption behind it is that local ray tracing and shading is fast and cheap and inter-nodes communication is expensive, meanwhile, Open MPI is optimized for large chunk of data exchange. The design assumes that the overhead of increased replicated work is lower than the overhead of increased communication.
 \subsubsection{Work Flow}
-\paragraph{}The pseudocode is as following, at the end of each function, there would a data exchange with synchronized blocking message passing:
+\paragraph{}The pseudocode is as following, at the end of each function, there would a data exchange with synchronized blocking message passing:\\
 \lstset{language=c++}
 \begin{lstlisting}[frame=single]
     void mpiTrace()
@@ -242,11 +236,113 @@ void azMPI::run()
 
 \section{Result}
 \subsection{Direct Illumination}
+\paragraph{} Direct illumination images:
+\begin{figure}[h]
+	\centering
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{d1lucy}
+                \caption{1 Lucy}
+                \label{fig:d1lucy}
+        \end{subfigure}%
+        ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+          %(or a blank line to force the subfigure onto a new line)
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{d9lucy}
+                \caption{9 Lucy}
+                \label{fig:d9lucy}
+        \end{subfigure}
+        ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+          %(or a blank line to force the subfigure onto a new line)
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{d18lucy}
+                \caption{18 Lucy}
+                \label{fig:d18lucy}
+        \end{subfigure}
+         \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{d36lucy}
+                \caption{36 Lucy}
+                \label{fig:d36lucy}
+        \end{subfigure}%
+        ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+          %(or a blank line to force the subfigure onto a new line)
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{d54lucy}
+                \caption{54 Lucy}
+                \label{fig:d54lucy}
+        \end{subfigure}
+        ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+          %(or a blank line to force the subfigure onto a new line)
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{d108lucy_1}
+                \caption{108 Lucy}
+                \label{fig:d108lucy}
+        \end{subfigure}
+        \caption{Pictures of rendered Lucies under direct illumination only}\
+\end{figure}
+\paragraph{} For direct illumination only test cases, the first algorithm: stage by stage gives some interesting results. The results come from the same algorithm running on different numbers of machines with different numbers of nodes. 
+\paragraph{} The test models we are using is Lucy model. Instead keeping the Lucies in the same memory space and managing them by reference count, we forced the ray tracer to load each Lucy independently. A Lucy model is about 78.5 mb on hard disk, and would cause 451 mb in memory once loaded into ray tracer and finished building BVH-Tree. Therefore, 108 Lucies would need about 47.6 GB in memory. For some of the results there are missing data, this is simply because the models could not fit in the DRAM of given numbers of machines.
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{res1}
+\caption{Algorithm 1.Direct Illumination only result}\
+\end{figure}
+\paragraph{}It is interesting to see that the increase of processing nodes in MPI message passing system does not necessarily increase the performance. In addition, the increase of machine numbers would slightly decrease the performance. Although a little bit disappointing, it meets our assumption about the system design. Since our major goal is to make it possible for distributed ray tracing system to render geometries that could not fit in DRAM, and it is reasonable that the increasing of machine nodes would definitely increase the inter communication overhead. Also, we are happy to observe that the rendering time did not linearly increase to the scene complexities. 
+\paragraph{}We also changed the camera positions and angles for testing the consistency of results. We observed a little bit change of rendering time required for distant camera. However we observed that if camera is getting too close to one of the overall geometry, the render time increased but not too bad compared to render with single machine. 
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{d108lucy_2}
+\caption{108 Lucies with direct Illumination from another angle}\
+\end{figure}
+\subsection{Global Illumination and Comparison}
+\paragraph{}We present an overall comparison of results from direct illumination and global illumination for both of the algorithms. For direct illumination only, it is easy to find that for lower number of geometries, Node by Node algorithm beats the performance of Stage by Stage algorithm. This is because of the inter-communication overhead is lower in algorithm 2 given that fact that there are duplicated work to be done in algorithm 1. However, when geometry number increased to more than 36 Lucies (36 nodes), the performance of algorithm 1 is getting better and better, since this is when the first algorithm start taking the advantage of transfer large amount of data with lower frequencies, and this proves that the overhead of increased inter-communication exceeds the overhead of duplicated tracing and shading works in our system.
+\paragraph{}The global illumination result, however, is not as consistent with direct illumination result. We presented the results here for reference, since there seems to be a Heisenbug that could cause a segment fault I could not figure out why for algorithm 1. The global illumination results of algorithm 1 seems not natural as well, therefore we could not make a lot of comparisons of the two results very confidently. However, since the global illumination results are very concrete for algorithm 2, we could still point out that the increase of inter-communication overhead for second rays results in superlinear increase of rendering time.
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{res2}
+\caption{Two algorithms result comparison}\
+\end{figure}
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{glucy108}
+\caption{108 Lucies with global Illumination}\
+\end{figure}
 \section{Conclusion}
-
+\paragraph{} In brief conclusion, we implemented a distributed ray tracing / path tracing system that could render large models that could not fit in one machine's DRAM. We designed and implemented two algorithms and compared their performance. The results are generated under OPEN MPI message passing interface. In brief, for scenes with less geometries that must be distributed, a node by node asynchronized solution has better performance in both direct illumination and global illumination. For larger scenes with a lot of geometries to be distributed across a lot of machine nodes, the overhead of increased communication might dominate and exceeds the overhead of duplicated tracing and shading work.  Under such circumstances, a synchronized stage by stage algorithm might be a better solution. Meanwhile, we have to admit that both of the algorithms have the potential of further optimized. A deferred rendering might be useful for helping improve the performance of node by node algorithm, and a discard of duplicated work after each tracing stage could be helpful for stage by stage algorithm. This could be the future optimization for this topic.
 %%%%%%%%%% BIBLIOGRAPHY %%%%%%%%%%
-
-
+\section{Appendix: Rendered Results}
+\paragraph{}Here are some rendered images for further indicating how our system works, and how results are look like other than the test Lucy scenes we used in former sections.
+\begin{figure}[h]
+	\centering
+        \begin{subfigure}[b]{0.5\textwidth}
+                \includegraphics[width=\textwidth]{2dragons}
+                \caption{Rendered two dragons}
+                \label{fig:2dragons}
+        \end{subfigure}%
+        ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+          %(or a blank line to force the subfigure onto a new line)
+        \begin{subfigure}[b]{0.5\textwidth}
+                \includegraphics[width=\textwidth]{depth}
+                \caption{Depth buffer used by algorithm 1}
+                \label{fig:depthbuffer}
+        \end{subfigure}
+  		\caption{Here is an example of rendered image and the depth buffer used by algorithm 1.}\
+\end{figure}
+\begin{figure}[h]
+	\centering
+        \begin{subfigure}[b]{0.5\textwidth}
+                \includegraphics[width=\textwidth]{shadow0}
+                \caption{Node 0 renderer shadow map}
+                \label{fig:shadow0}
+        \end{subfigure}%
+        ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+          %(or a blank line to force the subfigure onto a new line)
+        \begin{subfigure}[b]{0.5\textwidth}
+                \includegraphics[width=\textwidth]{shadow1}
+                \caption{Node 1 renderer shadow map}
+                \label{fig:shadow1}
+        \end{subfigure}
+  		\caption{Here is an example of rendered shadow map in algorithm 1. Both of the nodes rendered the bigger dragon since concept eye rays are duplicated on both of the nodes. Blue shadows indicate the shadow caused by the geometry of the node itself, red shadow indicated the shadows caused by geometries on other nodes.}\
+\end{figure}
 \bibliographystyle{plain}
 \bibliography{references}
 \addcontentsline{toc}{section}{References}
