@@ -42,8 +42,8 @@
     <mesh name="lucy3" rank="3" filename="models/lucy.obj"/>
     <mesh name="lucy4" rank="4" filename="models/lucy.obj"/>
     <mesh name="lucy5" rank="5" filename="models/lucy.obj"/>
-    <mesh name="lucy6" rank="5" filename="models/lucy.obj"/>
-    <mesh name="lucy7" rank="6" filename="models/lucy.obj"/>
+    <mesh name="lucy6" rank="6" filename="models/lucy.obj"/>
+    <mesh name="lucy7" rank="7" filename="models/lucy.obj"/>
     <mesh name="lucy8" rank="8" filename="models/lucy.obj"/>
     <mesh name="lucy9" rank="9" filename="models/lucy.obj"/>
     <!-- <mesh name="lucy3" rank="4" filename="models/lucy.obj"/> -->
