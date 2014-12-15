@@ -44,7 +44,7 @@
     <!-------------------1----------------->
     <!-------------------1----------------->
 
-    <mesh name="lucy1" rank="1" filename="models/lucy.obj"/>
+    <mesh name="lucy1" rank="9" filename="models/lucy.obj"/>
     <mesh name="lucy1" rank="1" filename="models/lucy.obj"/>
     <mesh name="lucy1" rank="2" filename="models/lucy.obj"/>
     <mesh name="lucy1" rank="3" filename="models/lucy.obj"/>
