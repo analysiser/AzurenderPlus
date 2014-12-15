@@ -81,11 +81,17 @@ ghc51,ghc52,ghc54,ghc55,ghc40,ghc41,ghc27,ghc29,ghc69
 GHC 3 machines, 6 node, 9 lucy, 5.05s
 
 GHC 3 machines, 9 node, 9 lucy, 5.40s
-GHC 6 machines, 9 node, 9 lucy, 6.43s
+GHC 3 machines, 9 node, 18 lucy, 6.78s
+
+GHC 6 machines, 9 node, 9 lucy, 6.13s
+GHC 6 machines, 9 node, 18 lucy, 11.13s
+GHC 6 machines, 9 node, 36 lucy, 12.14s
+
 GHC 9 machines, 9 node, 9 lucy, 7.64s
 GHC 9 machines, 9 node, 18 lucy, 8.8s
 GHC 9 machines, 9 node, 36 lucy, 12.56s
 GHC 9 machines, 9 node, 54 lucy, 14.37s
+GHC 9 machines, 9 node, 108 lucy, 22.47s
 
 
 
