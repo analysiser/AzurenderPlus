@@ -2294,7 +2294,7 @@ namespace _462 {
                 Ray r = Ray(scene->camera.get_position(), Ray::get_pixel_dir(i, j));
                 r.color = Color3::Black();
                 r.type = ERayType_Eye;
-                r.depth = 0;
+                r.depth = 2;
                 r.isHit = false;
                 r.x = x;
                 r.y = y;
