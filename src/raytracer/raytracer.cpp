@@ -558,33 +558,28 @@ namespace _462 {
         buffer.cleanbuffer(width, height);
 
         
-//        while (!mpiShouldStop(scene->node_size, scene->node_rank, shadowrays.size(), girays.size()))
-//        {
-//            
-////            eyerays.clear();
-////            eyerays = girays;
-////            girays.clear();
-////            shadowrays.clear();
+        while (!mpiShouldStop(scene->node_size, scene->node_rank, shadowrays.size(), girays.size()))
+        {
+            
+//            eyerays.clear();
 //            eyerays = girays;
-//            
-//            mpiStageLocalRayTrace(scene->node_size, scene->node_rank, eyerays, &shadowrays, &girays, false);
-//            
-//            
-//            mpiStageShadowRayTracing(scene->node_size, scene->node_rank, buffer, shadowrays);
-//            
-//            
-//            // TODO: merge global illumination buffer
-//            if (scene->node_rank == 0)
-//                printf("=======%d=======\n", scene->node_rank);
-//            mpiMergeFrameBufferToBuffer(scene->node_size, scene->node_rank, buffer, gibuffer);
-//            if (scene->node_rank == 0)
-//                printf("-------%d-------\n", scene->node_rank);
-//            
-//            buffer.cleanbuffer(width, height);
-//            
-//            mergebuffers(dibuffer, gibuffer, width, height);
-//            
-//        }
+//            girays.clear();
+//            shadowrays.clear();
+            eyerays = girays;
+            
+            mpiStageLocalRayTrace(scene->node_size, scene->node_rank, eyerays, &shadowrays, &girays, false);
+            
+            
+            mpiStageShadowRayTracing(scene->node_size, scene->node_rank, buffer, shadowrays);
+            
+            // TODO: merge global illumination buffer
+            mpiMergeFrameBufferToBuffer(scene->node_size, scene->node_rank, buffer, gibuffer);
+            
+            buffer.cleanbuffer(width, height);
+            
+            mergebuffers(dibuffer, gibuffer, width, height);
+            
+        }
         
 
         return true;
@@ -2148,7 +2143,7 @@ namespace _462 {
                         r.x = x;
                         r.y = y;
                         r.color = Color3::Black();
-                        r.depth = 0;
+                        r.depth = 2;
                         currentNodeRayList.push_back(node_id, r);
                     }
                 }
