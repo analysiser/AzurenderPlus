@@ -99,3 +99,10 @@ GHC 9 machines, 9 node, 108 lucy, 22.47s
 
 master results, GI
 9m 9p 9lucy, 18.64s
+9m 9p 18lucy, 20.03s
+9m 9p 36lucy, 30.92s
+9m 9p 54lucy, 35.84s
+9m 9p 108lucy, 38.55s
+
+
+
