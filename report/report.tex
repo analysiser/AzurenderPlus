@@ -60,6 +60,7 @@ The system is shown in $Figure 3$.
 \paragraph{}The assumption behind it is that local ray tracing and shading is fast and cheap and inter-nodes communication is expensive, meanwhile, Open MPI is optimized for large chunk of data exchange. The design assumes that the overhead of increased replicated work is lower than the overhead of increased communication.
 \subsubsection{Work Flow}
 \paragraph{}The pseudocode is as following, at the end of each function, there would a data exchange with synchronized blocking message passing:\\
+\\
 \lstset{language=c++}
 \begin{lstlisting}[frame=single]
     void mpiTrace()
@@ -295,21 +296,24 @@ void azMPI::run()
 \end{figure}
 \subsection{Global Illumination and Comparison}
 \paragraph{}We present an overall comparison of results from direct illumination and global illumination for both of the algorithms. For direct illumination only, it is easy to find that for lower number of geometries, Node by Node algorithm beats the performance of Stage by Stage algorithm. This is because of the inter-communication overhead is lower in algorithm 2 given that fact that there are duplicated work to be done in algorithm 1. However, when geometry number increased to more than 36 Lucies (36 nodes), the performance of algorithm 1 is getting better and better, since this is when the first algorithm start taking the advantage of transfer large amount of data with lower frequencies, and this proves that the overhead of increased inter-communication exceeds the overhead of duplicated tracing and shading works in our system.
-\paragraph{}The global illumination result, however, is not as consistent with direct illumination result. We presented the results here for reference, since there seems to be a Heisenbug that could cause a segment fault I could not figure out why for algorithm 1. The global illumination results of algorithm 1 seems not natural as well, therefore we could not make a lot of comparisons of the two results very confidently. However, since the global illumination results are very concrete for algorithm 2, we could still point out that the increase of inter-communication overhead for second rays results in superlinear increase of rendering time.
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.8\textwidth]{res2}
 \caption{Two algorithms result comparison}\
 \end{figure}
+\paragraph{}The global illumination result, however, is not as consistent with direct illumination result. We presented the results here for reference, since there seems to be a Heisenbug that could cause a segment fault I could not figure out why for algorithm 1. The global illumination results of algorithm 1 seems not natural as well, therefore we could not make a lot of comparisons of the two results very confidently. However, since the global illumination results are very concrete for algorithm 2, we could still point out that the increase of inter-communication overhead for second rays results in superlinear 
+\newpage
+\section{Conclusion}
+\paragraph{} In brief conclusion, we implemented a distributed ray tracing / path tracing system that could render large models that could not fit in one machine's DRAM. We designed and implemented two algorithms and compared their performance. The results are generated under OPEN MPI message passing interface. In brief, for scenes with less geometries that must be distributed, a node by node asynchronized solution has better performance in both direct illumination and global illumination. For larger scenes with a lot of geometries to be distributed across a lot of machine nodes, the overhead of increased communication might dominate and exceeds the overhead of duplicated tracing and shading work.  Under such circumstances, a synchronized stage by stage algorithm might be a better solution. Meanwhile, we have to admit that both of the algorithms have the potential of further optimized. A deferred rendering might be useful for helping improve the performance of node by node algorithm, and a discard of duplicated work after each tracing stage could be helpful for stage by stage algorithm. This could be the future optimization for this topic.
+%%%%%%%%%% BIBLIOGRAPHY %%%%%%%%%%
+\newpage
+\section{Appendix: Rendered Results}
+increase of rendering time.
 \begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth]{glucy108}
 \caption{108 Lucies with global Illumination}\
 \end{figure}
-\section{Conclusion}
-\paragraph{} In brief conclusion, we implemented a distributed ray tracing / path tracing system that could render large models that could not fit in one machine's DRAM. We designed and implemented two algorithms and compared their performance. The results are generated under OPEN MPI message passing interface. In brief, for scenes with less geometries that must be distributed, a node by node asynchronized solution has better performance in both direct illumination and global illumination. For larger scenes with a lot of geometries to be distributed across a lot of machine nodes, the overhead of increased communication might dominate and exceeds the overhead of duplicated tracing and shading work.  Under such circumstances, a synchronized stage by stage algorithm might be a better solution. Meanwhile, we have to admit that both of the algorithms have the potential of further optimized. A deferred rendering might be useful for helping improve the performance of node by node algorithm, and a discard of duplicated work after each tracing stage could be helpful for stage by stage algorithm. This could be the future optimization for this topic.
-%%%%%%%%%% BIBLIOGRAPHY %%%%%%%%%%
-\section{Appendix: Rendered Results}
 \paragraph{}Here are some rendered images for further indicating how our system works, and how results are look like other than the test Lucy scenes we used in former sections.
 \begin{figure}[h]
 	\centering
