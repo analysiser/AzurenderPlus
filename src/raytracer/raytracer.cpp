@@ -2308,7 +2308,6 @@ namespace _462 {
         MPI_Gather(buffer.zbuffer, screensize, MPI_DOUBLE, zbuf, screensize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         MPI_Gather(buffer.shadowMap, screensize, MPI_UNSIGNED_CHAR, sbuf, screensize, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
         
-        printf("**************\n");
         // merge buffers from all nodes
         // TODO: make it clearer
         for (size_t i = 0; i < width * height; i++) {
@@ -2363,9 +2362,7 @@ namespace _462 {
             }
             
             color.to_array(&rootbuffer[i*4]);
-        }
-        printf("~~~~~~~~~~~~~~~~\n");
-        
+        }        
         free(rbuf);
         free(zbuf);
         free(sbuf);
